@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="jitsi-hammer">
+
+    <property file="local.properties" />
+    <property name="output" value="classes" />
+    <property name="run.arg.line" value="" />
+    <property name="run.jvmarg.line" value="" />
+    <property name="dist" value="dist" />
+    <property name="doc" value="doc"/>
+    <property name="java.doc" value="${doc}/api"/>
+
+    <condition property="label" value="build.SVN">
+        <not>
+            <isset property="label"/>
+        </not>
+    </condition>
+
+    <property
+        name="packname.win"
+        value="${ant.project.name}-windows-x86-${label}"/>
+    <property
+        name="packname.win64"
+    	value="${ant.project.name}-windows-x64-${label}"/>
+    <property
+        name="packname.lin"
+        value="${ant.project.name}-linux-x86-${label}"/>
+    <property
+        name="packname.lin64"
+    	value="${ant.project.name}-linux-x64-${label}"/>
+    <property
+    	name="packname.macosx"
+        value="${ant.project.name}-macosx-${label}"/>
+    <property name="packname.src" value="${ant.project.name}-src-${label}"/>
+
+    <path id="compile.classpath">
+        <fileset dir="lib" includes="*.jar" />
+    </path>
+    <path id="run.classpath">
+        <path refid="compile.classpath" />
+        <pathelement location="${output}" />
+    </path>
+
+
+    <target name="clean">
+        <delete failonerror="false" includeemptydirs="true">
+            <fileset dir="${output}" />
+            <fileset dir="${dist}" />
+            <fileset dir="${doc}" />
+        </delete>
+    </target>
+
+    <target name="compile">
+        <mkdir dir="${output}" />
+        <javac
+            classpathref="compile.classpath"
+            destdir="${output}"
+            debug="true"
+            fork="true"
+            source="1.6"
+            srcdir="src"
+            target="1.6" />
+    </target>
+
+    <target name="run">
+        <condition property="run.lib.native" value="windows-64">
+            <os arch="amd64" family="windows" />
+        </condition>
+        <condition property="run.lib.native" value="windows">
+            <os arch="i386" family="windows" />
+        </condition>
+        <condition property="run.lib.native" value="macosx">
+            <os family="mac" />
+        </condition>
+        <condition property="run.lib.native" value="linux-64">
+            <and>
+                <equals
+                        arg1="${os.name}"
+                        arg2="linux"
+                        casesensitive="false"
+                        trim="true"/>
+                <os arch="amd64" />
+            </and>
+        </condition>
+        <condition property="run.lib.native" value="linux">
+            <and>
+                <equals
+                        arg1="${os.name}"
+                        arg2="linux"
+                        casesensitive="false"
+                        trim="true"/>
+                <os arch="i386" />
+            </and>
+        </condition>
+        <condition
+                else=""
+                property="run.java.library.path"
+                value="-Djava.library.path=${basedir}/lib/native/${run.lib.native}">
+            <isset property="run.lib.native"/>
+	    </condition>
+        <java
+	            classname="org.jitsi.hammer.Main"
+	            classpathref="run.classpath"
+	            failonerror="true"
+	            fork="true" >
+            <jvmarg line="${run.java.library.path} ${run.jvmarg.line}" />
+            <arg line="${run.arg.line}" />
+        </java>
+    </target>
+
+
+    <target name="jar" depends="compile">
+        <jar
+            compress="true"
+            destfile="jitsi-hammer.jar">
+        <fileset casesensitive="no" dir="${output}">
+            <include name="**/*.class" />
+            <include name="**/*.properties" />
+            <exclude name="${output}/jitsi-hammer.jar" />
+        </fileset>
+        </jar>
+    </target>
+
+    <target
+        name="make"
+        depends="compile,jar"
+        description="Incrementally compile and jar/package the project." />
+
+    <target
+        name="rebuild"
+        depends="clean,make"
+        description="Clean and make the project." />
+
+    <!-- JAVADOC -->
+    <target name="javadoc"
+        description="Generates project javadoc.">
+        <javadoc author="true" destdir="${java.doc}" package="true"
+            version="true" use="true" windowtitle="Jitsi-Hammer API"
+            classpathref="compile.classpath" source="1.6+" maxmemory="256m">
+            <packageset dir="src">
+                <include name="**"/>
+            </packageset>
+            <tag name="todo" description="To do:"/>
+            <tag name="note" description="Note:"/>
+            <link href="${j2se_api}" />
+            <header>
+                <![CDATA[
+                <b> Jitsi-Hammer : A traffic generator for Jitsi Videobridge. </b>
+                ]]>
+            </header>
+            <bottom>
+                <![CDATA[
+                <font size="-1">
+						 <a href="http://jitsi.org/Projects/JitsiVideobridge"> 
+							 Jitsi-Videobridge, Video relaying for efficient multi-party video conferences. </a>
+                    <br>
+                        <a href="http://gnu.org"> Distributable under LGPL license. </a>
+                    <br>
+                </font>
+                ]]>
+            </bottom>
+        </javadoc>
+    </target>
+</project>
