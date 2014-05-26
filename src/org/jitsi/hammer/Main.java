@@ -31,6 +31,6 @@ public class Main
         Hammer hammer = new Hammer(infoCLI,"JitMeet-Hammer",1);
         hammer.start();
         hammer.startStream();
-        while(true) Thread.sleep(3600);
+        while(true) Thread.sleep(3600000);
     }
 }
