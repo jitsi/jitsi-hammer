@@ -30,7 +30,7 @@ class JingleSession implements PacketListener {
     public JingleSession(HostInfo hostInfo,String username)
     {
         this.serverInfo = hostInfo;
-        this.username = (username == null) ? "JitMeet_Hammer" : username;
+        this.username = (username == null) ? "User" : username;
 
         ProviderManager.getInstance().addExtensionProvider(MediaProvider.ELEMENT_NAME,MediaProvider.NAMESPACE, new MediaProvider());
         ProviderManager.getInstance().addIQProvider(JingleIQ.ELEMENT_NAME,JingleIQ.NAMESPACE,new JingleIQProvider());
@@ -45,7 +45,7 @@ class JingleSession implements PacketListener {
                 }
             });
         
-        config.setDebuggerEnabled(false);
+        config.setDebuggerEnabled(true);
         //Connection.DEBUG_ENABLED = false;
     }
 
@@ -57,13 +57,16 @@ class JingleSession implements PacketListener {
         connection.loginAnonymously();
 
         muc = new MultiUserChat(connection, serverInfo.getRoomName()+"@"+serverInfo.getMUC());
-        System.out.println(username);
         muc.join(username);
         muc.sendMessage("Hello World!");
         
         muc.addMessageListener(new MyPacketListener(muc,serverInfo.getRoomName()+"@"+serverInfo.getMUC() +"/" + muc.getNickname()));
     }
 
+    /*
+     * acceptJingleSession create a accept-session Jingle message and send it to the initiator of the session.
+     * The initiator is taken from the From attribut of the the initiate-session message.
+     */
     protected void acceptJingleSession()
     {
         ArrayList<ContentPacketExtension> contentList = null;
@@ -127,6 +130,10 @@ class JingleSession implements PacketListener {
         }
     }
 
+    
+    /*
+     * Callback function used when a Jingle IQ is received by the XMPP connector.
+     */
     public void processPacket(Packet packet)
     {
         JingleIQ jiq = (JingleIQ)packet;
