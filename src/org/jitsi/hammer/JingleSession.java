@@ -1,15 +1,18 @@
 package org.jitsi.hammer;
 
+import org.ice4j.ice.*;
+import org.jitsi.service.neomedia.*;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smackx.muc.*;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.filter.*;
-import org.jivesoftware.smack.provider.ProviderManager;
+import org.jivesoftware.smack.provider.*;
 
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.SendersEnum;
 
-import java.util.ArrayList;
+import java.io.*;
+import java.util.*;
 
 class JingleSession implements PacketListener {
 
@@ -20,10 +23,14 @@ class JingleSession implements PacketListener {
     protected MultiUserChat muc;
     protected JingleIQ initiateSessionInfo;
 
+    public JingleSession(HostInfo hostInfo)
+    {
+        this(hostInfo,null);
+    }
     public JingleSession(HostInfo hostInfo,String username)
     {
         this.serverInfo = hostInfo;
-        this.username = (username == null) ? "JitMeet-Hammer" : username;
+        this.username = (username == null) ? "JitMeet_Hammer" : username;
 
         ProviderManager.getInstance().addExtensionProvider(MediaProvider.ELEMENT_NAME,MediaProvider.NAMESPACE, new MediaProvider());
         ProviderManager.getInstance().addIQProvider(JingleIQ.ELEMENT_NAME,JingleIQ.NAMESPACE,new JingleIQProvider());
@@ -38,26 +45,86 @@ class JingleSession implements PacketListener {
                 }
             });
         
-        config.setDebuggerEnabled(true);
+        config.setDebuggerEnabled(false);
         //Connection.DEBUG_ENABLED = false;
     }
 
 
-    public void start() throws XMPPException
+    public void start()
+        throws XMPPException
     {
         connection.connect();
         connection.loginAnonymously();
 
         muc = new MultiUserChat(connection, serverInfo.getRoomName()+"@"+serverInfo.getMUC());
+        System.out.println(username);
         muc.join(username);
         muc.sendMessage("Hello World!");
-        muc.changeNickname(username);
+        
         muc.addMessageListener(new MyPacketListener(muc,serverInfo.getRoomName()+"@"+serverInfo.getMUC() +"/" + muc.getNickname()));
     }
 
     protected void acceptJingleSession()
     {
-    
+        ArrayList<ContentPacketExtension> contentList = null;
+        Map<String,SelectedMedia> selectedMedias = null;
+        List<MediaStream> mediaStreamList = null;
+        IceMediaStreamGenerator iceMediaStramGenerator = IceMediaStreamGenerator.getGenerator();
+        Agent agent = null;
+
+        // Now is the code section where we generate the content list for the accept-session
+        ////////////////////////////////////
+        
+        //For now, we just generate an empty list (no <content/> childs will be added to the message)
+        contentList = new ArrayList<ContentPacketExtension>();
+        
+        selectedMedias = JingleUtils.generateAcceptedContentListFromSessionInitiateIQ(contentList,initiateSessionInfo,SendersEnum.both);
+        try
+        {
+            agent = iceMediaStramGenerator.generateIceMediaStream(selectedMedias.keySet(),null,null);
+        }
+        catch (IOException e)
+        {
+            System.err.println(e);
+        }
+
+        JingleUtils.addRemoteCandidateToAgent(agent,initiateSessionInfo.getContentList());
+        JingleUtils.addLocalCandidateToContentList(agent,contentList);
+
+        agent.startConnectivityEstablishment();
+
+        ////////////////////////////////////
+        // End of the code section generating the content list of the accept-session
+
+        //check establishment connectivity Agent + start stream
+        //TODO
+
+        //Creation of a session-accept message and its sending
+        JingleIQ accept = JinglePacketFactory.createSessionAccept(
+                initiateSessionInfo.getTo(),
+                initiateSessionInfo.getFrom(),
+                initiateSessionInfo.getSID(),
+                contentList);
+        connection.sendPacket(accept);
+        System.out.println("Jingle accept-session message sent");
+
+        while(IceProcessingState.TERMINATED != agent.getState())
+        {
+            System.out.println("Connectivity Establishment in process");
+            try
+            {
+                Thread.sleep(1500);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+        mediaStreamList = JingleUtils.generateMediaStreamFromAgent(agent,selectedMedias);
+        for(MediaStream stream : mediaStreamList)
+        {
+            stream.start();
+        }
     }
 
     public void processPacket(Packet packet)

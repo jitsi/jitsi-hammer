@@ -1,20 +1,15 @@
 package org.jitsi.hammer;
 
 import org.jivesoftware.smack.XMPPException;
-import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.CmdLineParser;
-
+import org.kohsuke.args4j.*;
 import org.jitsi.service.libjitsi.*;
-import org.jitsi.service.neomedia.*;
-import org.jitsi.service.neomedia.device.*;
 
-
-import java.util.List;
 
 public class Main
 {
-    public static void main(String[] args) throws XMPPException, InterruptedException
+    public static void main(String[] args)
+        throws XMPPException,
+        InterruptedException
     {
         
         java.util.logging.Logger l = java.util.logging.Logger.getLogger("");
@@ -33,10 +28,11 @@ public class Main
             return;
         }
         
-        //This HostInfo is used for tests in the localhost XMPP server
+        //This HostInfo is used for tests in my localhost XMPP server
         //HostInfo infoCLI = new HostInfo("jitmeet.example.com","conference.jitmeet.example.com","jitsi-videobridge.lambada.jitsi.net","HammerTest");
 
         Hammer hammer = new Hammer(infoCLI);
+        hammer.start();
         while(true) Thread.sleep(10000);
     }
 }

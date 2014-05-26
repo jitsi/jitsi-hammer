@@ -1,10 +1,11 @@
 package org.jitsi.hammer;
 
-import org.jitsi.service.neomedia.device.MediaDevice;
-import org.jitsi.service.neomedia.format.MediaFormat;
+import org.jitsi.service.neomedia.device.*;
+import org.jitsi.service.neomedia.format.*;
 
 
-class SelectedMedia {
+class SelectedMedia
+{
     public MediaDevice mediaDevice;
     public MediaFormat mediaFormat;
 

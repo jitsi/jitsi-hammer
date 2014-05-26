@@ -1,17 +1,13 @@
 package org.jitsi.hammer;
 
-import org.ice4j.ice.Agent;
-import org.ice4j.ice.IceMediaStream;
-import org.ice4j.ice.Component;
-import org.ice4j.Transport;
-import org.ice4j.TransportAddress;
-import org.ice4j.ice.harvest.StunCandidateHarvester;
-import org.ice4j.ice.harvest.TurnCandidateHarvester;
+import org.ice4j.ice.*;
+import org.ice4j.*;
+import org.ice4j.ice.harvest.*;
 
-import java.util.Map;
-import java.util.Set;
 
-import java.io.IOException;
+import java.util.*;
+
+import java.io.*;
 
 
 
@@ -39,10 +35,11 @@ class IceMediaStreamGenerator {
     public Agent generateIceMediaStream (
             Set<String> mediaNameSet,
             TransportAddress stunAddresses[],
-            TransportAddress turnAddresses[]) throws IOException
+            TransportAddress turnAddresses[])
+        throws IOException
     {
         Agent agent = new Agent();
-        agent.setControlling(false && true);
+        agent.setControlling(false);
 
         IceMediaStream stream = null;
 

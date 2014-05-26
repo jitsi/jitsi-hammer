@@ -17,8 +17,10 @@ public class MediaProvider implements PacketExtensionProvider
      * parseExtension normally parse a XML sub-document beginning with a <media> tag and MediaProvider.NAMESPACE as namespace.
      * This function parse the XML to create a MediaPacketExtension object equivalent to the XML documents.
      */
-    public PacketExtension parseExtension(XmlPullParser parser) throws Exception
+    public PacketExtension parseExtension(XmlPullParser parser)
+        throws Exception
     {
+        
         MediaPacketExtension packet = null;
         boolean done = false;
 
@@ -34,15 +36,23 @@ public class MediaProvider implements PacketExtensionProvider
                 switch (parser.next())
                 {
                     case XmlPullParser.END_TAG:
-                        //If the tag is </media>, then this functions is done parsing
+                        /*
+                         * If the tag is </media>, then this functions is done parsing
+                         */
                         if(parser.getName().equals(MediaProvider.ELEMENT_NAME)) done = true;
                         break;
 
                     case XmlPullParser.START_TAG:
-                        //If we read a <source /> line, we can add a Source to "packet", the MediaPacketExtension returned by this function
+                        /* 
+                         * If we read a <source /> line, we can add a Source to "packet",
+                         * the MediaPacketExtension returned by this function
+                         */
                         if(parser.getName().equals("source"))
                         {
-                            packet.addSource(parser.getAttributeValue("","type"),parser.getAttributeValue("","ssrc"),parser.getAttributeValue("","direction"));
+                            packet.addSource(
+                                    parser.getAttributeValue("","type"),
+                                    parser.getAttributeValue("","ssrc"),
+                                    parser.getAttributeValue("","direction"));
                         }
                         break;
                     default:

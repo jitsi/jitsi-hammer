@@ -4,21 +4,16 @@ import org.jivesoftware.smack.*;
 import org.jivesoftware.smackx.muc.*;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.filter.*;
-import org.jivesoftware.smack.provider.ProviderManager;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-import java.util.ArrayList;
+
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.SendersEnum;
-import org.ice4j.ice.Agent;
-import org.ice4j.ice.IceProcessingState;
-import java.util.Map;
-import java.util.List;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 
-import org.jitsi.service.libjitsi.*;
+import org.ice4j.ice.*;
+
 import org.jitsi.service.neomedia.*;
-import org.jitsi.service.neomedia.device.*;
-import org.jitsi.service.neomedia.format.*;
 
-import java.io.IOException;
+import java.util.*;
+import java.io.*;
 
 /*
  * Hammer is the class that 
@@ -80,8 +75,10 @@ public class Hammer {
 
 
 
-    public Hammer(HostInfo host) throws XMPPException
+    public Hammer(HostInfo host)
+        throws XMPPException
     {
+    	/*
         serverInfo = host;
 
         ProviderManager.getInstance().addExtensionProvider(MediaProvider.ELEMENT_NAME,MediaProvider.NAMESPACE, new MediaProvider());
@@ -105,6 +102,9 @@ public class Hammer {
         muc.sendMessage("Hello World!");
         muc.changeNickname("JitMeet-Hammer");
         muc.addMessageListener(new MyPacketListener(muc,serverInfo.getRoomName()+"@"+serverInfo.getMUC() +"/" + muc.getNickname()));
+        */
+    	JingleSession session = new JingleSession(host);
+    	session.start();
     }
 
     protected void setJingleInfo(JingleIQ info)
@@ -232,6 +232,12 @@ public class Hammer {
         {
             return (packet instanceof JingleIQ);
         }
+    }
+
+
+    public void start() {
+        // TODO Auto-generated method stub
+        
     }
 }
 

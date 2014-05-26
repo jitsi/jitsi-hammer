@@ -1,6 +1,6 @@
 package org.jitsi.hammer;
 
-import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.*;
 
 public class HostInfo
 {

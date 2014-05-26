@@ -1,35 +1,28 @@
 package org.jitsi.hammer;
 
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.SendersEnum;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.CreatorEnum;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.CandidateType;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
 
-import org.jitsi.impl.neomedia.transform.sdes.SDesControlImpl;
+//import org.jitsi.impl.neomedia.transform.sdes.*;
+import org.jitsi.impl.neomedia.*;
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.device.*;
 import org.jitsi.service.neomedia.format.*;
 import org.ice4j.Transport;
 import org.ice4j.TransportAddress;
-import org.ice4j.ice.Agent;
-import org.ice4j.ice.CandidatePair;
-import org.ice4j.ice.Component;
-import org.ice4j.ice.IceMediaStream;
-import org.ice4j.ice.LocalCandidate;
-import org.ice4j.ice.RemoteCandidate;
-//import org.ice4j.ice.CandidateType;
+import org.ice4j.ice.*;
 
-import java.lang.String;
-import java.net.DatagramSocket;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
+import java.net.*;
+import java.util.*;
 
 class JingleUtils {
 
-    public static Map<String,SelectedMedia> generateAcceptedContentListFromSessionInitiateIQ(List<ContentPacketExtension> contentList, JingleIQ jiq, SendersEnum senders)
+    public static Map<String,SelectedMedia> generateAcceptedContentListFromSessionInitiateIQ(
+        List<ContentPacketExtension> contentList, 
+        JingleIQ jiq, 
+        SendersEnum senders)
     {
         if(jiq.getAction() != JingleAction.SESSION_INITIATE) return null;
 
@@ -383,6 +376,7 @@ class JingleUtils {
             stream.setFormat(selectedMedia.mediaFormat);
             stream.setDirection(MediaDirection.SENDRECV);
             stream.setConnector(connector);
+            stream.setSSRCFactory(new SSRCFactoryImpl((new Random()).nextInt() & 0xFFFFFFFFL));
             //FIXME The pair is given in the StreamConnector constructor, should I also give it to the stream?
             stream.setTarget(new MediaStreamTarget(rtpPair.getRemoteCandidate().getTransportAddress(), rtcpPair.getRemoteCandidate().getTransportAddress()));
             stream.setName(mediaName);
