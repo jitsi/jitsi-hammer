@@ -1,35 +1,28 @@
 package org.jitsi.hammer;
 
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.SendersEnum;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.CreatorEnum;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.CandidateType;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
 
-import org.jitsi.impl.neomedia.transform.sdes.SDesControlImpl;
+//import org.jitsi.impl.neomedia.transform.sdes.*;
+import org.jitsi.impl.neomedia.*;
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.device.*;
 import org.jitsi.service.neomedia.format.*;
 import org.ice4j.Transport;
 import org.ice4j.TransportAddress;
-import org.ice4j.ice.Agent;
-import org.ice4j.ice.CandidatePair;
-import org.ice4j.ice.Component;
-import org.ice4j.ice.IceMediaStream;
-import org.ice4j.ice.LocalCandidate;
-import org.ice4j.ice.RemoteCandidate;
-//import org.ice4j.ice.CandidateType;
+import org.ice4j.ice.*;
 
-import java.lang.String;
-import java.net.DatagramSocket;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
+import java.net.*;
+import java.util.*;
 
 class JingleUtils {
 
-    public static Map<String,SelectedMedia> generateAcceptedContentListFromSessionInitiateIQ(List<ContentPacketExtension> contentList, JingleIQ jiq, SendersEnum senders)
+    public static Map<String,SelectedMedia> generateAcceptedContentListFromSessionInitiateIQ(
+        List<ContentPacketExtension> contentList, 
+        JingleIQ jiq, 
+        SendersEnum senders)
     {
         if(jiq.getAction() != JingleAction.SESSION_INITIATE) return null;
 
@@ -46,8 +39,7 @@ class JingleUtils {
         
 
         MediaService mediaService = LibJitsi.getMediaService();
-
-            
+        
         for(ContentPacketExtension content : jiq.getContentList())
         {
             contentForSessionAccept = createContentPacketExtension(content.getName(),CreatorEnum.responder, senders);
@@ -85,9 +77,22 @@ class JingleUtils {
                     supportedFormat = getSupportedFormatFromPayloadType( device, payloadType );
                     if(supportedFormat != null)
                     {
-                        //Yeah, add this format to accepted content
-                        if(selectedMediaMap.containsKey(descriptionMediaName) != true) selectedMediaMap.put(descriptionMediaName, new SelectedMedia(device,supportedFormat));
-                        descriptionOfContentForSessionAccept.addPayloadType(createPayloadType(supportedFormat));
+                        //Yeah, add this format to accepted content (if one wasn't already in)
+                        if(selectedMediaMap.containsKey(descriptionMediaName) != true)
+                        {
+                            selectedMediaMap.put(
+                                    descriptionMediaName,
+                                    new SelectedMedia(
+                                            device,
+                                            supportedFormat,
+                                            (byte)payloadType.getID()));
+                        }
+                        
+                        
+                        descriptionOfContentForSessionAccept.addPayloadType(
+                                createPayloadType(
+                                        supportedFormat,
+                                        (byte)payloadType.getID()));
                         break;
                     }
                 }
@@ -163,13 +168,60 @@ class JingleUtils {
         
     }
 
-    public static PayloadTypePacketExtension createPayloadType( MediaFormat mediaFormat )
+    public static PayloadTypePacketExtension createPayloadType( MediaFormat mediaFormat)
     {
         PayloadTypePacketExtension payloadExtension = new PayloadTypePacketExtension();
 
-        //int rtpPayloadType = mediaFormat.getRTPPayloadType();
+        int rtpPayloadType = mediaFormat.getRTPPayloadType();
 
-        payloadExtension.setId(mediaFormat.getRTPPayloadType());
+        payloadExtension.setId(rtpPayloadType);
+        payloadExtension.setName(mediaFormat.getEncoding());
+        payloadExtension.setClockrate((int)mediaFormat.getClockRate());
+
+        //Audio format have a number of channel that we need to add to its payload extension
+        if(mediaFormat instanceof AudioMediaFormat)
+        {
+            AudioMediaFormat audioMediaFormat = (AudioMediaFormat) mediaFormat;
+            payloadExtension.setChannels(audioMediaFormat.getChannels());
+        }
+
+        //If the mediaFormat has parameter or advanced attributes, we have to add them too as payload parameter
+        for(Map.Entry<String, String> paramEntry : mediaFormat.getFormatParameters().entrySet())
+        {
+            ParameterPacketExtension paramExtension = new ParameterPacketExtension();
+            
+            paramExtension.setName(paramEntry.getKey());
+            paramExtension.setValue(paramEntry.getValue());
+            
+            payloadExtension.addParameter(paramExtension);
+        }
+        for(Map.Entry<String, String> attributEntry : mediaFormat.getAdvancedAttributes().entrySet())
+        {
+            ParameterPacketExtension paramExtension = new ParameterPacketExtension();
+
+            paramExtension.setName(attributEntry.getKey());
+            paramExtension.setValue(attributEntry.getValue());
+            
+            payloadExtension.addParameter(paramExtension);
+        }
+
+        return payloadExtension;
+    }   
+    
+    
+    public static PayloadTypePacketExtension createPayloadType( 
+            MediaFormat mediaFormat,
+            byte dynamicPayloadType )
+    {
+        PayloadTypePacketExtension payloadExtension = new PayloadTypePacketExtension();
+
+        int rtpPayloadType = mediaFormat.getRTPPayloadType();
+        if(rtpPayloadType == MediaFormat.RTP_PAYLOAD_TYPE_UNKNOWN)
+        {
+            rtpPayloadType = dynamicPayloadType;
+        }
+
+        payloadExtension.setId(rtpPayloadType);
         payloadExtension.setName(mediaFormat.getEncoding());
         payloadExtension.setClockrate((int)mediaFormat.getClockRate());
 
@@ -212,15 +264,19 @@ class JingleUtils {
             for(MediaFormat mediaFormat : device.getSupportedFormats())
             {
                 //System.out.print(mediaFormat);
-                //System.out.println(" |||| " + payloadType.toXML());
+                //System.out.println(" |||| " + mediaFormat.getRTPPayloadType() + " || " + payloadType.getID());
                 if((mediaFormat.getClockRateString().equals(String.valueOf(payloadType.getClockrate())))
-                        && (mediaFormat.getEncoding().equals(payloadType.getName()))
-                        && (mediaFormat.getRTPPayloadType() == payloadType.getID())
-                        //These attribute are not available in a MediaFormat object (maybe with getAdditionnalCodecSetting or getAdvancedAttributes)
-                        //&& (payloadType.getChannels())
-                        //&& (payloadType.getMaxptime())
-                        //&& (payloadType.getPTtime())
-                    )
+                    && (mediaFormat.getEncoding().equals(payloadType.getName()))
+                    //TODO Do I have to test if the payload type is the same ?
+                    && (
+                            (mediaFormat.getRTPPayloadType() == MediaFormat.RTP_PAYLOAD_TYPE_UNKNOWN)
+                            ||(mediaFormat.getRTPPayloadType() == payloadType.getID())
+                       )
+                    //These attribute are not available in a MediaFormat object (maybe with getAdditionnalCodecSetting or getAdvancedAttributes)
+                    //&& (payloadType.getChannels())
+                    //&& (payloadType.getMaxptime())
+                    //&& (payloadType.getPTtime())
+                  )
                 {
                     return mediaFormat;
                 }
@@ -383,12 +439,13 @@ class JingleUtils {
             stream.setFormat(selectedMedia.mediaFormat);
             stream.setDirection(MediaDirection.SENDRECV);
             stream.setConnector(connector);
+            stream.setSSRCFactory(new SSRCFactoryImpl((new Random()).nextInt() & 0xFFFFFFFFL));
             //FIXME The pair is given in the StreamConnector constructor, should I also give it to the stream?
             stream.setTarget(new MediaStreamTarget(rtpPair.getRemoteCandidate().getTransportAddress(), rtcpPair.getRemoteCandidate().getTransportAddress()));
             stream.setName(mediaName);
             stream.setRTPTranslator(mediaService.createRTPTranslator());
-            //stream.addDynamicRTPPayloadType(arg0, arg1);
-            
+            if(selectedMedia.mediaFormat.getRTPPayloadType() == MediaFormat.RTP_PAYLOAD_TYPE_UNKNOWN)
+                stream.addDynamicRTPPayloadType(selectedMedia.dynamicPayloadType, selectedMedia.mediaFormat);
             stream.getSrtpControl().start(selectedMedia.mediaFormat.getMediaType());
             
             streamList.add(stream);

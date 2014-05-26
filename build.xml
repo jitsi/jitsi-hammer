@@ -55,10 +55,10 @@
             classpathref="compile.classpath"
             destdir="${output}"
             debug="true"
-            fork="true"
-            source="1.6"
+            fork="false"
+            source="1.5"
             srcdir="src"
-            target="1.6" />
+            target="1.5" />
     </target>
 
     <target name="run">

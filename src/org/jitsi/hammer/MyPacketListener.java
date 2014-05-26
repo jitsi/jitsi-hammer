@@ -5,7 +5,8 @@ import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smackx.muc.*;
 
 
-public class MyPacketListener implements PacketListener {
+public class MyPacketListener implements PacketListener 
+{
     /*
      * muc is used to send a message when this client receive a Message (not from itself)
      */
@@ -15,7 +16,7 @@ public class MyPacketListener implements PacketListener {
      */
     protected String myID;
 
-    public MyPacketListener(MultiUserChat muc,String id)
+    public MyPacketListener(MultiUserChat muc,String id) 
     {
         this.muc = muc;
         this.myID = id;
@@ -26,16 +27,16 @@ public class MyPacketListener implements PacketListener {
      * If it is, it print its body and sender.
      * If the Message received isn't from this client, this client responds with "C'est pas faux.".
      */
-    public void processPacket(Packet packet)
+    public void processPacket(Packet packet) 
     {
-        if(packet instanceof Message)
+        if(packet instanceof Message) 
         {
             Message msg = (Message)packet;
             System.out.println(msg.getFrom().split("/")[1] + " : " + msg.getBody());
 
             if(packet.getFrom().equals(myID) !=  true)
             {           
-                try
+                try 
                 {
                     muc.sendMessage("C'est pas faux.");
                 }
