@@ -67,10 +67,22 @@ class IceMediaStreamGenerator {
             {
                 stream = agent.createMediaStream(name);
                 
-                if( (CURRENT_COMPONENT_PORT + 1) >= MAX_COMPONENT_PORT ) CURRENT_COMPONENT_PORT = MIN_COMPONENT_PORT;
+                if( (CURRENT_COMPONENT_PORT + 1) >= MAX_COMPONENT_PORT )
+                    CURRENT_COMPONENT_PORT = MIN_COMPONENT_PORT;
 
-                agent.createComponent(stream, Transport.UDP, CURRENT_COMPONENT_PORT, CURRENT_COMPONENT_PORT, CURRENT_COMPONENT_PORT + 49);
-                agent.createComponent(stream, Transport.UDP, CURRENT_COMPONENT_PORT+1, CURRENT_COMPONENT_PORT+1, CURRENT_COMPONENT_PORT + 50);
+                agent.createComponent(
+                        stream,
+                        Transport.UDP,
+                        CURRENT_COMPONENT_PORT,
+                        CURRENT_COMPONENT_PORT,
+                        CURRENT_COMPONENT_PORT + 50);
+                
+                agent.createComponent(
+                        stream,
+                        Transport.UDP,
+                        CURRENT_COMPONENT_PORT+1,
+                        CURRENT_COMPONENT_PORT+1,
+                        CURRENT_COMPONENT_PORT + 50);
     
                 CURRENT_COMPONENT_PORT+=50;
             }
