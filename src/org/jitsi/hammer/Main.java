@@ -5,9 +5,8 @@ import java.awt.Toolkit;
 import java.io.File;
 
 import net.java.sip.communicator.launcher.ChangeJVMFrame;
-import net.java.sip.communicator.util.ScStdOut;
-import net.java.sip.communicator.util.launchutils.LaunchArgHandler;
-import net.java.sip.communicator.util.launchutils.SipCommunicatorLock;
+//import net.java.sip.communicator.util.ScStdOut;
+
 
 import org.kohsuke.args4j.*;
 
@@ -328,8 +327,6 @@ public class Main
         
         
         
-        
-        
         java.util.logging.Logger l = java.util.logging.Logger.getLogger("");
         l.setLevel(java.util.logging.Level.WARNING);
         
@@ -350,7 +347,7 @@ public class Main
 
         Hammer hammer = new Hammer(infoCLI,"JitMeet-Hammer",1);
         hammer.init();
-        //hammer.start();
+        hammer.start();
         while(true) Thread.sleep(3600000);
     }
 }
