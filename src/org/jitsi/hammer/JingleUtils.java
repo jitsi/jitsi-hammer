@@ -168,7 +168,7 @@ class JingleUtils {
         
     }
 
-    public static PayloadTypePacketExtension createPayloadType( MediaFormat mediaFormat)
+    public static PayloadTypePacketExtension createPayloadType(MediaFormat mediaFormat)
     {
         PayloadTypePacketExtension payloadExtension = new PayloadTypePacketExtension();
 
@@ -257,17 +257,18 @@ class JingleUtils {
 
 
 
-    private static MediaFormat getSupportedFormatFromPayloadType(MediaDevice device, PayloadTypePacketExtension payloadType)
+    private static MediaFormat getSupportedFormatFromPayloadType(
+            MediaDevice device,
+            PayloadTypePacketExtension payloadType)
     {
         if((device != null) && (payloadType != null))
         {
             for(MediaFormat mediaFormat : device.getSupportedFormats())
             {
-                //System.out.print(mediaFormat);
-                //System.out.println(" |||| " + mediaFormat.getRTPPayloadType() + " || " + payloadType.getID());
+                System.out.print(mediaFormat);
+                System.out.println(" |||| " + payloadType.toXML());
                 if((mediaFormat.getClockRateString().equals(String.valueOf(payloadType.getClockrate())))
                     && (mediaFormat.getEncoding().equals(payloadType.getName()))
-                    //TODO Do I have to test if the payload type is the same ?
                     && (
                             (mediaFormat.getRTPPayloadType() == MediaFormat.RTP_PAYLOAD_TYPE_UNKNOWN)
                             ||(mediaFormat.getRTPPayloadType() == payloadType.getID())
@@ -285,7 +286,9 @@ class JingleUtils {
             return null;
     }
 
-    public static void addRemoteCandidateToAgent(Agent agent, List<ContentPacketExtension> contentList)
+    public static void addRemoteCandidateToAgent(
+            Agent agent,
+            List<ContentPacketExtension> contentList)
     {
         IceUdpTransportPacketExtension transports = null;
         List<CandidatePacketExtension> candidates = null;
@@ -351,7 +354,9 @@ class JingleUtils {
         }
     }
     
-    public static void addLocalCandidateToContentList(Agent agent, List<ContentPacketExtension> contentList)
+    public static void addLocalCandidateToContentList(
+            Agent agent,
+            List<ContentPacketExtension> contentList)
     {
         IceMediaStream iceMediaStream = null;
         IceUdpTransportPacketExtension transport = null;
@@ -400,7 +405,9 @@ class JingleUtils {
         }
     }
 
-    public static List<MediaStream> generateMediaStreamFromAgent(Agent agent, Map<String,SelectedMedia> selectedMediaMap)
+    public static List<MediaStream> generateMediaStreamFromAgent(
+            Agent agent,
+            Map<String,SelectedMedia> selectedMediaMap)
     {
         ArrayList<MediaStream> streamList = new ArrayList<MediaStream>();
         
@@ -435,28 +442,42 @@ class JingleUtils {
             
             
             connector = new DefaultStreamConnector(rtpSocket, rtcpSocket);
-            stream = mediaService.createMediaStream(null, selectedMedia.mediaFormat.getMediaType(), mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
+            stream = mediaService.createMediaStream(
+                    null,
+                    selectedMedia.mediaFormat.getMediaType(),
+                    mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
             stream.setFormat(selectedMedia.mediaFormat);
             stream.setDirection(MediaDirection.SENDRECV);
             stream.setConnector(connector);
-            stream.setSSRCFactory(new SSRCFactoryImpl((new Random()).nextInt() & 0xFFFFFFFFL));
-            //FIXME The pair is given in the StreamConnector constructor, should I also give it to the stream?
-            stream.setTarget(new MediaStreamTarget(rtpPair.getRemoteCandidate().getTransportAddress(), rtcpPair.getRemoteCandidate().getTransportAddress()));
+            stream.setSSRCFactory(
+                    new SSRCFactoryImpl((new Random()).nextInt() & 0xFFFFFFFFL));
+            //TODO The pair is given in the StreamConnector constructor,
+            //should I also give it to the stream?
+            stream.setTarget(
+                    new MediaStreamTarget(
+                            rtpPair.getRemoteCandidate().getTransportAddress(),
+                            rtcpPair.getRemoteCandidate().getTransportAddress()));
             stream.setName(mediaName);
             stream.setRTPTranslator(mediaService.createRTPTranslator());
-            if(selectedMedia.mediaFormat.getRTPPayloadType() == MediaFormat.RTP_PAYLOAD_TYPE_UNKNOWN)
-                stream.addDynamicRTPPayloadType(selectedMedia.dynamicPayloadType, selectedMedia.mediaFormat);
+            if(selectedMedia.mediaFormat.getRTPPayloadType()
+               ==  MediaFormat.RTP_PAYLOAD_TYPE_UNKNOWN)
+            {    
+                stream.addDynamicRTPPayloadType(
+                        selectedMedia.dynamicPayloadType,
+                        selectedMedia.mediaFormat);
+            }
+            /*
+            //FIXME Useless when the hammer will handle red correctly
+            if(selectedMedia.mediaFormat.getMediaType() == MediaType.VIDEO)
+                tream.addDynamicRTPPayloadType(
+                        (byte) 116,
+                        selectedMedia.mediaFormat);
+            */
             stream.getSrtpControl().start(selectedMedia.mediaFormat.getMediaType());
             
             streamList.add(stream);
         }
         
         return streamList;
-    }
-
-
-    public static void start()
-    {
-        LibJitsi.start();
     }
 }
