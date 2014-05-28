@@ -1,17 +1,44 @@
 package org.jitsi.hammer;
 
-import org.jivesoftware.smack.*;
+import java.util.HashMap;
+import java.util.Map;
 
+import net.java.sip.communicator.impl.osgi.framework.launch.*;
+
+import org.jivesoftware.smack.*;
+/*
+ * Import used when I want to debug some things
+import org.jitsi.service.configuration.*;
 import org.jitsi.service.libjitsi.*;
+import org.jitsi.service.neomedia.MediaType;
+import org.jitsi.service.neomedia.MediaUseCase;
+import org.jitsi.service.neomedia.device.MediaDevice;
+import org.jitsi.service.neomedia.format.MediaFormat;
+*/
+import org.osgi.framework.*;
+import org.osgi.framework.launch.*;
+import org.osgi.framework.startlevel.*;
+
 
 //import java.util.*;
 
 
 
 public class Hammer {
-    protected String username;
+    private String username;
+    private HostInfo serverInfo;
     
-    protected HostInfo serverInfo;
+    
+    /**
+     * The <tt>org.osgi.framework.launch.Framework</tt> instance which
+     * represents the OSGi instance launched by this <tt>ComponentImpl</tt>.
+     */
+    private Framework framework;
+    
+    /**
+     * The <tt>Object</tt> which synchronizes the access to {@link #framework}.
+     */
+    private final Object frameworkSyncRoot = new Object();
     
     /**
      * The locations of the OSGi bundles (or rather of the class files of their
@@ -19,9 +46,8 @@ public class Hammer {
      * An element of the <tt>BUNDLES</tt> array is an array of <tt>String</tt>s
      * and represents an OSGi start level.
      */
-    /*
-    private static final String[][] BUNDLES
-        = {
+    private static final String[][] BUNDLES =
+        {
             {
                 "net/java/sip/communicator/impl/libjitsi/LibJitsiActivator"
             },
@@ -32,7 +58,7 @@ public class Hammer {
             {
                 "net/java/sip/communicator/impl/configuration/ConfigurationActivator"
             },
-            {
+            /*{
                 "net/java/sip/communicator/impl/resources/ResourceManagementActivator"
             },
             {
@@ -41,20 +67,20 @@ public class Hammer {
             {
                 "net/java/sip/communicator/impl/netaddr/NetaddrActivator"
             },
-            {
+            /*{
                 "net/java/sip/communicator/impl/packetlogging/PacketLoggingActivator"
-            },
-            {
+            },*/
+            /*{
                 "net/java/sip/communicator/service/gui/internal/GuiServiceActivator"
             },
             {
                 "net/java/sip/communicator/service/protocol/media/ProtocolMediaActivator"
             },
-            {
-                "org/jitsi/hammer/HammerBundleActivator"
-            }
+            /*{
+                "org/jitsi/hammer/HammerActivator"
+            }*/
         };
-*/
+
     
     JingleSession sessions[] = null;
 
@@ -66,16 +92,104 @@ public class Hammer {
         
         for(int i = 0; i<numberOfUser; i++)
         {
-            sessions[i] = new JingleSession(host,username+"_"+i);    
+            sessions[i] = new JingleSession(this.serverInfo,this.username+"_"+i);    
         }
     }
 
-    public void start() {
+
+    /*
+     * This code is a slightly modified copy of the one found in
+     * startOSGi of the class ComponentImpl of jitsi-videobridge.
+     * 
+     * This function run the activation of different bundle that are needed
+     * These bundle are the one found in the BUNDLE array
+     */
+    public void init() {
         // TODO Setting up OSGI
-        LibJitsi.start();
+        
+        synchronized (frameworkSyncRoot)
+        {
+            if (this.framework != null)
+                return;
+        }
+
+        FrameworkFactory frameworkFactory = new FrameworkFactoryImpl();
+        Map<String, String> configuration = new HashMap<String, String>();
+        BundleContext bundleContext = null;
+
+        configuration.put(
+                Constants.FRAMEWORK_BEGINNING_STARTLEVEL,
+                Integer.toString(BUNDLES.length));
+
+        Framework framework = frameworkFactory.newFramework(configuration);
+
+        try
+        {
+            framework.init();
+
+            bundleContext = framework.getBundleContext();
+
+            //bundleContext.registerService(Component.class, this, null);
+
+            for (int startLevelMinus1 = 0;
+                    startLevelMinus1 < BUNDLES.length;
+                    startLevelMinus1++)
+            {
+                int startLevel = startLevelMinus1 + 1;
+
+                for (String location : BUNDLES[startLevelMinus1])
+                {
+                    Bundle bundle = bundleContext.installBundle(location);
+
+                    if (bundle != null)
+                    {
+                        BundleStartLevel bundleStartLevel
+                            = bundle.adapt(BundleStartLevel.class);
+
+                        if (bundleStartLevel != null)
+                            bundleStartLevel.setStartLevel(startLevel);
+                    }
+                }
+            }
+
+            framework.start();
+        }
+        catch (BundleException be)
+        {
+            throw new RuntimeException(be);
+        }
+
+        synchronized (frameworkSyncRoot)
+        {
+            this.framework = framework;
+        }
+        /*
+        ConfigurationService config = LibJitsi.getConfigurationService();
+        System.out.println(config.getConfigurationFilename());
+        System.out.println(config.getScHomeDirLocation());
+        System.out.println(config.getScHomeDirName());
+        
+        for(MediaDevice device : LibJitsi.getMediaService().getDevices(MediaType.AUDIO, MediaUseCase.ANY))
+        {
+            System.out.println(device.getDirection());
+            for(MediaFormat type : device.getSupportedFormats())
+            {
+                System.out.println(type.toString());
+            }
+        }
+        System.out.println("\n\n");
+        for(MediaDevice device : LibJitsi.getMediaService().getDevices(MediaType.VIDEO, MediaUseCase.ANY))
+        {
+            System.out.println(device.getDirection());
+            for(MediaFormat type : device.getSupportedFormats())
+            {
+                System.out.println(type.toString());
+            }
+        }*/
+        //LibJitsi.start();
     }
     
-    public void startStream() {
+    public void start() {
         // TODO
         try
         {
