@@ -10,9 +10,9 @@ import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.device.*;
 import org.jitsi.service.neomedia.format.*;
-import org.ice4j.Transport;
-import org.ice4j.TransportAddress;
+import org.ice4j.*;
 import org.ice4j.ice.*;
+import org.jitsi.videobridge.*;
 
 import java.net.*;
 import java.util.*;
@@ -58,10 +58,13 @@ class JingleUtils {
                 if(descriptionMediaName.equals("audio"))
                 {
                     device = mediaService.getDefaultDevice(MediaType.AUDIO,MediaUseCase.CALL);
+                    device = new AudioSilenceMediaDevice();
+                    //device = mediaService.createMixer(device);
                 }
                 else if(descriptionMediaName.equals("video"))
                 {
                     device = mediaService.getDefaultDevice(MediaType.VIDEO,MediaUseCase.CALL);
+                    continue;
                 }
                 else
                 {
@@ -299,7 +302,6 @@ class JingleUtils {
         RemoteCandidate relatedCandidate = null;
         TransportAddress mainAddr = null, relatedAddr = null;
         RemoteCandidate remoteCandidate;
-        //InetAddress ia = null;
         
         for(ContentPacketExtension content : contentList)
         {
@@ -325,10 +327,8 @@ class JingleUtils {
                     {
                         if((candidate.getIP() != null) && (candidate.getPort() > 0))
                         {
-                        //InetAddress.getByName(candidate.getIP());
 
                             mainAddr = new TransportAddress(candidate.getIP(), candidate.getPort(), Transport.parse(candidate.getProtocol().toLowerCase()));
-                            //mainCandidate = component.findRemoteCandidate(mainAddr);
                     
                     
                             relatedCandidate = null;
@@ -443,15 +443,13 @@ class JingleUtils {
             
             connector = new DefaultStreamConnector(rtpSocket, rtcpSocket);
             stream = mediaService.createMediaStream(
-                    null,
+                    connector,
                     selectedMedia.mediaFormat.getMediaType(),
                     mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
             stream.setFormat(selectedMedia.mediaFormat);
-            stream.setDirection(MediaDirection.SENDRECV);
-            stream.setConnector(connector);
             stream.setSSRCFactory(
                     new SSRCFactoryImpl((new Random()).nextInt() & 0xFFFFFFFFL));
-            //TODO The pair is given in the StreamConnector constructor,
+            //XXX The pair is given in the StreamConnector constructor,
             //should I also give it to the stream?
             stream.setTarget(
                     new MediaStreamTarget(
@@ -474,6 +472,8 @@ class JingleUtils {
                         selectedMedia.mediaFormat);
             */
             stream.getSrtpControl().start(selectedMedia.mediaFormat.getMediaType());
+            stream.setDevice(selectedMedia.mediaDevice);
+            //stream.setDirection(MediaDirection.SENDRECV);
             
             streamList.add(stream);
         }

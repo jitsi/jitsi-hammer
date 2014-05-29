@@ -15,6 +15,7 @@ import org.jitsi.service.neomedia.MediaUseCase;
 import org.jitsi.service.neomedia.device.MediaDevice;
 import org.jitsi.service.neomedia.format.MediaFormat;
 */
+
 import org.osgi.framework.*;
 import org.osgi.framework.launch.*;
 import org.osgi.framework.startlevel.*;
@@ -104,9 +105,8 @@ public class Hammer {
      * This function run the activation of different bundle that are needed
      * These bundle are the one found in the BUNDLE array
      */
-    public void init() {
-        // TODO Setting up OSGI
-        
+    public void init()
+    {
         synchronized (frameworkSyncRoot)
         {
             if (this.framework != null)
@@ -186,11 +186,9 @@ public class Hammer {
                 System.out.println(type.toString());
             }
         }*/
-        //LibJitsi.start();
     }
     
     public void start() {
-        // TODO
         try
         {
             for(JingleSession session : sessions)

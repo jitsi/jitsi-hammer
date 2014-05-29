@@ -320,15 +320,12 @@ public class Main
 
             return;
         }
-
-        //there was no error, continue;
-        //System.setOut(new ScStdOut(System.out));
         
         
         
         
         java.util.logging.Logger l = java.util.logging.Logger.getLogger("");
-        l.setLevel(java.util.logging.Level.WARNING);
+        l.setLevel(java.util.logging.Level.ALL);
         
         HostInfo infoCLI = new HostInfo();
         CmdLineParser parser = new CmdLineParser(infoCLI);

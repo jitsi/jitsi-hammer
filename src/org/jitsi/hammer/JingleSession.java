@@ -99,9 +99,6 @@ class JingleSession implements PacketListener {
         ////////////////////////////////////
         // End of the code section generating the content list of the accept-session
 
-        //check establishment connectivity Agent + start stream
-        //TODO
-
         //Creation of a session-accept message and its sending
         JingleIQ accept = JinglePacketFactory.createSessionAccept(
                 initiateSessionInfo.getTo(),
@@ -123,6 +120,7 @@ class JingleSession implements PacketListener {
                 e.printStackTrace();
             }
         }
+        
         mediaStreamList = JingleUtils.generateMediaStreamFromAgent(agent,selectedMedias);
         for(MediaStream stream : mediaStreamList)
         {
