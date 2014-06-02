@@ -14,8 +14,7 @@ import org.jitsi.service.neomedia.*;
 
 /**
  * Implements a <tt>MediaDevice</tt> which provides silence in the form of audio
- * media and does not play back any (audio) media (because Jitsi Videobridge is
- * a server-side technology).
+ * media.
  *
  * @author Lyubomir Marinov
  */
@@ -32,46 +31,6 @@ public class AudioSilenceMediaDevice
     protected CaptureDevice createCaptureDevice()
     {
         return new AudioSilenceCaptureDevice();
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * Overrides the super implementation to disable the very playback because
-     * Jitsi Videobridge is a server-side technology.
-     */
-    @Override
-    protected Processor createPlayer(DataSource dataSource)
-    {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * Overrides the super implementation to initialize a
-     * <tt>MediaDeviceSession</tt> which disables the very playback because
-     * Jitsi Videobridge is a server-side technology.
-     */
-    @Override
-    public MediaDeviceSession createSession()
-    {
-        return
-            new AudioMediaDeviceSession(this)
-                    {
-                        /**
-                         * {@inheritDoc}
-                         *
-                         * Overrides the super implementation to disable the
-                         * very playback because Jitsi Videobridge is a
-                         * server-side technology.
-                         */
-                        @Override
-                        protected Player createPlayer(DataSource dataSource)
-                        {
-                            return null;
-                        }
-                    };
     }
 
     /**
