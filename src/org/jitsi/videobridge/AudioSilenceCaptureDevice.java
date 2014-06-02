@@ -37,7 +37,7 @@ public class AudioSilenceCaptureDevice
      * push media unless at least one <tt>Channel</tt> is receiving actual
      * media.
      */
-    private static final boolean CLOCK_ONLY = true;
+    private static final boolean CLOCK_ONLY = false;
 
     /**
      * The interval of time in milliseconds between two consecutive ticks of the
