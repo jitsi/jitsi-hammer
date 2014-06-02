@@ -4,12 +4,13 @@ import org.ice4j.ice.*;
 import org.jitsi.service.neomedia.*;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smackx.muc.*;
+import org.jivesoftware.smackx.packet.*;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.filter.*;
 import org.jivesoftware.smack.provider.*;
 
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.SendersEnum;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
 
 import java.io.*;
 import java.util.*;
@@ -56,9 +57,15 @@ class JingleSession implements PacketListener {
         connection.connect();
         connection.loginAnonymously();
 
+        
         muc = new MultiUserChat(connection, serverInfo.getRoomName()+"@"+serverInfo.getMUC());
         muc.join(username);
         muc.sendMessage("Hello World!");
+        
+        Packet nicknamePacket = new Presence(Presence.Type.available);
+        nicknamePacket.addExtension(new Nick(username));
+        nicknamePacket.setTo(serverInfo.getRoomName()+"@"+serverInfo.getMUC());
+        connection.sendPacket(nicknamePacket);
         
         muc.addMessageListener(new MyPacketListener(muc,serverInfo.getRoomName()+"@"+serverInfo.getMUC() +"/" + muc.getNickname()));
     }
