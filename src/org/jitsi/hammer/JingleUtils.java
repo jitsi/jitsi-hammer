@@ -13,6 +13,7 @@ import org.jitsi.service.neomedia.format.*;
 import org.ice4j.*;
 import org.ice4j.ice.*;
 import org.jitsi.videobridge.*;
+import org.jivesoftware.smack.packet.PacketExtension;
 
 import java.net.*;
 import java.util.*;
@@ -83,6 +84,7 @@ class JingleUtils {
                         //Yeah, add this format to accepted content (if one wasn't already in)
                         if(selectedMediaMap.containsKey(descriptionMediaName) != true)
                         {
+                            addParameterToMediaFormat(supportedFormat,payloadType.getChildExtensionsOfType(ParameterPacketExtension.class));
                             selectedMediaMap.put(
                                     descriptionMediaName,
                                     new SelectedMedia(
@@ -268,8 +270,8 @@ class JingleUtils {
         {
             for(MediaFormat mediaFormat : device.getSupportedFormats())
             {
-                System.out.print(mediaFormat);
-                System.out.println(" |||| " + payloadType.toXML());
+                //System.out.print(mediaFormat);
+                //System.out.println(" |||| " + payloadType.toXML());
                 if((mediaFormat.getClockRateString().equals(String.valueOf(payloadType.getClockrate())))
                     && (mediaFormat.getEncoding().equals(payloadType.getName()))
                     && (
@@ -287,6 +289,17 @@ class JingleUtils {
             }
         }
             return null;
+    }
+    
+    private static void addParameterToMediaFormat(MediaFormat mediaFormat, List<ParameterPacketExtension> list)
+    {
+        Map<String,String> paramMap = new HashMap<String,String>();
+        for(ParameterPacketExtension param : list)
+        {
+            paramMap.put(param.getName(),param.getValue());
+        }
+        
+        mediaFormat.setAdditionalCodecSettings(paramMap);
     }
 
     public static void addRemoteCandidateToAgent(
@@ -431,6 +444,8 @@ class JingleUtils {
             //System.out.println(mediaName);
             iceMediaStream = agent.getStream(mediaName);
             selectedMedia = selectedMediaMap.get(mediaName);
+            
+            
 
             rtpPair = iceMediaStream.getComponent(Component.RTP).getSelectedPair();
             rtcpPair = iceMediaStream.getComponent(Component.RTCP).getSelectedPair();
@@ -446,9 +461,8 @@ class JingleUtils {
                     connector,
                     selectedMedia.mediaFormat.getMediaType(),
                     mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
+            stream.setDevice(selectedMedia.mediaDevice);
             stream.setFormat(selectedMedia.mediaFormat);
-            stream.setSSRCFactory(
-                    new SSRCFactoryImpl((new Random()).nextInt() & 0xFFFFFFFFL));
             //XXX The pair is given in the StreamConnector constructor,
             //should I also give it to the stream?
             stream.setTarget(
@@ -472,8 +486,7 @@ class JingleUtils {
                         selectedMedia.mediaFormat);
             */
             stream.getSrtpControl().start(selectedMedia.mediaFormat.getMediaType());
-            stream.setDevice(selectedMedia.mediaDevice);
-            //stream.setDirection(MediaDirection.SENDRECV);
+            
             
             streamList.add(stream);
         }
