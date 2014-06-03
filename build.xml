@@ -58,7 +58,9 @@
             fork="false"
             source="1.5"
             srcdir="src"
-            target="1.5" />
+            target="1.5">
+            <exclude name="net/java/sip/communicator/launcher/SIPCommunicator.java" />
+        </javac>
     </target>
 
     <target name="run"
