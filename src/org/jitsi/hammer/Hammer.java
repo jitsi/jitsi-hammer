@@ -12,10 +12,13 @@ import org.jitsi.service.neomedia.MediaType;
 import org.jitsi.service.neomedia.MediaUseCase;
 */
 
+
+import org.jitsi.service.libjitsi.LibJitsi;
 import org.jivesoftware.smack.*;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.*;
 import org.osgi.framework.startlevel.*;
+
 import net.java.sip.communicator.impl.osgi.framework.launch.*;
 
 
@@ -96,15 +99,17 @@ public class Hammer {
     }
 
 
-    /*
-     * This code is a slightly modified copy of the one found in
-     * startOSGi of the class ComponentImpl of jitsi-videobridge.
-     * 
-     * This function run the activation of different bundle that are needed
-     * These bundle are the one found in the BUNDLE array
-     */
+
     public void init()
     {
+        /*
+         * This code is a slightly modified copy of the one found in
+         * startOSGi of the class ComponentImpl of jitsi-videobridge.
+         * 
+         * This function run the activation of different bundle that are needed
+         * These bundle are the one found in the BUNDLE array
+         */
+    	/*
         synchronized (frameworkSyncRoot)
         {
             if (this.framework != null)
@@ -158,8 +163,12 @@ public class Hammer {
         synchronized (frameworkSyncRoot)
         {
             this.framework = framework;
-        }
-        /*
+        }*/
+    	
+    	
+    	LibJitsi.start();
+        
+    	/*
         ConfigurationService config = LibJitsi.getConfigurationService();
         System.out.println(config.getConfigurationFilename());
         System.out.println(config.getScHomeDirLocation());
