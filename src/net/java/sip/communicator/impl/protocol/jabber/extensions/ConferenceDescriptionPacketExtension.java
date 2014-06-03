@@ -288,7 +288,6 @@ public class ConferenceDescriptionPacketExtension
          * @return the created <tt>ConferenceDescriptionPacketExtension</tt>.
          * @throws Exception
          */
-        @Override
         public PacketExtension parseExtension(XmlPullParser parser)
                 throws Exception
         {
