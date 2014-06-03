@@ -109,7 +109,7 @@ public class Hammer {
          * This function run the activation of different bundle that are needed
          * These bundle are the one found in the BUNDLE array
          */
-    	/*
+    	
         synchronized (frameworkSyncRoot)
         {
             if (this.framework != null)
@@ -163,10 +163,7 @@ public class Hammer {
         synchronized (frameworkSyncRoot)
         {
             this.framework = framework;
-        }*/
-    	
-    	
-    	LibJitsi.start();
+        }
         
     	/*
         ConfigurationService config = LibJitsi.getConfigurationService();
