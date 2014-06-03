@@ -61,7 +61,8 @@
             target="1.5" />
     </target>
 
-    <target name="run">
+    <target name="run"
+    	description="Launch the Jitsi-Hammer">
         <condition property="run.lib.native" value="windows-64">
             <os arch="amd64" family="windows" />
         </condition>
