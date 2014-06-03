@@ -5,17 +5,13 @@ import java.util.Map;
 
 import net.java.sip.communicator.impl.osgi.framework.launch.*;
 
-import org.jivesoftware.smack.*;
 /*
- * Import used when I want to debug some things
-import org.jitsi.service.configuration.*;
-import org.jitsi.service.libjitsi.*;
+//XXX remove these import when you remove the print below in init().
+import org.jitsi.service.libjitsi.LibJitsi;
 import org.jitsi.service.neomedia.MediaType;
 import org.jitsi.service.neomedia.MediaUseCase;
-import org.jitsi.service.neomedia.device.MediaDevice;
-import org.jitsi.service.neomedia.format.MediaFormat;
 */
-
+import org.jivesoftware.smack.*;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.*;
 import org.osgi.framework.startlevel.*;
