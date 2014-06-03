@@ -3,7 +3,7 @@ package org.jitsi.hammer;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.java.sip.communicator.impl.osgi.framework.launch.*;
+
 
 /*
 //XXX remove these import when you remove the print below in init().
@@ -11,10 +11,12 @@ import org.jitsi.service.libjitsi.LibJitsi;
 import org.jitsi.service.neomedia.MediaType;
 import org.jitsi.service.neomedia.MediaUseCase;
 */
+
 import org.jivesoftware.smack.*;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.*;
 import org.osgi.framework.startlevel.*;
+import net.java.sip.communicator.impl.osgi.framework.launch.*;
 
 
 //import java.util.*;
@@ -125,8 +127,6 @@ public class Hammer {
 
             bundleContext = framework.getBundleContext();
 
-            //bundleContext.registerService(Component.class, this, null);
-
             for (int startLevelMinus1 = 0;
                     startLevelMinus1 < BUNDLES.length;
                     startLevelMinus1++)
@@ -135,12 +135,12 @@ public class Hammer {
 
                 for (String location : BUNDLES[startLevelMinus1])
                 {
-                    Bundle bundle = bundleContext.installBundle(location);
+                	Bundle bundle = bundleContext.installBundle(location);
 
                     if (bundle != null)
                     {
                         BundleStartLevel bundleStartLevel
-                            = bundle.adapt(BundleStartLevel.class);
+                        	= bundle.adapt(BundleStartLevel.class);
 
                         if (bundleStartLevel != null)
                             bundleStartLevel.setStartLevel(startLevel);

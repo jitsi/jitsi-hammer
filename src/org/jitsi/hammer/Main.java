@@ -324,8 +324,9 @@ public class Main
         
         
         
+        
         java.util.logging.Logger l = java.util.logging.Logger.getLogger("");
-        l.setLevel(java.util.logging.Level.ALL);
+        l.setLevel(java.util.logging.Level.WARNING);
         
         HostInfo infoCLI = new HostInfo();
         CmdLineParser parser = new CmdLineParser(infoCLI);
