@@ -4,8 +4,6 @@ import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.CandidateType;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
 
-//import org.jitsi.impl.neomedia.transform.sdes.*;
-import org.jitsi.impl.neomedia.*;
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.device.*;
@@ -13,7 +11,6 @@ import org.jitsi.service.neomedia.format.*;
 import org.ice4j.*;
 import org.ice4j.ice.*;
 import org.jitsi.videobridge.*;
-import org.jivesoftware.smack.packet.PacketExtension;
 
 import java.net.*;
 import java.util.*;
@@ -52,6 +49,7 @@ class JingleUtils {
                 descriptionMediaName = rtpDescription.getMedia();
                 descriptionOfContentForSessionAccept = new RtpDescriptionPacketExtension();
                 descriptionOfContentForSessionAccept.setMedia(descriptionMediaName);
+                descriptionOfContentForSessionAccept.setNamespace(RtpDescriptionPacketExtension.NAMESPACE);
                 contentForSessionAccept.addChildExtension(descriptionOfContentForSessionAccept);
                 
 
@@ -65,13 +63,13 @@ class JingleUtils {
                 else if(descriptionMediaName.equals("video"))
                 {
                     device = mediaService.getDefaultDevice(MediaType.VIDEO,MediaUseCase.CALL);
-                    continue;
+                    device = null;
                 }
                 else
                 {
                     return null;
                 }
-                if(device == null) return null;
+                if(device == null) continue;
 
                 //We can add to the content of the accept IQ the accepted format (what we do here),
                 //or we can add all the format we can handle (what we don't do here).
@@ -101,6 +99,9 @@ class JingleUtils {
                         break;
                     }
                 }
+                //TODO for(Source) SourcePacketExtension (add the source child, don't forget the namespace)
+                //TODO add ssrc child
+                //TODO add rtp-hdrext child
             }
         }
 
@@ -226,6 +227,7 @@ class JingleUtils {
             rtpPayloadType = dynamicPayloadType;
         }
 
+        payloadExtension.setNamespace(RtpDescriptionPacketExtension.NAMESPACE);
         payloadExtension.setId(rtpPayloadType);
         payloadExtension.setName(mediaFormat.getEncoding());
         payloadExtension.setClockrate((int)mediaFormat.getClockRate());
@@ -244,6 +246,7 @@ class JingleUtils {
             
             paramExtension.setName(paramEntry.getKey());
             paramExtension.setValue(paramEntry.getValue());
+            paramExtension.setNamespace(RtpDescriptionPacketExtension.NAMESPACE);
             
             payloadExtension.addParameter(paramExtension);
         }
@@ -373,6 +376,7 @@ class JingleUtils {
     {
         IceMediaStream iceMediaStream = null;
         IceUdpTransportPacketExtension transport = null;
+        DtlsFingerprintPacketExtension fingerprint = null;
         CandidatePacketExtension candidate = null;
         long candidateID = 0;
 
@@ -387,12 +391,18 @@ class JingleUtils {
         
             if(iceMediaStream != null)
             {
+            fingerprint = new DtlsFingerprintPacketExtension();
+            	
+            fingerprint.setFingerprint("");
+            	fingerprint.setHash("");
+            	
                 for(Component component : iceMediaStream.getComponents())
                 {
                     for(LocalCandidate localCandidate : component.getLocalCandidates())
                     {
                         candidate = new CandidatePacketExtension();
                         
+                        candidate.setNamespace(IceUdpTransportPacketExtension.NAMESPACE);
                         candidate.setFoundation(localCandidate.getFoundation());
                         candidate.setComponent(localCandidate.getParentComponent().getComponentID());
                         candidate.setProtocol(localCandidate.getParentComponent().getTransport().toString());
@@ -418,11 +428,11 @@ class JingleUtils {
         }
     }
 
-    public static List<MediaStream> generateMediaStreamFromAgent(
+    public static Map<String,MediaStream> generateMediaStreamFromAgent(
             Agent agent,
             Map<String,SelectedMedia> selectedMediaMap)
     {
-        ArrayList<MediaStream> streamList = new ArrayList<MediaStream>();
+        Map<String,MediaStream> streamMap = new HashMap<String,MediaStream>();
         
         IceMediaStream iceMediaStream = null;
         CandidatePair rtpPair = null;
@@ -485,12 +495,93 @@ class JingleUtils {
                         (byte) 116,
                         selectedMedia.mediaFormat);
             */
-            stream.getSrtpControl().start(selectedMedia.mediaFormat.getMediaType());
-            
-            
-            streamList.add(stream);
+            streamMap.put(mediaName,stream);
         }
         
-        return streamList;
+        return streamMap;
+    }
+    
+    
+    
+    
+    
+
+    public static void setDtlsEncryptionOnTransport (
+    		Map<String,MediaStream> mediaStreamMap,
+    		//FIXME Can't add fingerprint to the content I send with the
+    		//session-accept because the mediaStream aren't created
+            //List<ContentPacketExtension> localContentList,
+            List<ContentPacketExtension> remoteContentList)
+    {
+        MediaStream stream = null;
+        IceUdpTransportPacketExtension transport = null;
+        List<DtlsFingerprintPacketExtension> fingerprints = null;
+        SrtpControl srtpControl = null;
+        DtlsControl dtlsControl = null;
+        
+        
+    	for(ContentPacketExtension remoteContent : remoteContentList)
+        {
+    	    transport = remoteContent.getFirstChildOfType(IceUdpTransportPacketExtension.class);
+    	    
+    	    stream = mediaStreamMap.get(remoteContent.getName());
+    	    if(stream == null) continue;
+    	    srtpControl = stream.getSrtpControl();
+    	    if(srtpControl == null) continue;
+            
+            
+    	    if( (srtpControl instanceof DtlsControl) && (transport != null) )
+            {
+    	        dtlsControl = (DtlsControl)srtpControl;
+    	        
+                fingerprints = transport.getChildExtensionsOfType(
+                        DtlsFingerprintPacketExtension.class);
+
+                if (!fingerprints.isEmpty())
+                {
+                    Map<String,String> remoteFingerprints
+                        = new LinkedHashMap<String,String>();
+
+                    for(DtlsFingerprintPacketExtension fingerprint : fingerprints)
+                    {
+                        remoteFingerprints.put(
+                                fingerprint.getHash(),
+                                fingerprint.getFingerprint());
+                    }
+
+
+                    dtlsControl.setRemoteFingerprints(remoteFingerprints);
+                }
+            }
+    	    
+    	    srtpControl.start(stream.getFormat().getMediaType());
+        }
+    	
+    	/*
+    	//This code add the fingerprint of the local MediaStream to the content
+    	//that will be sent with the session-accept
+    	for(ContentPacketExtension localContent : localContentList)
+        {
+            transport = localContent.getFirstChildOfType(
+                    IceUdpTransportPacketExtension.class);
+            
+            stream = mediaStreamMap.get(localContent.getName());
+            if(stream == null) continue;
+            srtpControl = stream.getSrtpControl();
+            
+            if( (srtpControl instanceof DtlsControl) && (transport != null))
+            {
+                DtlsFingerprintPacketExtension fingerprint = 
+                        new DtlsFingerprintPacketExtension();
+                dtlsControl = (DtlsControl) srtpControl;
+                
+                
+                fingerprint.setHash(dtlsControl.getLocalFingerprintHashFunction());
+                fingerprint.setFingerprint(dtlsControl.getLocalFingerprint());
+                
+                transport.addChildExtension(fingerprint);
+            }
+        }
+        */
     }
 }

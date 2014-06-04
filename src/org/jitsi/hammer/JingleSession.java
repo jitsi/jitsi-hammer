@@ -78,14 +78,12 @@ class JingleSession implements PacketListener {
     {
         ArrayList<ContentPacketExtension> contentList = null;
         Map<String,SelectedMedia> selectedMedias = null;
-        List<MediaStream> mediaStreamList = null;
+        Map<String,MediaStream> mediaStreamMap = null;
         IceMediaStreamGenerator iceMediaStramGenerator = IceMediaStreamGenerator.getGenerator();
         Agent agent = null;
 
         // Now is the code section where we generate the content list for the accept-session
         ////////////////////////////////////
-        
-        //For now, we just generate an empty list (no <content/> childs will be added to the message)
         contentList = new ArrayList<ContentPacketExtension>();
         
         selectedMedias = JingleUtils.generateAcceptedContentListFromSessionInitiateIQ(contentList,initiateSessionInfo,SendersEnum.both);
@@ -106,6 +104,7 @@ class JingleSession implements PacketListener {
         ////////////////////////////////////
         // End of the code section generating the content list of the accept-session
 
+        
         //Creation of a session-accept message and its sending
         JingleIQ accept = JinglePacketFactory.createSessionAccept(
                 initiateSessionInfo.getTo(),
@@ -114,7 +113,8 @@ class JingleSession implements PacketListener {
                 contentList);
         connection.sendPacket(accept);
         System.out.println("Jingle accept-session message sent");
-
+        
+        
         while(IceProcessingState.TERMINATED != agent.getState())
         {
             System.out.println("Connectivity Establishment in process");
@@ -128,8 +128,14 @@ class JingleSession implements PacketListener {
             }
         }
         
-        mediaStreamList = JingleUtils.generateMediaStreamFromAgent(agent,selectedMedias);
-        for(MediaStream stream : mediaStreamList)
+        mediaStreamMap = JingleUtils.generateMediaStreamFromAgent(agent,selectedMedias);
+        
+        JingleUtils.setDtlsEncryptionOnTransport(
+                mediaStreamMap,
+        //        contentList,
+                initiateSessionInfo.getContentList());
+        
+        for(MediaStream stream : mediaStreamMap.values())
         {
             stream.start();
         }
