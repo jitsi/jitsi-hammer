@@ -11,6 +11,7 @@ import org.jivesoftware.smack.provider.*;
 import org.ice4j.ice.*;
 
 import org.jitsi.service.neomedia.*;
+import org.jitsi.hammer.utils.*;
 
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
@@ -29,7 +30,7 @@ import java.util.*;
  * to the videobridge.
  *
  */
-class JingleSession implements PacketListener {
+public class JingleSession implements PacketListener {
     /**
      * The XMPP server info to which this <tt>JingleSession</tt> will
      * communicate
@@ -227,7 +228,7 @@ class JingleSession implements PacketListener {
         contentList = new ArrayList<ContentPacketExtension>();
         
         selectedMedias = 
-                JingleUtils.generateAcceptedContentListFromSessionInitiateIQ(
+                HammerUtils.generateAcceptedContentListFromSessionInitiateIQ(
                         contentList,
                         sessionInitiate,
                         SendersEnum.both);
@@ -245,10 +246,10 @@ class JingleSession implements PacketListener {
             System.err.println(e);
         }
 
-        JingleUtils.addRemoteCandidateToAgent(
+        HammerUtils.addRemoteCandidateToAgent(
                 agent,
                 sessionInitiate.getContentList());
-        JingleUtils.addLocalCandidateToContentList(
+        HammerUtils.addLocalCandidateToContentList(
                 agent,
                 contentList);
 
@@ -283,11 +284,11 @@ class JingleSession implements PacketListener {
             }
         }
         
-        mediaStreamMap = JingleUtils.generateMediaStreamFromAgent(
+        mediaStreamMap = HammerUtils.generateMediaStreamFromAgent(
                 agent,
                 selectedMedias);
         
-        JingleUtils.setDtlsEncryptionOnTransport(
+        HammerUtils.setDtlsEncryptionOnTransport(
                 mediaStreamMap,
         //        contentList,
                 sessionInitiate.getContentList());

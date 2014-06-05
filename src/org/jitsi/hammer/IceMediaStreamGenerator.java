@@ -19,7 +19,7 @@ import java.io.*;
  * This class propose a static instance of itself (with default value for min
  * and max port number) to directly use it without having to instantiate one.
  */
-class IceMediaStreamGenerator
+public class IceMediaStreamGenerator
 {
     /**
      * The static instance of the IceMediaStreamGenerator.

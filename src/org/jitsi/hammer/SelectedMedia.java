@@ -16,7 +16,7 @@ import org.jitsi.service.neomedia.format.*;
  * MediaFormat is a dynamic one (MediaFormat.getRTPPayloadType() return 
  * RTP_PAYLOAD_TYPE_UNKNOWN).
  */
-class SelectedMedia
+public class SelectedMedia
 {
     public MediaDevice mediaDevice;
     public MediaFormat mediaFormat;

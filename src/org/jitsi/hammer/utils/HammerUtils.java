@@ -1,4 +1,4 @@
-package org.jitsi.hammer;
+package org.jitsi.hammer.utils;
 
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.CandidateType;
@@ -11,11 +11,12 @@ import org.jitsi.service.neomedia.format.*;
 import org.ice4j.*;
 import org.ice4j.ice.*;
 import org.jitsi.videobridge.*;
+import org.jitsi.hammer.*;
 
 import java.net.*;
 import java.util.*;
 
-class JingleUtils {
+public class HammerUtils {
 
     public static Map<String,SelectedMedia> generateAcceptedContentListFromSessionInitiateIQ(
         List<ContentPacketExtension> contentList, 
