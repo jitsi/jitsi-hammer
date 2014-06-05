@@ -3,17 +3,6 @@ package org.jitsi.hammer;
 import java.util.HashMap;
 import java.util.Map;
 
-
-
-/*
-//XXX remove these import when you remove the print below in init().
-import org.jitsi.service.libjitsi.LibJitsi;
-import org.jitsi.service.neomedia.MediaType;
-import org.jitsi.service.neomedia.MediaUseCase;
-*/
-
-
-import org.jitsi.service.libjitsi.LibJitsi;
 import org.jivesoftware.smack.*;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.*;
@@ -22,12 +11,31 @@ import org.osgi.framework.startlevel.*;
 import net.java.sip.communicator.impl.osgi.framework.launch.*;
 
 
-//import java.util.*;
-
-
-
+/**
+ * 
+ * @author Thomas Kuntz
+ *
+ * The <tt>Hammer</tt> class is the core class of the jitsi-hammer project.
+ * This class will try to create N virtual users to a XMPP server then to
+ * a MUC chatroom created by JitMeet (https://jitsi.org/Projects/JitMeet).
+ * 
+ * Each virtual user after succeeding in the connection to the JitMeet MUC
+ * receive an invitation to a audio/video conference. After receiving the
+ * invitation, each virtual user will positively reply to the invitation and
+ * start sending audio and video data to the jitsi-videobridge handling the
+ * conference.
+ */
 public class Hammer {
+    /**
+     * The base of the username use by all the virtual users this Hammer
+     * will create.
+     */
     private String username;
+    
+    /**
+     * The information about the XMPP server to which all virtual users will
+     * try to connect.
+     */
     private HostInfo serverInfo;
     
     
@@ -43,8 +51,8 @@ public class Hammer {
     private final Object frameworkSyncRoot = new Object();
     
     /**
-     * The locations of the OSGi bundles (or rather of the class files of their
-     * <tt>BundleActivator</tt> implementations) comprising Jitsi Hammer.
+     * The locations of the OSGi bundles (or rather of the path of the class
+     * files of their <tt>BundleActivator</tt> implementations).
      * An element of the <tt>BUNDLES</tt> array is an array of <tt>String</tt>s
      * and represents an OSGi start level.
      */
@@ -83,9 +91,26 @@ public class Hammer {
             }*/
         };
 
+    /**
+     * The array containing all the <tt>JingleSession</tt> that this Hammer
+     * handle, representing all the virtual user that will connect to the XMPP
+     * server and start MediaStream with its jitsi-videobridge
+     */
+    private JingleSession sessions[] = null;
     
-    JingleSession sessions[] = null;
+    
 
+    /**
+     * Instantiate a <tt>Hammer</tt> object with <tt>numberOfUser</tt> virtual
+     * users that will try to connect to the XMPP server and its videobridge
+     * contained in <tt>host</tt>.
+     * 
+     * @param host The information about the XMPP server to which all
+     * virtual users will try to connect.
+     * @param username The base of the username used by all the virtual users.
+     * @param numberOfUser The number of virtual users this <tt>Hammer</tt>
+     * will create and handle.
+     */
     public Hammer(HostInfo host, String username, int numberOfUser)
     {
         this.username = username;
@@ -100,16 +125,19 @@ public class Hammer {
 
 
 
+    /**
+     * Initialize the Hammer by launching the OSGi Framework and
+     * installing/registering the needed bundle (LibJitis and more..).
+     */
     public void init()
     {
-        /*
+        /**
          * This code is a slightly modified copy of the one found in
          * startOSGi of the class ComponentImpl of jitsi-videobridge.
          * 
          * This function run the activation of different bundle that are needed
-         * These bundle are the one found in the BUNDLE array
-         */
-    	
+         * These bundle are the one found in the <tt>BUNDLE</tt> array
+         */  	
         synchronized (frameworkSyncRoot)
         {
             if (this.framework != null)
@@ -164,32 +192,12 @@ public class Hammer {
         {
             this.framework = framework;
         }
-        
-    	/*
-        ConfigurationService config = LibJitsi.getConfigurationService();
-        System.out.println(config.getConfigurationFilename());
-        System.out.println(config.getScHomeDirLocation());
-        System.out.println(config.getScHomeDirName());
-        
-        for(MediaDevice device : LibJitsi.getMediaService().getDevices(MediaType.AUDIO, MediaUseCase.ANY))
-        {
-            System.out.println(device.getDirection());
-            for(MediaFormat type : device.getSupportedFormats())
-            {
-                System.out.println(type.toString());
-            }
-        }
-        System.out.println("\n\n");
-        for(MediaDevice device : LibJitsi.getMediaService().getDevices(MediaType.VIDEO, MediaUseCase.ANY))
-        {
-            System.out.println(device.getDirection());
-            for(MediaFormat type : device.getSupportedFormats())
-            {
-                System.out.println(type.toString());
-            }
-        }*/
     }
     
+    /**
+     * Start the connection of all the virtual user that this <tt>Hammer</tt>
+     * handles to the XMPP server(and then a MUC).
+     */
     public void start() {
         try
         {

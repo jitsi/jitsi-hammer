@@ -10,7 +10,14 @@ import net.java.sip.communicator.launcher.ChangeJVMFrame;
 
 import org.kohsuke.args4j.*;
 
-
+/**
+ * 
+ * @author Thomas Kuntz
+ * 
+ * This class contains the Main method used to launch jitsi-hammer.
+ * A lot of code is copied from the SIPCommunicator.java Main
+ * method, because jitsi-hammer use a lot of the same configuration that Jitsi.
+ */
 public class Main
 {
     /**
@@ -341,10 +348,22 @@ public class Main
         }
         
         //This HostInfo is used for tests in my localhost XMPP server
-        //HostInfo infoCLI = new HostInfo("jitmeet.example.com","conference.jitmeet.example.com","jitsi-videobridge.lambada.jitsi.net","HammerTest");
-
+        /*
+        infoCLI = new HostInfo(
+                "jitmeet.example.com",
+                "conference.jitmeet.example.com",
+                5222,
+                "jitsi-videobridge.lambada.jitsi.net",
+                "HammerTest");
+        */
+        
+        //We create a Hammer with only 1 user for now
         Hammer hammer = new Hammer(infoCLI,"JitMeet-Hammer",1);
+        
+        //We call initialize the Hammer (registering OSGi bundle for example)
         hammer.init();
+        //After the initialization we start the Hammer (all its users will
+        //connect to the XMPP server and try to setup media stream with it bridge
         hammer.start();
         while(true) Thread.sleep(3600000);
     }

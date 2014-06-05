@@ -7,28 +7,35 @@ import org.jivesoftware.smackx.muc.*;
 
 public class MyPacketListener implements PacketListener 
 {
-    /*
+    /**
      * muc is used to send a message when this client receive a Message (not from itself)
      */
     protected MultiUserChat muc;
-    /*
+    /**
      * myID is this client ID of a "from" attribute of a Message
      */
     protected String myID;
 
+    /**
+     * Instantiate a new <tt>MyPacketListener</tt>
+     * @param muc the <tt>MultiUserChat</tt> used to send a reply to a <tt>Message<tt>
+     * @param id the id of the user this <tt>PacketListener</tt> listen for.
+     */
     public MyPacketListener(MultiUserChat muc,String id) 
     {
         this.muc = muc;
         this.myID = id;
     }
 
-    /*
-     * When a packet is received, it check is this packet is a Message.
-     * If it is, it print its body and sender.
-     * If the Message received isn't from this client, this client responds with "C'est pas faux.".
-     */
     public void processPacket(Packet packet) 
     {
+        /*
+         * When a packet is received, it check is this packet is a Message.
+         * If it is, it print its body and sender.
+         * If the Message received isn't from this client,
+         * this client replies with "C'est pas faux.".
+         */
+        
         if(packet instanceof Message) 
         {
             Message msg = (Message)packet;
@@ -40,7 +47,10 @@ public class MyPacketListener implements PacketListener
                 {
                     muc.sendMessage("C'est pas faux.");
                 }
-                catch (XMPPException e) {}
+                catch (XMPPException e)
+                {
+                    e.printStackTrace();
+                }
             }
         }
     }

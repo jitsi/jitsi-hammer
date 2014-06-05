@@ -1,7 +1,6 @@
 package org.jitsi.hammer;
 
-import org.ice4j.ice.*;
-import org.jitsi.service.neomedia.*;
+
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smackx.muc.*;
 import org.jivesoftware.smackx.packet.*;
@@ -9,34 +8,129 @@ import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.filter.*;
 import org.jivesoftware.smack.provider.*;
 
+import org.ice4j.ice.*;
+
+import org.jitsi.service.neomedia.*;
+
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
 
 import java.io.*;
 import java.util.*;
 
+
+/**
+ * 
+ * @author Thomas Kuntz
+ *
+ * <tt>JingleSession</tt> represent a Jingle,ICE and RTP/RTCP session with
+ * jitsi-videobridge : it simulate a jitmeet user by setting up an 
+ * ICE stream and then sending fake audio/video data using RTP
+ * to the videobridge.
+ *
+ */
 class JingleSession implements PacketListener {
+    /**
+     * The XMPP server info to which this <tt>JingleSession</tt> will
+     * communicate
+     */
+    private HostInfo serverInfo;
+    
+    /**
+     * The username/nickname taken by this <tt>JingleSession</tt> in the
+     * MUC chatroom
+     */
+    private String username;
+    
+    
+    /**
+     * The <tt>ConnectionConfiguration</tt> equivalent of <tt>serverInfo</tt>.
+     */
+    private ConnectionConfiguration config;
+    
+    /**
+     * The object use to connect to and then communicate with the XMPP server.
+     */
+    private XMPPConnection connection;
+    
+    /**
+     * The object use to connect to and then send message to the MUC chatroom.
+     */
+    private MultiUserChat muc;
+    
+        
+    /**
+     * The IQ message received by the XMPP server to initiate the Jingle session.
+     * 
+     * It contains a list of <tt>ContentPacketExtension</tt> representing
+     * the media and their formats the videobridge is offering to send/receive
+     * and their corresponding transport information (IP, port, etc...).
+     */
+    private JingleIQ sessionInitiate;
+    
+    /**
+     * The IQ message send by this <tt>JingleSession</tt> to the XMPP server
+     * to accept the Jingle session.
+     * 
+     * It contains a list of <tt>ContentPacketExtension</tt> representing
+     * the media and format, with their corresponding transport information,
+     * that this <tt>JingleSession</tt> accept to receive and send. 
+     */
+    private JingleIQ sessionAccept;
 
-    protected HostInfo serverInfo;
-    protected String username;
-    protected ConnectionConfiguration config;
-    protected XMPPConnection connection;
-    protected MultiUserChat muc;
-    protected JingleIQ initiateSessionInfo;
-
+    /**
+     * A Map of the different <tt>MediaStream</tt> this <tt>JingleSession</tt>
+     * handles.
+     */
+    private Map<String,MediaStream> mediaStreamMap;
+    
+    
+    /**
+     * Instantiates a <tt>JingleSession</tt> with a default username that
+     * will connect to the XMPP server contained in <tt>hostInfo</tt>.
+     *  
+     * @param hostInfo the XMPP server informations needed for the connection.
+     */
     public JingleSession(HostInfo hostInfo)
     {
         this(hostInfo,null);
     }
+    
+    /**
+     * Instantiates a <tt>JingleSession</tt> with a specified <tt>username</tt>
+     * that will connect to the XMPP server contained in <tt>hostInfo</tt>.
+     * 
+     * @param hostInfo the XMPP server informations needed for the connection.
+     * @param username the username used by this <tt>JingleSession</tt> in the
+     * connection.
+     * 
+     */
     public JingleSession(HostInfo hostInfo,String username)
     {
         this.serverInfo = hostInfo;
-        this.username = (username == null) ? "User" : username;
+        this.username = (username == null) ? "Anonymous" : username;
+        
+        
+        
+        ProviderManager manager = ProviderManager.getInstance();
+        manager.addExtensionProvider(
+                MediaProvider.ELEMENT_NAME,
+                MediaProvider.NAMESPACE,
+                new MediaProvider());
+        
+        manager.addIQProvider(
+                JingleIQ.ELEMENT_NAME,
+                JingleIQ.NAMESPACE,
+                new JingleIQProvider());
 
-        ProviderManager.getInstance().addExtensionProvider(MediaProvider.ELEMENT_NAME,MediaProvider.NAMESPACE, new MediaProvider());
-        ProviderManager.getInstance().addIQProvider(JingleIQ.ELEMENT_NAME,JingleIQ.NAMESPACE,new JingleIQProvider());
-
-        config = new ConnectionConfiguration(serverInfo.getMUC(),serverInfo.getPort(),serverInfo.getDomain());
+        
+        
+        
+        config = new ConnectionConfiguration(
+                serverInfo.getHostname(),
+                serverInfo.getPort(),
+                serverInfo.getDomain());
+        
         connection = new XMPPConnection(config);
         connection.addPacketListener(this,new PacketFilter()
             {
@@ -46,11 +140,15 @@ class JingleSession implements PacketListener {
                 }
             });
         
+        
         config.setDebuggerEnabled(true);
-        //Connection.DEBUG_ENABLED = false;
     }
 
 
+    /**
+     * Connect to the XMPP server then to the MUC chatroom.
+     * @throws XMPPException if the connection to the XMPP server goes wrong
+     */
     public void start()
         throws XMPPException
     {
@@ -58,60 +156,117 @@ class JingleSession implements PacketListener {
         connection.loginAnonymously();
 
         
-        muc = new MultiUserChat(connection, serverInfo.getRoomName()+"@"+serverInfo.getMUC());
+        String roomURL = serverInfo.getRoomName()+"@"+serverInfo.getHostname();
+        muc = new MultiUserChat(
+                connection,
+                roomURL);
         muc.join(username);
         muc.sendMessage("Hello World!");
         
+        
+        /*
+         * Send a Presence packet containing a Nick extension so that the
+         * nickname is correctly displayed in jitmeet
+         */
         Packet nicknamePacket = new Presence(Presence.Type.available);
+        String recipient = serverInfo.getRoomName()+"@"+serverInfo.getHostname();
         nicknamePacket.addExtension(new Nick(username));
-        nicknamePacket.setTo(serverInfo.getRoomName()+"@"+serverInfo.getMUC());
+        nicknamePacket.setTo(recipient);
         connection.sendPacket(nicknamePacket);
         
-        muc.addMessageListener(new MyPacketListener(muc,serverInfo.getRoomName()+"@"+serverInfo.getMUC() +"/" + muc.getNickname()));
+        
+        /*
+         * Add a simple message listener that will just display in the terminal
+         * received message (and respond back with a "C'est pas faux");
+         */
+        muc.addMessageListener(
+                new MyPacketListener(muc,roomURL +"/" + muc.getNickname()) );
     }
 
-    /*
-     * acceptJingleSession create a accept-session Jingle message and send it to the initiator of the session.
-     * The initiator is taken from the From attribut of the the initiate-session message.
+    /**
+     * Stop all media stream and disconnect from the MUC and the XMPP server
      */
-    protected void acceptJingleSession()
+    public void stop()
+    {
+        for(MediaStream stream : mediaStreamMap.values())
+        {
+            stream.stop();
+        }
+        muc.leave();
+        connection.disconnect();
+    }
+    
+    
+    
+    /**
+     * acceptJingleSession create a accept-session Jingle message and
+     * send it to the initiator of the session.
+     * The initiator is taken from the From attribut 
+     * of the initiate-session message.
+     * 
+     * FIXME : this function is a WIP (more like a battleground) for now.
+     * My first implementation was a little naive
+     * and I'm not satisfied with how it do things.
+     */
+    private void acceptJingleSession()
     {
         ArrayList<ContentPacketExtension> contentList = null;
         Map<String,SelectedMedia> selectedMedias = null;
-        Map<String,MediaStream> mediaStreamMap = null;
-        IceMediaStreamGenerator iceMediaStramGenerator = IceMediaStreamGenerator.getGenerator();
+        IceMediaStreamGenerator iceMediaStreamGenerator = null;
+        
         Agent agent = null;
+        
+        
+        
+        iceMediaStreamGenerator = IceMediaStreamGenerator.getInstance();
 
-        // Now is the code section where we generate the content list for the accept-session
+        /* Now is the code section where we generate
+         * the content list for the session-accept */
         ////////////////////////////////////
+        
         contentList = new ArrayList<ContentPacketExtension>();
         
-        selectedMedias = JingleUtils.generateAcceptedContentListFromSessionInitiateIQ(contentList,initiateSessionInfo,SendersEnum.both);
+        selectedMedias = 
+                JingleUtils.generateAcceptedContentListFromSessionInitiateIQ(
+                        contentList,
+                        sessionInitiate,
+                        SendersEnum.both);
+        
+        
         try
         {
-            agent = iceMediaStramGenerator.generateIceMediaStream(selectedMedias.keySet(),null,null);
+            agent = iceMediaStreamGenerator.generateIceMediaStream(
+                    selectedMedias.keySet(),
+                    null,
+                    null);
         }
         catch (IOException e)
         {
             System.err.println(e);
         }
 
-        JingleUtils.addRemoteCandidateToAgent(agent,initiateSessionInfo.getContentList());
-        JingleUtils.addLocalCandidateToContentList(agent,contentList);
+        JingleUtils.addRemoteCandidateToAgent(
+                agent,
+                sessionInitiate.getContentList());
+        JingleUtils.addLocalCandidateToContentList(
+                agent,
+                contentList);
 
         agent.startConnectivityEstablishment();
 
         ////////////////////////////////////
-        // End of the code section generating the content list of the accept-session
+        /*
+         * End of the code section generating
+         * the content list of the accept-session */
 
         
         //Creation of a session-accept message and its sending
-        JingleIQ accept = JinglePacketFactory.createSessionAccept(
-                initiateSessionInfo.getTo(),
-                initiateSessionInfo.getFrom(),
-                initiateSessionInfo.getSID(),
+        sessionAccept = JinglePacketFactory.createSessionAccept(
+                sessionInitiate.getTo(),
+                sessionInitiate.getFrom(),
+                sessionInitiate.getSID(),
                 contentList);
-        connection.sendPacket(accept);
+        connection.sendPacket(sessionAccept);
         System.out.println("Jingle accept-session message sent");
         
         
@@ -128,12 +283,14 @@ class JingleSession implements PacketListener {
             }
         }
         
-        mediaStreamMap = JingleUtils.generateMediaStreamFromAgent(agent,selectedMedias);
+        mediaStreamMap = JingleUtils.generateMediaStreamFromAgent(
+                agent,
+                selectedMedias);
         
         JingleUtils.setDtlsEncryptionOnTransport(
                 mediaStreamMap,
         //        contentList,
-                initiateSessionInfo.getContentList());
+                sessionInitiate.getContentList());
         
         for(MediaStream stream : mediaStreamMap.values())
         {
@@ -142,8 +299,9 @@ class JingleSession implements PacketListener {
     }
 
     
-    /*
-     * Callback function used when a Jingle IQ is received by the XMPP connector.
+    /**
+     * Callback function used when a JingleIQ is received by the XMPP connector.
+     * @param packet the packet received by the <tt>JingleSession</tt> 
      */
     public void processPacket(Packet packet)
     {
@@ -153,7 +311,7 @@ class JingleSession implements PacketListener {
         switch(jiq.getAction())
         {
             case SESSION_INITIATE:
-                initiateSessionInfo = jiq;
+                sessionInitiate = jiq;
                 acceptJingleSession();
                 break;
             default:
@@ -162,7 +320,13 @@ class JingleSession implements PacketListener {
         }
     }
 
-    protected void ackJingleIQ(JingleIQ packetToAck)
+    
+    /**
+     * This function simply create an ACK packet to acknowledge the Jingle IQ
+     * packet <tt>packetToAck</tt>.
+     * @param packetToAck the <tt>JingleIQ</tt> that need to be acknowledge.
+     */
+    private void ackJingleIQ(JingleIQ packetToAck)
     {
         IQ ackPacket = IQ.createResultIQ(packetToAck);
         connection.sendPacket(ackPacket);
