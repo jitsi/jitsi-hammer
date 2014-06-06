@@ -1,3 +1,10 @@
+/*
+ * Jitsi-Hammer, A traffic generator for Jitsi Videobridge.
+ * 
+ * Distributable under LGPL license.
+ * See terms of license at gnu.org.
+ */
+
 package org.jitsi.hammer;
 
 import java.util.HashMap;
