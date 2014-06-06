@@ -14,14 +14,15 @@ import org.jivesoftware.smackx.packet.*;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.filter.*;
 import org.jivesoftware.smack.provider.*;
-
 import org.ice4j.ice.*;
-
 import org.jitsi.service.neomedia.*;
+import org.jitsi.service.neomedia.format.*;
 import org.jitsi.hammer.utils.*;
 
+import net.java.sip.communicator.impl.protocol.jabber.jinglesdp.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
+import net.java.sip.communicator.service.protocol.media.*;
 
 import java.io.*;
 import java.util.*;
@@ -66,7 +67,13 @@ public class JingleSession implements PacketListener {
      */
     private MultiUserChat muc;
     
-        
+    
+    
+    DynamicPayloadTypeRegistry ptRegistry = new DynamicPayloadTypeRegistry();
+    Map<String,List<MediaFormat>> possibleFormatMap =
+            new HashMap<String,List<MediaFormat>>();
+    Map<String,MediaFormat> selectedFormat = new HashMap<String,MediaFormat>();
+    
     /**
      * The IQ message received by the XMPP server to initiate the Jingle session.
      * 
@@ -91,6 +98,11 @@ public class JingleSession implements PacketListener {
      * handles.
      */
     private Map<String,MediaStream> mediaStreamMap;
+    
+    /**
+     * The <tt>Agent</tt> handling the ICE protocol of the stream
+     */
+    private Agent agent;
     
     
     /**
@@ -200,10 +212,18 @@ public class JingleSession implements PacketListener {
         {
             stream.stop();
         }
+        
+        connection.sendPacket(
+                JinglePacketFactory.createSessionTerminate(
+                        sessionAccept.getFrom(),
+                        sessionAccept.getTo(),
+                        sessionAccept.getSID(),
+                        Reason.GONE,
+                        "Bye Bye"));
+        
         muc.leave();
         connection.disconnect();
     }
-    
     
     
     /**
@@ -211,40 +231,53 @@ public class JingleSession implements PacketListener {
      * send it to the initiator of the session.
      * The initiator is taken from the From attribut 
      * of the initiate-session message.
-     * 
-     * FIXME : this function is a WIP (more like a battleground) for now.
-     * My first implementation was a little naive
-     * and I'm not satisfied with how it do things.
      */
     private void acceptJingleSession()
     {
-        ArrayList<ContentPacketExtension> contentList = null;
-        Map<String,SelectedMedia> selectedMedias = null;
         IceMediaStreamGenerator iceMediaStreamGenerator = null;
+        List<MediaFormat> listFormat = null;
+        Map<String,ContentPacketExtension> contentMap =
+                new HashMap<String,ContentPacketExtension>();
         
-        Agent agent = null;
-        
-        
+        for(ContentPacketExtension cpe : sessionInitiate.getContentList())
+        {
+            listFormat = JingleUtils.extractFormats(
+                    cpe.getFirstChildOfType(RtpDescriptionPacketExtension.class),
+                    ptRegistry);
+            
+            
+            //extractRTPExtensions() TODO ?
+            
+            
+            
+            possibleFormatMap.put(
+                    cpe.getName(),
+                    listFormat);
+            
+            selectedFormat.put(
+                    cpe.getName(),
+                    HammerUtils.selectFormat(cpe.getName(),listFormat));
+            
+            
+            
+            contentMap.put(
+                    cpe.getName(),
+                    JingleUtils.createDescription(
+                            CreatorEnum.responder, 
+                            cpe.getName(),
+                            SendersEnum.both,
+                            listFormat,
+                            null,
+                            ptRegistry,
+                            null) );
+        }
         
         iceMediaStreamGenerator = IceMediaStreamGenerator.getInstance();
-
-        /* Now is the code section where we generate
-         * the content list for the session-accept */
-        ////////////////////////////////////
-        
-        contentList = new ArrayList<ContentPacketExtension>();
-        
-        selectedMedias = 
-                HammerUtils.generateAcceptedContentListFromSessionInitiateIQ(
-                        contentList,
-                        sessionInitiate,
-                        SendersEnum.both);
-        
         
         try
         {
             agent = iceMediaStreamGenerator.generateIceMediaStream(
-                    selectedMedias.keySet(),
+                    contentMap.keySet(),
                     null,
                     null);
         }
@@ -252,31 +285,36 @@ public class JingleSession implements PacketListener {
         {
             System.err.println(e);
         }
-
+        
         HammerUtils.addRemoteCandidateToAgent(
                 agent,
                 sessionInitiate.getContentList());
         HammerUtils.addLocalCandidateToContentList(
                 agent,
-                contentList);
-
-        agent.startConnectivityEstablishment();
-
-        ////////////////////////////////////
-        /*
-         * End of the code section generating
-         * the content list of the accept-session */
-
+                contentMap.values());
+        
+        
+        
+        
+        //create mediastream
+        mediaStreamMap = HammerUtils.generateMediaStream(
+                selectedFormat,
+                ptRegistry);
+        
+        //Set fingerprint
+        
         
         //Creation of a session-accept message and its sending
         sessionAccept = JinglePacketFactory.createSessionAccept(
                 sessionInitiate.getTo(),
                 sessionInitiate.getFrom(),
                 sessionInitiate.getSID(),
-                contentList);
+                contentMap.values());
         connection.sendPacket(sessionAccept);
         System.out.println("Jingle accept-session message sent");
         
+        
+        agent.startConnectivityEstablishment();
         
         while(IceProcessingState.TERMINATED != agent.getState())
         {
@@ -291,22 +329,17 @@ public class JingleSession implements PacketListener {
             }
         }
         
-        mediaStreamMap = HammerUtils.generateMediaStreamFromAgent(
-                agent,
-                selectedMedias);
-        
-        HammerUtils.setDtlsEncryptionOnTransport(
-                mediaStreamMap,
-        //        contentList,
-                sessionInitiate.getContentList());
+        //Add socket to the MediaStream
+        HammerUtils.addSocketToMediaStream(agent, mediaStreamMap);
         
         for(MediaStream stream : mediaStreamMap.values())
         {
             stream.start();
         }
     }
-
     
+    
+  
     /**
      * Callback function used when a JingleIQ is received by the XMPP connector.
      * @param packet the packet received by the <tt>JingleSession</tt> 

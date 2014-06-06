@@ -9,7 +9,7 @@ package org.jitsi.hammer.utils;
 
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.CandidateType;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
+import net.java.sip.communicator.service.protocol.media.DynamicPayloadTypeRegistry;
 
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
@@ -18,304 +18,112 @@ import org.jitsi.service.neomedia.format.*;
 import org.ice4j.*;
 import org.ice4j.ice.*;
 import org.jitsi.videobridge.*;
-import org.jitsi.hammer.*;
 
 import java.net.*;
 import java.util.*;
 
+/**
+ * The class contains a number of utility methods that are meant to facilitate
+ * the handling of a Jingle session and the created ICE stream and media stream.
+ *
+ * @author Thomas Kuntz
+ */
 public class HammerUtils {
-
-    public static Map<String,SelectedMedia> generateAcceptedContentListFromSessionInitiateIQ(
-        List<ContentPacketExtension> contentList, 
-        JingleIQ jiq, 
-        SendersEnum senders)
+    
+    /**
+     * Select the favorite <tt>MediaFormat</tt> of a list of <tt>MediaFormat</tt>
+     * 
+     * @param mediaType The type of the <tt>MediaFormat</tt>
+     * in <tt>mediaFormatList</tt>
+     * 
+     * @param mediaFormatList a list of <tt>MediaFormat</tt>
+     * (their <tt>MediaType</tt> should be the same as <tt>mediaType</tt>
+     * 
+     * 
+     * @return the favorite <tt>MediaFormat</tt>
+     * of a list of <tt>MediaFormat</tt>
+     */
+    public static MediaFormat selectFormat(
+            String mediaType,
+            List<MediaFormat> mediaFormatList)
     {
-        if(jiq.getAction() != JingleAction.SESSION_INITIATE) return null;
-
-        Map<String,SelectedMedia> selectedMediaMap = new HashMap<String,SelectedMedia>();
-
-        List<RtpDescriptionPacketExtension> rtpDescriptions = null;
-        List<PayloadTypePacketExtension> payloadTypes = null;
-        MediaDevice device = null;
-        MediaFormat supportedFormat = null;
-        String descriptionMediaName = null;
+        MediaFormat returnedFormat = null;
         
-        ContentPacketExtension contentForSessionAccept = null;
-        RtpDescriptionPacketExtension descriptionOfContentForSessionAccept = null;
         
-
-        MediaService mediaService = LibJitsi.getMediaService();
-        
-        for(ContentPacketExtension content : jiq.getContentList())
+        /*
+         * returnedFormat take the value of the first element in the list,
+         * so that if the favorite MediaFormat isn't found on the list,
+         * then this function return the first MediaFormat of the list.
+         * 
+         * For now, this function prefer opus for the audio format, and
+         * vp8 for the video format
+         */
+        switch(MediaType.parseString(mediaType))
         {
-            contentForSessionAccept = createContentPacketExtension(content.getName(),CreatorEnum.responder, senders);
-            contentList.add(contentForSessionAccept);
-            
-            rtpDescriptions = content.getChildExtensionsOfType(RtpDescriptionPacketExtension.class);
-            for(RtpDescriptionPacketExtension rtpDescription : rtpDescriptions)
-            {
-                descriptionMediaName = rtpDescription.getMedia();
-                descriptionOfContentForSessionAccept = new RtpDescriptionPacketExtension();
-                descriptionOfContentForSessionAccept.setMedia(descriptionMediaName);
-                descriptionOfContentForSessionAccept.setNamespace(RtpDescriptionPacketExtension.NAMESPACE);
-                contentForSessionAccept.addChildExtension(descriptionOfContentForSessionAccept);
-                
-
-                device = null;
-                if(descriptionMediaName.equals("audio"))
+            case AUDIO:
+                for(MediaFormat fmt : mediaFormatList)
                 {
-                    device = mediaService.getDefaultDevice(MediaType.AUDIO,MediaUseCase.CALL);
-                    device = new AudioSilenceMediaDevice();
-                    //device = mediaService.createMixer(device);
-                }
-                else if(descriptionMediaName.equals("video"))
-                {
-                    device = mediaService.getDefaultDevice(MediaType.VIDEO,MediaUseCase.CALL);
-                    device = null;
-                }
-                else
-                {
-                    return null;
-                }
-                if(device == null) continue;
-
-                //We can add to the content of the accept IQ the accepted format (what we do here),
-                //or we can add all the format we can handle (what we don't do here).
-                payloadTypes = rtpDescription.getPayloadTypes();
-                for(PayloadTypePacketExtension payloadType : payloadTypes)
-                {
-                    supportedFormat = getSupportedFormatFromPayloadType( device, payloadType );
-                    if(supportedFormat != null)
+                    if(returnedFormat == null) returnedFormat = fmt;
+                    if(fmt.getEncoding().equalsIgnoreCase("opus"))
                     {
-                        //Yeah, add this format to accepted content (if one wasn't already in)
-                        if(selectedMediaMap.containsKey(descriptionMediaName) != true)
-                        {
-                            addParameterToMediaFormat(supportedFormat,payloadType.getChildExtensionsOfType(ParameterPacketExtension.class));
-                            selectedMediaMap.put(
-                                    descriptionMediaName,
-                                    new SelectedMedia(
-                                            device,
-                                            supportedFormat,
-                                            (byte)payloadType.getID()));
-                        }
-                        
-                        
-                        descriptionOfContentForSessionAccept.addPayloadType(
-                                createPayloadType(
-                                        supportedFormat,
-                                        (byte)payloadType.getID()));
+                        returnedFormat = fmt;
                         break;
                     }
                 }
-                //TODO for(Source) SourcePacketExtension (add the source child, don't forget the namespace)
-                //TODO add ssrc child
-                //TODO add rtp-hdrext child
-            }
-        }
-
-        return selectedMediaMap;
-    }
-
-
-    public static ContentPacketExtension createContentPacketExtension(
-            String contentName,
-            CreatorEnum contentCreator,
-            SendersEnum contentSenders)
-    {
-        ContentPacketExtension content = new ContentPacketExtension();
-
-        content.setCreator(contentCreator);
-        content.setName(contentName);
-        content.setSenders(contentSenders);
-    
-        return content;
-    }
-
-
-    public static ContentPacketExtension createContentPacketExtension(
-            String contentName,
-            CreatorEnum contentCreator,
-            SendersEnum contentSenders,
-            MediaDevice device)
-    {
-        ContentPacketExtension content = new ContentPacketExtension();
-        RtpDescriptionPacketExtension description = new RtpDescriptionPacketExtension();
-        
-
-        content.setCreator(contentCreator);
-        content.setName(contentName);
-        content.setSenders(contentSenders);
-    
-        content.addChildExtension(description);
-
-        List<MediaFormat> mediaFormats = device.getSupportedFormats();
-        description.setMedia(mediaFormats.get(0).getMediaType().toString());
-        for (MediaFormat mediaFormat : mediaFormats)
-        {
-            description.addPayloadType(createPayloadType(mediaFormat));
-        }
-
-        return content;
-    }
-
-
-    public static ContentPacketExtension createContentPacketExtension(
-            String contentName,
-            CreatorEnum contentCreator,
-            SendersEnum contentSenders,
-            MediaFormat mediaFormat)
-    {
-        ContentPacketExtension content = new ContentPacketExtension();
-        RtpDescriptionPacketExtension description = new RtpDescriptionPacketExtension();
-        
-
-        content.setCreator(contentCreator);
-        content.setName(contentName);
-        content.setSenders(contentSenders);
-    
-        content.addChildExtension(description);
-
-        description.setMedia(mediaFormat.getMediaType().toString());
-        description.addPayloadType(createPayloadType(mediaFormat));
-
-        return content;
-        
-    }
-
-    public static PayloadTypePacketExtension createPayloadType(MediaFormat mediaFormat)
-    {
-        PayloadTypePacketExtension payloadExtension = new PayloadTypePacketExtension();
-
-        int rtpPayloadType = mediaFormat.getRTPPayloadType();
-
-        payloadExtension.setId(rtpPayloadType);
-        payloadExtension.setName(mediaFormat.getEncoding());
-        payloadExtension.setClockrate((int)mediaFormat.getClockRate());
-
-        //Audio format have a number of channel that we need to add to its payload extension
-        if(mediaFormat instanceof AudioMediaFormat)
-        {
-            AudioMediaFormat audioMediaFormat = (AudioMediaFormat) mediaFormat;
-            payloadExtension.setChannels(audioMediaFormat.getChannels());
-        }
-
-        //If the mediaFormat has parameter or advanced attributes, we have to add them too as payload parameter
-        for(Map.Entry<String, String> paramEntry : mediaFormat.getFormatParameters().entrySet())
-        {
-            ParameterPacketExtension paramExtension = new ParameterPacketExtension();
-            
-            paramExtension.setName(paramEntry.getKey());
-            paramExtension.setValue(paramEntry.getValue());
-            
-            payloadExtension.addParameter(paramExtension);
-        }
-        for(Map.Entry<String, String> attributEntry : mediaFormat.getAdvancedAttributes().entrySet())
-        {
-            ParameterPacketExtension paramExtension = new ParameterPacketExtension();
-
-            paramExtension.setName(attributEntry.getKey());
-            paramExtension.setValue(attributEntry.getValue());
-            
-            payloadExtension.addParameter(paramExtension);
-        }
-
-        return payloadExtension;
-    }   
-    
-    
-    public static PayloadTypePacketExtension createPayloadType( 
-            MediaFormat mediaFormat,
-            byte dynamicPayloadType )
-    {
-        PayloadTypePacketExtension payloadExtension = new PayloadTypePacketExtension();
-
-        int rtpPayloadType = mediaFormat.getRTPPayloadType();
-        if(rtpPayloadType == MediaFormat.RTP_PAYLOAD_TYPE_UNKNOWN)
-        {
-            rtpPayloadType = dynamicPayloadType;
-        }
-
-        payloadExtension.setNamespace(RtpDescriptionPacketExtension.NAMESPACE);
-        payloadExtension.setId(rtpPayloadType);
-        payloadExtension.setName(mediaFormat.getEncoding());
-        payloadExtension.setClockrate((int)mediaFormat.getClockRate());
-
-        //Audio format have a number of channel that we need to add to its payload extension
-        if(mediaFormat instanceof AudioMediaFormat)
-        {
-            AudioMediaFormat audioMediaFormat = (AudioMediaFormat) mediaFormat;
-            payloadExtension.setChannels(audioMediaFormat.getChannels());
-        }
-
-        //If the mediaFormat has parameter or advanced attributes, we have to add them too as payload parameter
-        for(Map.Entry<String, String> paramEntry : mediaFormat.getFormatParameters().entrySet())
-        {
-            ParameterPacketExtension paramExtension = new ParameterPacketExtension();
-            
-            paramExtension.setName(paramEntry.getKey());
-            paramExtension.setValue(paramEntry.getValue());
-            paramExtension.setNamespace(RtpDescriptionPacketExtension.NAMESPACE);
-            
-            payloadExtension.addParameter(paramExtension);
-        }
-        for(Map.Entry<String, String> attributEntry : mediaFormat.getAdvancedAttributes().entrySet())
-        {
-            ParameterPacketExtension paramExtension = new ParameterPacketExtension();
-
-            paramExtension.setName(attributEntry.getKey());
-            paramExtension.setValue(attributEntry.getValue());
-            
-            payloadExtension.addParameter(paramExtension);
-        }
-
-        return payloadExtension;
-    }   
-
-
-
-    private static MediaFormat getSupportedFormatFromPayloadType(
-            MediaDevice device,
-            PayloadTypePacketExtension payloadType)
-    {
-        if((device != null) && (payloadType != null))
-        {
-            for(MediaFormat mediaFormat : device.getSupportedFormats())
-            {
-                //System.out.print(mediaFormat);
-                //System.out.println(" |||| " + payloadType.toXML());
-                if((mediaFormat.getClockRateString().equals(String.valueOf(payloadType.getClockrate())))
-                    && (mediaFormat.getEncoding().equals(payloadType.getName()))
-                    && (
-                            (mediaFormat.getRTPPayloadType() == MediaFormat.RTP_PAYLOAD_TYPE_UNKNOWN)
-                            ||(mediaFormat.getRTPPayloadType() == payloadType.getID())
-                       )
-                    //These attribute are not available in a MediaFormat object (maybe with getAdditionnalCodecSetting or getAdvancedAttributes)
-                    //&& (payloadType.getChannels())
-                    //&& (payloadType.getMaxptime())
-                    //&& (payloadType.getPTtime())
-                  )
+                break;
+                
+            case VIDEO:
+                for(MediaFormat fmt : mediaFormatList)
                 {
-                    return mediaFormat;
+                    if(returnedFormat == null) returnedFormat = fmt;
+                    if(fmt.getEncoding().equalsIgnoreCase("vp8"))
+                    {
+                        returnedFormat = fmt;
+                        break;
+                    }
                 }
-            }
-        }
-            return null;
-    }
-    
-    private static void addParameterToMediaFormat(MediaFormat mediaFormat, List<ParameterPacketExtension> list)
-    {
-        Map<String,String> paramMap = new HashMap<String,String>();
-        for(ParameterPacketExtension param : list)
-        {
-            paramMap.put(param.getName(),param.getValue());
+                break;
+            default :
+                break;
         }
         
-        mediaFormat.setAdditionalCodecSettings(paramMap);
+        return returnedFormat;
     }
+
+    
+    /**
+     * Select the favorite <tt>MediaDevice</tt> for a given media type.
+     * 
+     * @param mediaType The type of the <tt>MediaDevice</tt> that you wish
+     * to get.
+     * 
+     * @return the favorite <tt>MediaDevice</tt> for a given media type.
+     */
+    public static MediaDevice selectMediaDevice(String mediaType)
+    {
+        MediaDevice returnedDevice = null;
+        
+        
+        switch(MediaType.parseString(mediaType))
+        {
+            case AUDIO:
+                returnedDevice = new AudioSilenceMediaDevice();
+                break;
+            case VIDEO:
+                returnedDevice = null;
+                break;
+            default :
+                break;
+        }
+        
+        return returnedDevice;
+    }
+
+
 
     public static void addRemoteCandidateToAgent(
             Agent agent,
-            List<ContentPacketExtension> contentList)
+            Collection<ContentPacketExtension> contentList)
     {
         IceUdpTransportPacketExtension transports = null;
         List<CandidatePacketExtension> candidates = null;
@@ -380,7 +188,7 @@ public class HammerUtils {
     
     public static void addLocalCandidateToContentList(
             Agent agent,
-            List<ContentPacketExtension> contentList)
+            Collection<ContentPacketExtension> contentList)
     {
         IceMediaStream iceMediaStream = null;
         IceUdpTransportPacketExtension transport = null;
@@ -436,33 +244,81 @@ public class HammerUtils {
         }
     }
 
-    public static Map<String,MediaStream> generateMediaStreamFromAgent(
-            Agent agent,
-            Map<String,SelectedMedia> selectedMediaMap)
+    
+    public static Map<String,MediaStream> generateMediaStream(
+            Map<String, MediaFormat> mediaFormatMap,
+            DynamicPayloadTypeRegistry ptRegistry)
     {
-        Map<String,MediaStream> streamMap = new HashMap<String,MediaStream>();
+        MediaStream stream = null;
+        MediaFormat format = null;
+        MediaDevice device = null;
+        Map<String,MediaStream> mediaStreamMap = new HashMap<String,MediaStream>();
         
+        
+
+        MediaService mediaService = LibJitsi.getMediaService();
+
+        for(String mediaName : mediaFormatMap.keySet())
+        {
+            //FIXME REMOVE THAT WHEN VIDEO IS HANDLE
+            if(mediaName.equalsIgnoreCase("video")) continue;
+            format = mediaFormatMap.get(mediaName);
+            
+            
+            stream = mediaService.createMediaStream(
+                    null,
+                    format.getMediaType(),
+                    mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
+            
+            device = selectMediaDevice(format.getMediaType().toString());
+            if(device != null) stream.setDevice(device);
+            stream.setFormat(format);
+            
+            //XXX The pair is given in the StreamConnector constructor,
+            //should I also give it to the stream?
+            
+            stream.setName(mediaName);
+            stream.setRTPTranslator(mediaService.createRTPTranslator());
+            
+            if(format.getRTPPayloadType()
+               ==  MediaFormat.RTP_PAYLOAD_TYPE_UNKNOWN)
+            {    
+                stream.addDynamicRTPPayloadType(
+                        ptRegistry.getPayloadType(format),
+                        format);
+            }
+            
+            
+            //FIXME
+            if(format.getMediaType() == MediaType.VIDEO)
+                stream.addDynamicRTPPayloadType(
+                        (byte) 116,
+                        format);
+            
+            
+            mediaStreamMap.put(mediaName, stream);
+        }
+        return mediaStreamMap;
+    }
+    
+    
+    public static void addSocketToMediaStream(
+            Agent agent,
+            Map<String,MediaStream> mediaStreamMap)
+    {
         IceMediaStream iceMediaStream = null;
         CandidatePair rtpPair = null;
         CandidatePair rtcpPair = null;
         DatagramSocket rtpSocket = null;
         DatagramSocket rtcpSocket = null;
         
-        SelectedMedia selectedMedia = null;
         StreamConnector connector = null;
         MediaStream stream = null;
         
-        
-        MediaService mediaService = LibJitsi.getMediaService();
-        
-        
-        
-        for(String mediaName : selectedMediaMap.keySet())
+        for(String mediaName : mediaStreamMap.keySet())
         {
-            //System.out.println(mediaName);
             iceMediaStream = agent.getStream(mediaName);
-            selectedMedia = selectedMediaMap.get(mediaName);
-            
+            stream = mediaStreamMap.get(mediaName);
             
 
             rtpPair = iceMediaStream.getComponent(Component.RTP).getSelectedPair();
@@ -475,38 +331,13 @@ public class HammerUtils {
             
             
             connector = new DefaultStreamConnector(rtpSocket, rtcpSocket);
-            stream = mediaService.createMediaStream(
-                    connector,
-                    selectedMedia.mediaFormat.getMediaType(),
-                    mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
-            stream.setDevice(selectedMedia.mediaDevice);
-            stream.setFormat(selectedMedia.mediaFormat);
-            //XXX The pair is given in the StreamConnector constructor,
-            //should I also give it to the stream?
+            stream.setConnector(connector);
+            
             stream.setTarget(
                     new MediaStreamTarget(
-                            rtpPair.getRemoteCandidate().getTransportAddress(),
-                            rtcpPair.getRemoteCandidate().getTransportAddress()));
-            stream.setName(mediaName);
-            stream.setRTPTranslator(mediaService.createRTPTranslator());
-            if(selectedMedia.mediaFormat.getRTPPayloadType()
-               ==  MediaFormat.RTP_PAYLOAD_TYPE_UNKNOWN)
-            {    
-                stream.addDynamicRTPPayloadType(
-                        selectedMedia.dynamicPayloadType,
-                        selectedMedia.mediaFormat);
-            }
-            /*
-            //FIXME Useless when the hammer will handle red correctly
-            if(selectedMedia.mediaFormat.getMediaType() == MediaType.VIDEO)
-                tream.addDynamicRTPPayloadType(
-                        (byte) 116,
-                        selectedMedia.mediaFormat);
-            */
-            streamMap.put(mediaName,stream);
+                        rtpPair.getRemoteCandidate().getTransportAddress(),
+                        rtcpPair.getRemoteCandidate().getTransportAddress()) );
         }
-        
-        return streamMap;
     }
     
     
