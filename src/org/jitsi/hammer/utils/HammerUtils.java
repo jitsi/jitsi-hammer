@@ -11,6 +11,7 @@ import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.CandidateType;
 import net.java.sip.communicator.service.protocol.media.DynamicPayloadTypeRegistry;
 
+import org.jitsi.hammer.device.*;
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.device.*;
@@ -110,7 +111,7 @@ public class HammerUtils {
                 returnedDevice = new AudioSilenceMediaDevice();
                 break;
             case VIDEO:
-                returnedDevice = null;
+                //returnedDevice = new VideoBlankMediaDevice();
                 break;
             default :
                 break;
@@ -227,7 +228,7 @@ public class HammerUtils {
                         candidate.setPort(localCandidate.getTransportAddress().getPort());
                         candidate.setType(CandidateType.valueOf(localCandidate.getType().toString()));
                         candidate.setGeneration(agent.getGeneration());
-                        candidate.setNetwork(1);//FIXME How do I decide which network it is?
+                        candidate.setNetwork(0);
                         candidate.setID(String.valueOf(candidateID++));
                         if( localCandidate.getRelatedAddress() != null )
                         {
@@ -273,9 +274,6 @@ public class HammerUtils {
             device = selectMediaDevice(format.getMediaType().toString());
             if(device != null) stream.setDevice(device);
             stream.setFormat(format);
-            
-            //XXX The pair is given in the StreamConnector constructor,
-            //should I also give it to the stream?
             
             stream.setName(mediaName);
             stream.setRTPTranslator(mediaService.createRTPTranslator());
