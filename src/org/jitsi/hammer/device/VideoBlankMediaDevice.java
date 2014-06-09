@@ -7,6 +7,11 @@
  
 package org.jitsi.hammer.device;
 
+import java.awt.Dimension;
+
+import javax.media.CaptureDeviceInfo;
+import javax.media.Format;
+import javax.media.format.VideoFormat;
 import javax.media.protocol.*;
 
 import org.jitsi.impl.neomedia.device.*;
@@ -21,9 +26,33 @@ import org.jitsi.service.neomedia.*;
 public class VideoBlankMediaDevice
     extends MediaDeviceImpl
 {
+
+    public final static float FRAMERATE = 10;
+    
+    
+    /**
+     * The list of <tt>Format</tt>s supported by the
+     * <tt>VideoBlankCaptureDevice</tt> instances.
+     */
+    public static final Format[] SUPPORTED_FORMATS
+        = new Format[]
+                {
+                    new VideoFormat(
+                            VideoFormat.RGB,
+                            new Dimension(853,480),
+                            Format.NOT_SPECIFIED,
+                            Format.byteArray,
+                            FRAMERATE)
+                };
+    
+    
     public VideoBlankMediaDevice()
     {
-        super(MediaType.VIDEO);
+        super(new CaptureDeviceInfo(
+                    "BlankVideo",
+                    null,
+                    VideoBlankMediaDevice.SUPPORTED_FORMATS),
+                MediaType.VIDEO);
     }
 
     

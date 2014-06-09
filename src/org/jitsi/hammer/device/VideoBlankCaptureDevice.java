@@ -7,7 +7,6 @@
  
 package org.jitsi.hammer.device;
 
-import java.awt.*;
 import java.io.*;
 import java.util.*;
 
@@ -21,16 +20,15 @@ import org.jitsi.impl.neomedia.codec.*;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.*;
 
 /**
- * Implements a <tt>CaptureDevice</tt> which provides silence in the form of
- * audio media.
+ * Implements a <tt>CaptureDevice</tt> which provides blank image in the form of 
+ * video media
  *
- * @author Lyubomir Marinov
+ * @author Thomas Kuntz
  */
 public class VideoBlankCaptureDevice
     extends AbstractPushBufferCaptureDevice
 {
 
-    public final static float FRAMERATE = 25;
     
     /**
      * The interval of time in milliseconds between two consecutive ticks of the
@@ -39,20 +37,6 @@ public class VideoBlankCaptureDevice
      */
     private static final long CLOCK_TICK_INTERVAL = 20;
 
-    /**
-     * The list of <tt>Format</tt>s supported by the
-     * <tt>VideoBlankCaptureDevice</tt> instances.
-     */
-    private static final Format[] SUPPORTED_FORMATS
-        = new Format[]
-                {
-                    new VideoFormat(
-                            VideoFormat.RGB,
-                            new Dimension(853,480),
-                            Format.NOT_SPECIFIED,
-                            Format.byteArray,
-                            FRAMERATE)
-                };
 
     /**
      * {@inheritDoc}
@@ -78,7 +62,7 @@ public class VideoBlankCaptureDevice
     @Override
     protected Format[] getSupportedFormats(int streamIndex)
     {
-        return SUPPORTED_FORMATS.clone();
+        return VideoBlankMediaDevice.SUPPORTED_FORMATS.clone();
     }
 
     /**
@@ -146,7 +130,7 @@ public class VideoBlankCaptureDevice
                         frameSizeInBytes,
                         false);
 
-            Arrays.fill(data, 0, frameSizeInBytes, (byte) 255);
+            Arrays.fill(data, 0, frameSizeInBytes, (byte) 0);
 
             buffer.setFormat(format);
             buffer.setLength(frameSizeInBytes);
