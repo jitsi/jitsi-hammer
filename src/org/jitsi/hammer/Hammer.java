@@ -75,10 +75,10 @@ public class Hammer {
             {
                 "net/java/sip/communicator/impl/configuration/ConfigurationActivator"
             },
-            /*{
+            {
                 "net/java/sip/communicator/impl/resources/ResourceManagementActivator"
             },
-            {
+            /*{
                 "net/java/sip/communicator/util/dns/DnsUtilActivator"
             },
             {
@@ -89,7 +89,7 @@ public class Hammer {
             },*/
             /*{
                 "net/java/sip/communicator/service/gui/internal/GuiServiceActivator"
-            },
+            },*/
             {
                 "net/java/sip/communicator/service/protocol/media/ProtocolMediaActivator"
             },
