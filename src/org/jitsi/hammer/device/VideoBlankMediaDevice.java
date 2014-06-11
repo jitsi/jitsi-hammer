@@ -11,11 +11,15 @@ import java.awt.Dimension;
 
 import javax.media.CaptureDeviceInfo;
 import javax.media.Format;
+import javax.media.format.RGBFormat;
 import javax.media.format.VideoFormat;
 import javax.media.protocol.*;
 
+import org.jitsi.impl.neomedia.codec.FFmpeg;
+import org.jitsi.impl.neomedia.codec.video.AVFrameFormat;
 import org.jitsi.impl.neomedia.device.*;
 import org.jitsi.service.neomedia.*;
+
 
 /**
  * Implements a <tt>MediaDevice</tt> which provides blank image in the form of 
@@ -36,16 +40,24 @@ public class VideoBlankMediaDevice
      */
     public static final Format[] SUPPORTED_FORMATS
         = new Format[]
-                {
-                    new VideoFormat(
-                            VideoFormat.RGB,
-                            new Dimension(853,480),
-                            Format.NOT_SPECIFIED,
-                            Format.byteArray,
-                            FRAMERATE)
-                };
+        		{
+//                new AVFrameFormat(
+//                	 new Dimension(640,480),
+//                     Format.NOT_SPECIFIED,
+//                     FFmpeg.PIX_FMT_ARGB,
+//                     Format.NOT_SPECIFIED),
+                new RGBFormat(
+                	 new Dimension(640,480), // size
+                     Format.NOT_SPECIFIED, // maxDataLength
+                     Format.byteArray, // dataType
+                     Format.NOT_SPECIFIED, // frameRate
+                     32, // bitsPerPixel
+                     2 /* red */,
+                     3 /* green */,
+                     4 /* blue */)
+        		};
     
-    
+ 
     public VideoBlankMediaDevice()
     {
         super(new CaptureDeviceInfo(
