@@ -111,7 +111,7 @@ public class HammerUtils {
                 returnedDevice = new AudioSilenceMediaDevice();
                 break;
             case VIDEO:
-                //returnedDevice = new VideoBlankMediaDevice();
+                returnedDevice = new VideoBlankMediaDevice();
                 break;
             default :
                 break;
@@ -262,7 +262,7 @@ public class HammerUtils {
         for(String mediaName : mediaFormatMap.keySet())
         {
             //FIXME REMOVE THAT WHEN VIDEO IS HANDLE
-            if(mediaName.equalsIgnoreCase("video")) continue;
+            //if(mediaName.equalsIgnoreCase("video")) continue;
             format = mediaFormatMap.get(mediaName);
             
             
