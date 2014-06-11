@@ -26,7 +26,11 @@ public class VideoBlankStream
 	 * invoked on this instance without an intervening {@link #stop()}.
 	 */
 	private boolean started;
+	
 	private long seqNo;
+	
+	private int color = 0;
+	private boolean increment = true;
 
 	/**
 	 * Initializes a new <tt>VideoBlankStream</tt> which is to be exposed
@@ -80,7 +84,7 @@ public class VideoBlankStream
 		buffer.setLength(frameSizeInBytes);
 		buffer.setOffset(0);
 		*/
-
+	    
 		Format format = buffer.getFormat();
 
         if (format == null)
@@ -89,7 +93,7 @@ public class VideoBlankStream
             if (format != null)
                 buffer.setFormat(format);
         }
-
+        /*
         if(format instanceof AVFrameFormat)
         {
             Object o = buffer.getData();
@@ -119,7 +123,7 @@ public class VideoBlankStream
                 throw new IOException("avpicture_fill");
             }
         }
-        else
+        else*/
         {
             byte[] bytes = (byte[]) buffer.getData();
             Dimension size = ((VideoFormat) format).getSize();
@@ -136,7 +140,12 @@ public class VideoBlankStream
 					frameSizeInBytes,
 					false);
 
-            Arrays.fill(data, 0, frameSizeInBytes, (byte) 200);
+            Arrays.fill(data, 0, frameSizeInBytes, (byte) color);
+            
+            if(increment) color+=2;
+            else color-=2;
+            if(color >= 254) increment = false;
+            else if(color <= 0) increment = true;
 
             buffer.setData(data);
             buffer.setOffset(0);
