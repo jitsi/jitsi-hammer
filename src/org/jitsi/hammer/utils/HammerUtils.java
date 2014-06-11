@@ -261,8 +261,6 @@ public class HammerUtils {
 
         for(String mediaName : mediaFormatMap.keySet())
         {
-            //FIXME REMOVE THAT WHEN VIDEO IS HANDLE
-            //if(mediaName.equalsIgnoreCase("video")) continue;
             format = mediaFormatMap.get(mediaName);
             
             

@@ -229,7 +229,7 @@ public class JingleSession implements PacketListener {
     /**
      * acceptJingleSession create a accept-session Jingle message and
      * send it to the initiator of the session.
-     * The initiator is taken from the From attribut 
+     * The initiator is taken from the From attribute 
      * of the initiate-session message.
      */
     private void acceptJingleSession()
