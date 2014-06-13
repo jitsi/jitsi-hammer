@@ -15,11 +15,11 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Implements a <tt>PullBufferStream</tt> which provides blank image in the form
- * of video media.
+ * Implements a <tt>PullBufferStream</tt> which provides a fading animation from
+ * white to black to white... in form of video.
  */
-public class VideoBlankStream
-	extends AbstractVideoPullBufferStream<VideoBlankCaptureDevice>
+public class VideoGreyFadingStream
+	extends AbstractVideoPullBufferStream<VideoGreyFadingCaptureDevice>
 {
 	/**
 	 * The indicator which determines whether {@link #start()} has been
@@ -33,19 +33,19 @@ public class VideoBlankStream
 	private boolean increment = true;
 
 	/**
-	 * Initializes a new <tt>VideoBlankStream</tt> which is to be exposed
-	 * by a specific <tt>VideoBlankCaptureDevice</tt> and which is to have
+	 * Initializes a new <tt>VideoGreyFadingStream</tt> which is to be exposed
+	 * by a specific <tt>VideoGreyFadingCaptureDevice</tt> and which is to have
 	 * its <tt>Format</tt>-related information abstracted by a specific
 	 * <tt>FormatControl</tt>.
 	 *
-	 * @param dataSource the <tt>VideoBlankCaptureDevice</tt> which is
+	 * @param dataSource the <tt>VideoGreyFadingCaptureDevice</tt> which is
 	 * initializing the new instance and which is to expose it in its array
 	 * of <tt>PushBufferStream</tt>s
 	 * @param formatControl the <tt>FormatControl</tt> which is to abstract
 	 * the <tt>Format</tt>-related information of the new instance
 	 */
-	public VideoBlankStream(
-			VideoBlankCaptureDevice dataSource,
+	public VideoGreyFadingStream(
+			VideoGreyFadingCaptureDevice dataSource,
 			FormatControl formatControl)
 	{
 		super(dataSource, formatControl);
@@ -65,6 +65,9 @@ public class VideoBlankStream
 	protected void doRead(Buffer buffer)
 		throws IOException
 	{
+	    long millis = System.currentTimeMillis();
+	    VideoFormat format;
+	    
 		/*VideoFormat format = (VideoFormat) getFormat();
 		long frameSizeInBytes
 			= FFmpeg.FF_INPUT_BUFFER_PADDING_SIZE + (int) (
@@ -85,11 +88,11 @@ public class VideoBlankStream
 		buffer.setOffset(0);
 		*/
 	    
-		Format format = buffer.getFormat();
+		format = (VideoFormat)buffer.getFormat();
 
         if (format == null)
         {
-            format = getFormat();
+            format = (VideoFormat)getFormat();
             if (format != null)
                 buffer.setFormat(format);
         }
@@ -142,10 +145,18 @@ public class VideoBlankStream
 
             Arrays.fill(data, 0, frameSizeInBytes, (byte) color);
             
-            if(increment) color+=2;
-            else color-=2;
-            if(color >= 254) increment = false;
-            else if(color <= 0) increment = true;
+            if(increment) color+=3;
+            else color-=3;
+            if(color >= 255)
+            {
+            	increment = false;
+            	color=255;
+            }
+            else if(color <= 0) 
+            {
+            	increment = true;
+            	color=0;
+            }
 
             buffer.setData(data);
             buffer.setOffset(0);
@@ -153,11 +164,24 @@ public class VideoBlankStream
         }
 		
 		
-		buffer.setHeader(null);
-        buffer.setTimeStamp(System.nanoTime());
-        buffer.setSequenceNumber(seqNo);
-        buffer.setFlags(Buffer.FLAG_SYSTEM_TIME | Buffer.FLAG_LIVE_DATA);
-        seqNo++;
+		buffer.setTimeStamp(System.nanoTime());
+		buffer.setFlags(Buffer.FLAG_SYSTEM_TIME | Buffer.FLAG_LIVE_DATA);
+		//buffer.setHeader(null);
+        //buffer.setSequenceNumber(seqNo);
+        //seqNo++;
+        
+        
+        //To respect the framerate, we wait for the remaing milliseconds
+        millis = System.currentTimeMillis() - millis;
+        millis = (long)(1000.0 / format.getFrameRate()) - millis;
+        try
+        {
+        	Thread.sleep(millis);
+        }
+        catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
 	}
 
 	/**

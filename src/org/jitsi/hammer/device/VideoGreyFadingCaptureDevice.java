@@ -19,12 +19,12 @@ import org.jitsi.impl.neomedia.codec.*;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.*;
 
 /**
- * Implements a <tt>CaptureDevice</tt> which provides blank image in the form of 
- * video media
+ * Implements a <tt>CaptureDevice</tt> which provides a fading animation from
+ * white to black to white... in form of video.
  *
  * @author Thomas Kuntz
  */
-public class VideoBlankCaptureDevice
+public class VideoGreyFadingCaptureDevice
     extends AbstractVideoPullBufferCaptureDevice
 {
     /**
@@ -33,11 +33,11 @@ public class VideoBlankCaptureDevice
      * Implements
      * {@link AbstractPushBufferCaptureDevice#createStream(int, FormatControl)}.
      */
-    protected VideoBlankStream createStream(
+    protected VideoGreyFadingStream createStream(
             int streamIndex,
             FormatControl formatControl)
     {
-        return new VideoBlankStream(this, formatControl);
+        return new VideoGreyFadingStream(this, formatControl);
     }
 
     /**
@@ -45,12 +45,12 @@ public class VideoBlankCaptureDevice
      *
      * Overrides the super implementation in order to return the list of
      * <tt>Format</tt>s hardcoded as supported in
-     * <tt>VideoBlankCaptureDevice</tt> because the super looks them up by
+     * <tt>VideoGreyFadingCaptureDevice</tt> because the super looks them up by
      * <tt>CaptureDeviceInfo</tt> and this instance does not have one.
      */
     @Override
     protected Format[] getSupportedFormats(int streamIndex)
     {
-        return VideoBlankMediaDevice.SUPPORTED_FORMATS.clone();
+        return VideoGreyFadingMediaDevice.SUPPORTED_FORMATS.clone();
     }
 }

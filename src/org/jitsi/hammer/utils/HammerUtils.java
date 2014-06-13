@@ -111,7 +111,7 @@ public class HammerUtils {
                 returnedDevice = new AudioSilenceMediaDevice();
                 break;
             case VIDEO:
-                returnedDevice = new VideoBlankMediaDevice();
+                returnedDevice = new VideoGreyFadingMediaDevice();
                 break;
             default :
                 break;

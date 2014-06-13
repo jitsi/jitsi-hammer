@@ -22,21 +22,21 @@ import org.jitsi.service.neomedia.*;
 
 
 /**
- * Implements a <tt>MediaDevice</tt> which provides blank image in the form of 
- * video media
+ * Implements a <tt>MediaDevice</tt> which provides a fading animation from
+ * white to black to white... in form of video.
  *
  * @author Thomas Kuntz
  */
-public class VideoBlankMediaDevice
+public class VideoGreyFadingMediaDevice
     extends MediaDeviceImpl
 {
 
-    public final static float FRAMERATE = 10;
+    public final static float FRAMERATE = 24;
     
     
     /**
      * The list of <tt>Format</tt>s supported by the
-     * <tt>VideoBlankCaptureDevice</tt> instances.
+     * <tt>VideoGreyFadingCaptureDevice</tt> instances.
      */
     public static final Format[] SUPPORTED_FORMATS
         = new Format[]
@@ -50,7 +50,7 @@ public class VideoBlankMediaDevice
                 	 new Dimension(640,480), // size
                      Format.NOT_SPECIFIED, // maxDataLength
                      Format.byteArray, // dataType
-                     Format.NOT_SPECIFIED, // frameRate
+                     FRAMERATE, // frameRate
                      32, // bitsPerPixel
                      2 /* red */,
                      3 /* green */,
@@ -58,12 +58,12 @@ public class VideoBlankMediaDevice
         		};
     
  
-    public VideoBlankMediaDevice()
+    public VideoGreyFadingMediaDevice()
     {
         super(new CaptureDeviceInfo(
-                    "BlankVideo",
+                    "GreyFadingVideo",
                     null,
-                    VideoBlankMediaDevice.SUPPORTED_FORMATS),
+                    VideoGreyFadingMediaDevice.SUPPORTED_FORMATS),
                 MediaType.VIDEO);
     }
 
@@ -77,7 +77,7 @@ public class VideoBlankMediaDevice
     @Override
     protected CaptureDevice createCaptureDevice()
     {
-        return new VideoBlankCaptureDevice();
+        return new VideoGreyFadingCaptureDevice();
     }
 
     
