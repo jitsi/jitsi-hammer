@@ -31,6 +31,8 @@ public class VideoGreyFadingStream
 	
 	private int color = 0;
 	private boolean increment = true;
+	
+	private long timeLastRead = 0;
 
 	/**
 	 * Initializes a new <tt>VideoGreyFadingStream</tt> which is to be exposed
@@ -65,28 +67,9 @@ public class VideoGreyFadingStream
 	protected void doRead(Buffer buffer)
 		throws IOException
 	{
-	    long millis = System.currentTimeMillis();
+	    long millis = 0;
 	    VideoFormat format;
 	    
-		/*VideoFormat format = (VideoFormat) getFormat();
-		long frameSizeInBytes
-			= FFmpeg.FF_INPUT_BUFFER_PADDING_SIZE + (int) (
-			 format.getSize().getHeight()
-			* format.getSize().getWidth()
-			* 4);
-
-		byte[] data
-			= AbstractCodec2.validateByteArraySize(
-					buffer,
-					frameSizeInBytes,
-					false);
-
-		Arrays.fill(data, 0, frameSizeInBytes, (byte) 0);
-
-		buffer.setFormat(format);
-		buffer.setLength(frameSizeInBytes);
-		buffer.setOffset(0);
-		*/
 	    
 		format = (VideoFormat)buffer.getFormat();
 
@@ -171,17 +154,23 @@ public class VideoGreyFadingStream
         //seqNo++;
         
         
-        //To respect the framerate, we wait for the remaing milliseconds
-        millis = System.currentTimeMillis() - millis;
+        //To respect the framerate, we wait for the remaing milliseconds since
+		//last doRead call
+		
+        millis = System.currentTimeMillis() - timeLastRead;
         millis = (long)(1000.0 / format.getFrameRate()) - millis;
-        try
+        if(millis > 0)
         {
-        	Thread.sleep(millis);
+            try
+            {
+            	Thread.sleep(millis);
+            }
+            catch (InterruptedException e)
+            {
+                e.printStackTrace();
+            }
         }
-        catch (InterruptedException e)
-        {
-            e.printStackTrace();
-        }
+        timeLastRead=System.currentTimeMillis();
 	}
 
 	/**
