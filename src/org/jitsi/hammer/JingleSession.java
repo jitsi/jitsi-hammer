@@ -301,15 +301,26 @@ public class JingleSession implements PacketListener {
                 selectedFormat,
                 ptRegistry);
         
-        //Set fingerprint
         
         
-        //Creation of a session-accept message and its sending
+        //Creation of a session-accept message
         sessionAccept = JinglePacketFactory.createSessionAccept(
                 sessionInitiate.getTo(),
                 sessionInitiate.getFrom(),
                 sessionInitiate.getSID(),
                 contentMap.values());
+        
+        
+        
+        
+        //Set fingerprint
+        HammerUtils.setDtlsEncryptionOnTransport(
+                mediaStreamMap,
+                sessionAccept.getContentList(),
+                sessionInitiate.getContentList());
+        
+        
+        //Sending of the session-accept IQ
         connection.sendPacket(sessionAccept);
         System.out.println("Jingle accept-session message sent");
         
@@ -334,8 +345,16 @@ public class JingleSession implements PacketListener {
         
         for(MediaStream stream : mediaStreamMap.values())
         {
+            stream.getSrtpControl().start(stream.getFormat().getMediaType());
+        }
+        
+        //XXX maybe sleep for a second here so that the dtls handshank has time?
+        
+        for(MediaStream stream : mediaStreamMap.values())
+        {
             stream.start();
         }
+        
     }
     
     

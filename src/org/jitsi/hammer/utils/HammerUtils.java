@@ -341,11 +341,9 @@ public class HammerUtils {
     
     
 
-    public static void setDtlsEncryptionOnTransport (
+    public static void setDtlsEncryptionOnTransport(
     		Map<String,MediaStream> mediaStreamMap,
-    		//FIXME Can't add fingerprint to the content I send with the
-    		//session-accept because the mediaStream aren't created
-            //List<ContentPacketExtension> localContentList,
+            List<ContentPacketExtension> localContentList,
             List<ContentPacketExtension> remoteContentList)
     {
         MediaStream stream = null;
@@ -353,6 +351,7 @@ public class HammerUtils {
         List<DtlsFingerprintPacketExtension> fingerprints = null;
         SrtpControl srtpControl = null;
         DtlsControl dtlsControl = null;
+        DtlsControl.Setup dtlsSetup = null;
         
         
     	for(ContentPacketExtension remoteContent : remoteContentList)
@@ -377,22 +376,34 @@ public class HammerUtils {
                     Map<String,String> remoteFingerprints
                         = new LinkedHashMap<String,String>();
 
+                    //XXX videobridge send a session-initiate with only one
+                    //fingerprint, so I'm not sure using a loop here is usefull
                     for(DtlsFingerprintPacketExtension fingerprint : fingerprints)
                     {
                         remoteFingerprints.put(
                                 fingerprint.getHash(),
                                 fingerprint.getFingerprint());
+                        
+                        //get the setup attribute of the fingerprint
+                        //(the first encounter setup will be taken)
+                        if(dtlsSetup == null)
+                        {
+                            String setup = fingerprint.getAttributeAsString("setup");
+                            if(setup != null)
+                            {
+                                dtlsSetup = DtlsControl.Setup.parseSetup(setup);
+                            }
+                        }
                     }
 
 
                     dtlsControl.setRemoteFingerprints(remoteFingerprints);
+                    dtlsControl.setSetup(getDtlsSetupForAnswer(dtlsSetup));
                 }
             }
-    	    
-    	    srtpControl.start(stream.getFormat().getMediaType());
         }
     	
-    	/*
+    	
     	//This code add the fingerprint of the local MediaStream to the content
     	//that will be sent with the session-accept
     	for(ContentPacketExtension localContent : localContentList)
@@ -413,10 +424,27 @@ public class HammerUtils {
                 
                 fingerprint.setHash(dtlsControl.getLocalFingerprintHashFunction());
                 fingerprint.setFingerprint(dtlsControl.getLocalFingerprint());
+                fingerprint.setAttribute("setup", dtlsSetup);
                 
                 transport.addChildExtension(fingerprint);
             }
         }
-        */
+    }
+    
+    public static DtlsControl.Setup getDtlsSetupForAnswer(DtlsControl.Setup setup)
+    {
+        DtlsControl.Setup returnedSetup = null;
+        if(setup != null)
+        {
+            if(setup.equals(DtlsControl.Setup.ACTPASS))
+                returnedSetup = DtlsControl.Setup.ACTIVE;
+            else if(setup.equals(DtlsControl.Setup.PASSIVE))
+                returnedSetup = DtlsControl.Setup.ACTIVE;
+            else if(setup.equals(DtlsControl.Setup.ACTIVE))
+                returnedSetup = DtlsControl.Setup.PASSIVE;
+            else if(setup.equals(DtlsControl.Setup.HOLDCONN))
+                returnedSetup = DtlsControl.Setup.HOLDCONN;
+        }
+        return returnedSetup;
     }
 }
