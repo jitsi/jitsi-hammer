@@ -18,6 +18,7 @@ import org.ice4j.ice.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.format.*;
 import org.jitsi.hammer.utils.*;
+import org.jitsi.hammer.extension.*;
 
 import net.java.sip.communicator.impl.protocol.jabber.jinglesdp.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
@@ -137,6 +138,10 @@ public class JingleSession implements PacketListener {
                 MediaProvider.ELEMENT_NAME,
                 MediaProvider.NAMESPACE,
                 new MediaProvider());
+        manager.addExtensionProvider(
+                SsrcProvider.ELEMENT_NAME,
+                SsrcProvider.NAMESPACE,
+                new SsrcProvider());
         
         manager.addIQProvider(
                 JingleIQ.ELEMENT_NAME,
@@ -311,6 +316,7 @@ public class JingleSession implements PacketListener {
                 contentMap.values());
         
         
+        HammerUtils.addSSRCToContent(contentMap, mediaStreamMap);
         
         
         //Set fingerprint
@@ -343,16 +349,19 @@ public class JingleSession implements PacketListener {
         //Add socket to the MediaStream
         HammerUtils.addSocketToMediaStream(agent, mediaStreamMap);
         
-        for(MediaStream stream : mediaStreamMap.values())
+        /*for(MediaStream stream : mediaStreamMap.values())
         {
-            stream.getSrtpControl().start(stream.getFormat().getMediaType());
-        }
+            SrtpControl control = stream.getSrtpControl();
+            MediaType type = stream.getFormat().getMediaType();
+            control.start(type);
+        }*/
         
         //XXX maybe sleep for a second here so that the dtls handshank has time?
         
         for(MediaStream stream : mediaStreamMap.values())
         {
             stream.start();
+            System.out.println(stream.getLocalSourceID());
         }
         
     }

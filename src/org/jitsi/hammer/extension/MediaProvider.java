@@ -5,7 +5,7 @@
  * See terms of license at gnu.org.
  */
 
-package org.jitsi.hammer;
+package org.jitsi.hammer.extension;
 
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.provider.*;

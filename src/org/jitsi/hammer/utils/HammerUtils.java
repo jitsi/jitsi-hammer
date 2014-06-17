@@ -7,11 +7,13 @@
 
 package org.jitsi.hammer.utils;
 
+import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.SourcePacketExtension;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.CandidateType;
 import net.java.sip.communicator.service.protocol.media.DynamicPayloadTypeRegistry;
 
 import org.jitsi.hammer.device.*;
+import org.jitsi.hammer.extension.*;
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.device.*;
@@ -357,6 +359,7 @@ public class HammerUtils {
     	for(ContentPacketExtension remoteContent : remoteContentList)
         {
     	    transport = remoteContent.getFirstChildOfType(IceUdpTransportPacketExtension.class);
+    	    dtlsSetup = null;
     	    
     	    stream = mediaStreamMap.get(remoteContent.getName());
     	    if(stream == null) continue;
@@ -398,7 +401,8 @@ public class HammerUtils {
 
 
                     dtlsControl.setRemoteFingerprints(remoteFingerprints);
-                    dtlsControl.setSetup(getDtlsSetupForAnswer(dtlsSetup));
+                    dtlsSetup = getDtlsSetupForAnswer(dtlsSetup);
+                    dtlsControl.setSetup(dtlsSetup);
                 }
             }
         }
@@ -445,6 +449,75 @@ public class HammerUtils {
             else if(setup.equals(DtlsControl.Setup.HOLDCONN))
                 returnedSetup = DtlsControl.Setup.HOLDCONN;
         }
+        System.out.println(returnedSetup);
         return returnedSetup;
+    }
+    
+    public static void addSSRCToContent(
+            Map<String,ContentPacketExtension> contentMap,
+            Map<String,MediaStream> mediaStreamMap)
+    {
+        ContentPacketExtension content = null;
+        RtpDescriptionPacketExtension description = null;
+        MediaStream mediaStream = null;
+        
+        
+        for(String mediaName : contentMap.keySet())
+        {
+            content = contentMap.get(mediaName);
+            mediaStream = mediaStreamMap.get(mediaName);
+            
+            description = content.getFirstChildOfType(
+                    RtpDescriptionPacketExtension.class);
+            
+            description.setSsrc(""+mediaStream.getLocalSourceID());
+            addSourceExtension(description, mediaStream.getLocalSourceID());
+        }
+    }
+    
+    
+    
+    /**
+     * Adds a <tt>SourcePacketExtension</tt> as a child element of
+     * <tt>description</tt>. See XEP-0339.
+     *
+     * @param description the <tt>RtpDescriptionPacketExtension</tt> to which
+     * a child element will be added.
+     * @param ssrc the SSRC for the <tt>SourcePacketExtension</tt> to use.
+     */
+    public static void addSourceExtension(RtpDescriptionPacketExtension description,
+                                    long ssrc)
+    {
+        MediaType type = MediaType.parseString(description.getMedia());
+        MediaService mediaService = LibJitsi.getMediaService();
+        String msLabel = UUID.randomUUID().toString();
+
+        SourcePacketExtension sourcePacketExtension = 
+                new SourcePacketExtension();
+        SsrcPacketExtension ssrcPacketExtension = 
+                new SsrcPacketExtension();
+
+        
+        sourcePacketExtension.setSSRC(ssrc);
+        sourcePacketExtension.addChildExtension(
+                new ParameterPacketExtension("cname",
+                                             LibJitsi.getMediaService()
+                                                .getRtpCname()));
+        sourcePacketExtension.addChildExtension(
+                new ParameterPacketExtension("msid", msLabel + " " + type.toString()));
+        sourcePacketExtension.addChildExtension(
+                new ParameterPacketExtension("mslabel", msLabel));
+        sourcePacketExtension.addChildExtension(
+                new ParameterPacketExtension("label", type.toString()));
+        description.addChildExtension(sourcePacketExtension);
+        
+        
+        
+        ssrcPacketExtension.setSsrc(""+ssrc);
+        ssrcPacketExtension.setCname(mediaService.getRtpCname());
+        ssrcPacketExtension.setMsid(msLabel + " " + type.toString());
+        ssrcPacketExtension.setMslabel(msLabel);
+        ssrcPacketExtension.setLabel(type.toString());
+        description.addChildExtension(ssrcPacketExtension);
     }
 }
