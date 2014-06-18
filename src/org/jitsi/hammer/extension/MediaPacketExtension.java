@@ -22,7 +22,7 @@ public class MediaPacketExtension implements PacketExtension
     /**
      * The namespace of this <tt>MediaPacketExtension</tt>
      */
-    private String namespace;
+    private String namespace = MediaProvider.NAMESPACE;
     
     /**
      * The list of <tt>Source</tt> that are childs of this media element

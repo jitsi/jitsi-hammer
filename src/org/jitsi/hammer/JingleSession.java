@@ -193,11 +193,11 @@ public class JingleSession implements PacketListener {
          * Send a Presence packet containing a Nick extension so that the
          * nickname is correctly displayed in jitmeet
          */
-        Packet nicknamePacket = new Presence(Presence.Type.available);
+        Packet presencePacket = new Presence(Presence.Type.available);
         String recipient = serverInfo.getRoomName()+"@"+serverInfo.getHostname();
-        nicknamePacket.addExtension(new Nick(username));
-        nicknamePacket.setTo(recipient);
-        connection.sendPacket(nicknamePacket);
+        presencePacket.setTo(recipient);
+        presencePacket.addExtension(new Nick(username));
+        connection.sendPacket(presencePacket);
         
         
         /*
@@ -308,15 +308,36 @@ public class JingleSession implements PacketListener {
         
         
         
+        //Send the SSRC of the different media in a "media" tag
+        //It's not necessary but its a copy of Jitsi Meet behavior
+        Packet presencePacket = new Presence(Presence.Type.available);
+        String recipient = serverInfo.getRoomName()+"@"+serverInfo.getHostname();
+        presencePacket.setTo(recipient);
+        MediaPacketExtension mediaPacket = new MediaPacketExtension();
+        for(String key : mediaStreamMap.keySet())
+        {
+            String str = String.valueOf(mediaStreamMap.get(key).getLocalSourceID());
+            mediaPacket.addSource(
+                    key,
+                    str,
+                    MediaDirection.SENDRECV.toString());
+        }
+        presencePacket.addExtension(mediaPacket);
+        connection.sendPacket(presencePacket);
+        
+        
+        
         //Creation of a session-accept message
         sessionAccept = JinglePacketFactory.createSessionAccept(
                 sessionInitiate.getTo(),
                 sessionInitiate.getFrom(),
                 sessionInitiate.getSID(),
                 contentMap.values());
+        sessionAccept.setInitiator(sessionInitiate.getFrom());
         
         
         HammerUtils.addSSRCToContent(contentMap, mediaStreamMap);
+        
         
         
         //Set fingerprint
@@ -361,7 +382,6 @@ public class JingleSession implements PacketListener {
         for(MediaStream stream : mediaStreamMap.values())
         {
             stream.start();
-            System.out.println(stream.getLocalSourceID());
         }
         
     }

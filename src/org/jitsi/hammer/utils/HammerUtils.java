@@ -288,6 +288,9 @@ public class HammerUtils {
             
             
             //FIXME
+            //I just add the dynamic payload type of RED (116) so that
+            //the MediaStream don't complain when it will received RED packet
+            //from the Jitsi Meet user
             if(format.getMediaType() == MediaType.VIDEO)
                 stream.addDynamicRTPPayloadType(
                         (byte) 116,
@@ -449,7 +452,6 @@ public class HammerUtils {
             else if(setup.equals(DtlsControl.Setup.HOLDCONN))
                 returnedSetup = DtlsControl.Setup.HOLDCONN;
         }
-        System.out.println(returnedSetup);
         return returnedSetup;
     }
     
@@ -464,14 +466,17 @@ public class HammerUtils {
         
         for(String mediaName : contentMap.keySet())
         {
+            long ssrc;
+            
             content = contentMap.get(mediaName);
             mediaStream = mediaStreamMap.get(mediaName);
+            ssrc = mediaStream.getLocalSourceID();
             
             description = content.getFirstChildOfType(
                     RtpDescriptionPacketExtension.class);
             
-            description.setSsrc(""+mediaStream.getLocalSourceID());
-            addSourceExtension(description, mediaStream.getLocalSourceID());
+            description.setSsrc(String.valueOf(ssrc));
+            addSourceExtension(description, ssrc);
         }
     }
     
