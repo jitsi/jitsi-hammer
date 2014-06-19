@@ -10,11 +10,31 @@ package org.jitsi.hammer;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.File;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
 
 import net.java.sip.communicator.launcher.ChangeJVMFrame;
 //import net.java.sip.communicator.util.ScStdOut;
 
 
+import org.jitsi.service.libjitsi.LibJitsi;
+import org.jitsi.service.neomedia.DefaultStreamConnector;
+import org.jitsi.service.neomedia.DtlsControl;
+import org.jitsi.service.neomedia.MediaDirection;
+import org.jitsi.service.neomedia.MediaService;
+import org.jitsi.service.neomedia.MediaStream;
+import org.jitsi.service.neomedia.MediaStreamTarget;
+import org.jitsi.service.neomedia.MediaType;
+import org.jitsi.service.neomedia.SrtpControlType;
+import org.jitsi.service.neomedia.StreamConnector;
+import org.jitsi.service.neomedia.device.MediaDevice;
+import org.jitsi.service.neomedia.format.MediaFormat;
+import org.jitsi.videobridge.AudioSilenceMediaDevice;
 import org.kohsuke.args4j.*;
 
 /**
@@ -283,7 +303,7 @@ public class Main
     
     
     public static void main(String[] args)
-        throws InterruptedException
+        throws InterruptedException, SocketException, UnknownHostException
     {
         String version = System.getProperty("java.version");
         String vmVendor = System.getProperty("java.vendor");
@@ -369,9 +389,90 @@ public class Main
         
         //We call initialize the Hammer (registering OSGi bundle for example)
         hammer.init();
-        //After the initialization we start the Hammer (all its users will
-        //connect to the XMPP server and try to setup media stream with it bridge
-        hammer.start();
+        //after the initialization we start the hammer (all its users will
+        
+        
+        MediaService mediaService = LibJitsi.getMediaService();
+        
+
+        MediaDevice device1 = new AudioSilenceMediaDevice();
+        MediaFormat format1
+        = mediaService.getFormatFactory().createMediaFormat(
+                "PCMU",
+                8000);
+        MediaDevice device2 = new AudioSilenceMediaDevice();
+        MediaFormat format2
+        = mediaService.getFormatFactory().createMediaFormat(
+                "PCMU",
+                8000);
+        
+        MediaStream mediaStream1 = mediaService.createMediaStream(
+        		null,
+        		device1,
+        		mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
+        MediaStream mediaStream2 = mediaService.createMediaStream(
+        		null,
+        		device2,
+        		mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
+
+        mediaStream1.setDirection(MediaDirection.SENDRECV);
+        mediaStream2.setDirection(MediaDirection.SENDRECV);
+        
+        mediaStream1.setFormat(format1);
+        mediaStream2.setFormat(format2);
+        
+        DtlsControl control1 = (DtlsControl) mediaStream1.getSrtpControl();
+        DtlsControl control2 = (DtlsControl) mediaStream2.getSrtpControl();
+        
+        control1.setSetup(DtlsControl.Setup.PASSIVE);
+        control2.setSetup(DtlsControl.Setup.ACTIVE);
+        
+        Map<String,String> map1 = new HashMap<String,String>();
+        Map<String,String> map2 = new HashMap<String,String>();
+        map1.put(
+				control2.getLocalFingerprintHashFunction(),
+				control2.getLocalFingerprint());
+        map2.put(
+				control1.getLocalFingerprintHashFunction(),
+				control1.getLocalFingerprint());
+        
+        control1.setRemoteFingerprints(map1);
+        control2.setRemoteFingerprints(map2);
+        
+        StreamConnector connector1
+        = new DefaultStreamConnector(
+                new DatagramSocket(10000),
+                new DatagramSocket(10001));
+        StreamConnector connector2
+        = new DefaultStreamConnector(
+                new DatagramSocket(11000),
+                new DatagramSocket(11001));
+        
+        
+        mediaStream1.setConnector(connector1);
+        mediaStream2.setConnector(connector2);
+
+        mediaStream1.setName(MediaType.AUDIO.toString());
+        mediaStream2.setName(MediaType.AUDIO.toString());
+        
+        mediaStream1.setTarget(
+                new MediaStreamTarget(
+                        new InetSocketAddress(InetAddress.getByName("localhost"), 11000),
+                        new InetSocketAddress(InetAddress.getByName("localhost"), 11001)));
+        mediaStream2.setTarget(
+                new MediaStreamTarget(
+                        new InetSocketAddress(InetAddress.getByName("localhost"), 10000),
+                        new InetSocketAddress(InetAddress.getByName("localhost"), 10000)));
+        
+        
+        
+        
+        control1.start(MediaType.AUDIO);
+        control2.start(MediaType.AUDIO);
+        
+        mediaStream1.start();
+        mediaStream2.start();
+        
         while(true) Thread.sleep(3600000);
     }
 }
