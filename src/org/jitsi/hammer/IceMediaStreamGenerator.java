@@ -138,6 +138,9 @@ public class IceMediaStreamGenerator
         {
             for(String name : mediaNameSet)
             {
+                //FIXME if the stream is a data one, we don't create an IceMediaStream
+                if(name.equalsIgnoreCase("data")) continue;
+                
                 stream = agent.createMediaStream(name);
                 
                 if( (CURRENT_COMPONENT_PORT + 1) >= MAX_COMPONENT_PORT )

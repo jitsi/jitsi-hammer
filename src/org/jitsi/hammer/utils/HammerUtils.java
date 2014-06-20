@@ -10,6 +10,8 @@ package org.jitsi.hammer.utils;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.SourcePacketExtension;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.CandidateType;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.CreatorEnum;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.SendersEnum;
 import net.java.sip.communicator.service.protocol.media.DynamicPayloadTypeRegistry;
 
 import org.jitsi.hammer.device.*;
@@ -210,9 +212,9 @@ public class HammerUtils {
         
             if(iceMediaStream != null)
             {
-            fingerprint = new DtlsFingerprintPacketExtension();
-            	
-            fingerprint.setFingerprint("");
+                fingerprint = new DtlsFingerprintPacketExtension();
+                	
+                fingerprint.setFingerprint("");
             	fingerprint.setHash("");
             	
                 for(Component component : iceMediaStream.getComponents())
@@ -264,6 +266,7 @@ public class HammerUtils {
         for(String mediaName : mediaFormatMap.keySet())
         {
             format = mediaFormatMap.get(mediaName);
+            if(format == null) continue;
             
             
             stream = mediaService.createMediaStream(
@@ -470,6 +473,8 @@ public class HammerUtils {
             
             content = contentMap.get(mediaName);
             mediaStream = mediaStreamMap.get(mediaName);
+            if((content == null) || (mediaStream == null)) continue;
+            
             ssrc = mediaStream.getLocalSourceID();
             
             description = content.getFirstChildOfType(
@@ -524,5 +529,28 @@ public class HammerUtils {
         ssrcPacketExtension.setMslabel(msLabel);
         ssrcPacketExtension.setLabel(type.toString());
         description.addChildExtension(ssrcPacketExtension);
+    }
+    
+    public static ContentPacketExtension createDescriptionForDATA(
+            CreatorEnum                  creator,
+            SendersEnum                  senders)
+    {
+        ContentPacketExtension content = new ContentPacketExtension();
+        RtpDescriptionPacketExtension description
+        = new RtpDescriptionPacketExtension();
+        
+        
+        content.setCreator(creator);
+        content.setName("data");
+
+        //senders - only if we have them and if they are different from default
+        if(senders != null && senders != SendersEnum.both)
+            content.setSenders(senders);
+
+        description.setMedia("data");
+        //RTP description
+        content.addChildExtension(description);
+
+        return content;
     }
 }

@@ -357,11 +357,12 @@ public class Main
         //This HostInfo is used for tests in my localhost XMPP server
         /*
         infoCLI = new HostInfo(
-                "jitmeet.example.com",
-                "conference.jitmeet.example.com",
+                "beta.meet.jit.si",
+                "beta.meet.jit.si",
                 5222,
-                "jitsi-videobridge.lambada.jitsi.net",
-                "HammerTest");
+                "jitsi-videobridge.beta.meet.jit.si",
+                "conference.beta.meet.jit.si",
+                "GSoC2014");
         */
         
         //We create a Hammer with only 1 user for now

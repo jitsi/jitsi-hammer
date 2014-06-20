@@ -30,19 +30,26 @@ public class HostInfo
      * The domain name of the XMPP server.
      */
     @Option(name="-domain",usage="XMPP domain name")
-    private String domain = "guest.jit.si";
+    private String XMPPdomain = "guest.jit.si";
     
     /**
      * The hostname used by the XMPP server (used to access to the MUC).
      */
-    @Option(name="-host",usage="XMPP server hostname")
-    private String host = "meet.jit.si";
+    @Option(name="-XMPPhost",usage="XMPP server hostname")
+    private String XMPPhost = "meet.jit.si";
     
     /**
      * The jitsi-videobridge hostname related to the XMPP server.
      */
     @Option(name="-bridge",usage="jitsi-videobridge hostname")
     private String bridge = "jitsi-videobridge.lambada.jitsi.net";
+    
+    
+    /**
+     * The hostname used by the XMPP server (used to access to the MUC).
+     */
+    @Option(name="-MUCDomain",usage="MUC domain name")
+    private String MUCdomain = "meet.jit.si";
     
     /**
      * The name of the MUC room that we'll use.
@@ -71,12 +78,13 @@ public class HostInfo
      * Instantiates a new <tt>HostInfo</tt> instance
      * with all the informations needed.
      */
-    public HostInfo(String domain,String host,int port,String bridge,String roomName)
+    public HostInfo(String XMPPdomain,String XMPPhost,int port,String bridge,String MUCdomain,String roomName)
     {
-        this.domain = domain;
+        this.XMPPdomain = XMPPdomain;
         this.port = port;
-        this.host = host;
+        this.XMPPhost = XMPPhost;
         this.bridge = bridge;
+        this.MUCdomain = MUCdomain;
         this.roomName = roomName;
     }
     
@@ -85,9 +93,19 @@ public class HostInfo
      * (in lower case).
      * @return the domain of the XMPP server (in lower case).
      */
-    public String getDomain()
+    public String getXMPPDomain()
     {
-        return this.domain.toLowerCase();
+        return this.XMPPdomain.toLowerCase();
+    }
+    
+    /**
+     * Get the domain of the MUC server of this <tt>HostInfo</tt>
+     * (in lower case).
+     * @return the domain of the MUC server (in lower case).
+     */
+    public String getMUCDomain()
+    {
+        return this.MUCdomain.toLowerCase();
     }
 
     /**
@@ -95,9 +113,9 @@ public class HostInfo
      * (in lower case).
      * @return the hostname of the XMPP server (in lower case).
      */
-    public String getHostname()
+    public String getXMPPHostname()
     {
-        return this.host.toLowerCase();
+        return this.XMPPhost.toLowerCase();
     }
     
     /**

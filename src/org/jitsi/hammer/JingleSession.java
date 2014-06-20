@@ -152,11 +152,12 @@ public class JingleSession implements PacketListener {
         
         
         config = new ConnectionConfiguration(
-                serverInfo.getHostname(),
+                serverInfo.getXMPPHostname(),
                 serverInfo.getPort(),
-                serverInfo.getDomain());
+                serverInfo.getXMPPDomain());
         
         connection = new XMPPConnection(config);
+        /*
         connection.addPacketListener(this,new PacketFilter()
             {
                 public boolean accept(Packet packet)
@@ -164,9 +165,9 @@ public class JingleSession implements PacketListener {
                     return (packet instanceof JingleIQ);
                 }
             });
+        */
         
-        
-        config.setDebuggerEnabled(true);
+        //config.setDebuggerEnabled(true);
     }
 
 
@@ -181,7 +182,7 @@ public class JingleSession implements PacketListener {
         connection.loginAnonymously();
 
         
-        String roomURL = serverInfo.getRoomName()+"@"+serverInfo.getHostname();
+        String roomURL = serverInfo.getRoomName()+"@"+serverInfo.getMUCDomain();
         muc = new MultiUserChat(
                 connection,
                 roomURL);
@@ -194,8 +195,7 @@ public class JingleSession implements PacketListener {
          * nickname is correctly displayed in jitmeet
          */
         Packet presencePacket = new Presence(Presence.Type.available);
-        String recipient = serverInfo.getRoomName()+"@"+serverInfo.getHostname();
-        presencePacket.setTo(recipient);
+        presencePacket.setTo(roomURL);
         presencePacket.addExtension(new Nick(username));
         connection.sendPacket(presencePacket);
         
@@ -243,39 +243,54 @@ public class JingleSession implements PacketListener {
         List<MediaFormat> listFormat = null;
         Map<String,ContentPacketExtension> contentMap =
                 new HashMap<String,ContentPacketExtension>();
+        ContentPacketExtension content = null;
         
         for(ContentPacketExtension cpe : sessionInitiate.getContentList())
         {
-            listFormat = JingleUtils.extractFormats(
-                    cpe.getFirstChildOfType(RtpDescriptionPacketExtension.class),
-                    ptRegistry);
+            //data isn't correctly handle by libjitsi for now, so we handle it
+            //differently than the other MediaType
+            if(cpe.getName().equalsIgnoreCase("data"))
+            {
+                content = HammerUtils.createDescriptionForDATA(
+                        CreatorEnum.responder,
+                        SendersEnum.both);
+            }
+            else
+            {
+                listFormat = JingleUtils.extractFormats(
+                        cpe.getFirstChildOfType(RtpDescriptionPacketExtension.class),
+                        ptRegistry);
+                
+                
+                //extractRTPExtensions() TODO ?
+                
+                
+                
+                possibleFormatMap.put(
+                        cpe.getName(),
+                        listFormat);
+                
+                selectedFormat.put(
+                        cpe.getName(),
+                        HammerUtils.selectFormat(cpe.getName(),listFormat));
+                
+                
+                content = JingleUtils.createDescription(
+                                CreatorEnum.responder, 
+                                cpe.getName(),
+                                SendersEnum.both,
+                                listFormat,
+                                null,
+                                ptRegistry,
+                                null);
+            }
             
-            
-            //extractRTPExtensions() TODO ?
-            
-            
-            
-            possibleFormatMap.put(
-                    cpe.getName(),
-                    listFormat);
-            
-            selectedFormat.put(
-                    cpe.getName(),
-                    HammerUtils.selectFormat(cpe.getName(),listFormat));
-            
-            
-            
-            contentMap.put(
-                    cpe.getName(),
-                    JingleUtils.createDescription(
-                            CreatorEnum.responder, 
-                            cpe.getName(),
-                            SendersEnum.both,
-                            listFormat,
-                            null,
-                            ptRegistry,
-                            null) );
+            contentMap.put(cpe.getName(),content);
         }
+        
+        //We remove the content for the data (because data is not handle
+        //for now by libjitsi, and even an empty content block ICE
+        contentMap.remove("data");
         
         iceMediaStreamGenerator = IceMediaStreamGenerator.getInstance();
         
@@ -311,7 +326,7 @@ public class JingleSession implements PacketListener {
         //Send the SSRC of the different media in a "media" tag
         //It's not necessary but its a copy of Jitsi Meet behavior
         Packet presencePacket = new Presence(Presence.Type.available);
-        String recipient = serverInfo.getRoomName()+"@"+serverInfo.getHostname();
+        String recipient = serverInfo.getRoomName()+"@"+serverInfo.getXMPPHostname();
         presencePacket.setTo(recipient);
         MediaPacketExtension mediaPacket = new MediaPacketExtension();
         for(String key : mediaStreamMap.keySet())
@@ -370,6 +385,8 @@ public class JingleSession implements PacketListener {
         //Add socket to the MediaStream
         HammerUtils.addSocketToMediaStream(agent, mediaStreamMap);
         
+        //For now the DTLS is not started because there is a bug
+        //that made the handshake fail
         /*for(MediaStream stream : mediaStreamMap.values())
         {
             SrtpControl control = stream.getSrtpControl();
@@ -377,7 +394,6 @@ public class JingleSession implements PacketListener {
             control.start(type);
         }*/
         
-        //XXX maybe sleep for a second here so that the dtls handshank has time?
         
         for(MediaStream stream : mediaStreamMap.values())
         {
