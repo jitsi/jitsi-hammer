@@ -29,7 +29,7 @@ public class HostInfo
     /**
      * The domain name of the XMPP server.
      */
-    @Option(name="-domain",usage="XMPP domain name")
+    @Option(name="-XMPPdomain",usage="XMPP domain name")
     private String XMPPdomain = "guest.jit.si";
     
     /**

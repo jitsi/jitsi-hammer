@@ -337,8 +337,6 @@ public class Main
         
         
         
-        
-        
         java.util.logging.Logger l = java.util.logging.Logger.getLogger("");
         l.setLevel(java.util.logging.Level.WARNING);
         

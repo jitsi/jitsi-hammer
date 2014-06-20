@@ -467,7 +467,7 @@ public class HammerUtils {
         MediaStream mediaStream = null;
         
         
-        for(String mediaName : contentMap.keySet())
+        for(String mediaName : mediaStreamMap.keySet())
         {
             long ssrc;
             

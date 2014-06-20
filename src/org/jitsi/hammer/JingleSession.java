@@ -157,7 +157,7 @@ public class JingleSession implements PacketListener {
                 serverInfo.getXMPPDomain());
         
         connection = new XMPPConnection(config);
-        /*
+        
         connection.addPacketListener(this,new PacketFilter()
             {
                 public boolean accept(Packet packet)
@@ -165,7 +165,6 @@ public class JingleSession implements PacketListener {
                     return (packet instanceof JingleIQ);
                 }
             });
-        */
         
         //config.setDebuggerEnabled(true);
     }
@@ -204,8 +203,8 @@ public class JingleSession implements PacketListener {
          * Add a simple message listener that will just display in the terminal
          * received message (and respond back with a "C'est pas faux");
          */
-        muc.addMessageListener(
-                new MyPacketListener(muc,roomURL +"/" + muc.getNickname()) );
+        //muc.addMessageListener(
+        //       new MyPacketListener(muc,roomURL +"/" + muc.getNickname()) );
     }
 
     /**
@@ -290,7 +289,8 @@ public class JingleSession implements PacketListener {
         
         //We remove the content for the data (because data is not handle
         //for now by libjitsi, and even an empty content block ICE
-        contentMap.remove("data");
+        //FIXME
+        //contentMap.remove("data");
         
         iceMediaStreamGenerator = IceMediaStreamGenerator.getInstance();
         
@@ -326,7 +326,7 @@ public class JingleSession implements PacketListener {
         //Send the SSRC of the different media in a "media" tag
         //It's not necessary but its a copy of Jitsi Meet behavior
         Packet presencePacket = new Presence(Presence.Type.available);
-        String recipient = serverInfo.getRoomName()+"@"+serverInfo.getXMPPHostname();
+        String recipient = serverInfo.getRoomName()+"@"+serverInfo.getMUCDomain();
         presencePacket.setTo(recipient);
         MediaPacketExtension mediaPacket = new MediaPacketExtension();
         for(String key : mediaStreamMap.keySet())
