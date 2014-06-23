@@ -27,7 +27,7 @@ public class VideoGreyFadingStream
 	 */
 	private boolean started;
 	
-	private long seqNo;
+	private long seqNo = 0;
 	
 	private int color = 0;
 	private boolean increment = true;
