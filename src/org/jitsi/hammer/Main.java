@@ -363,6 +363,16 @@ public class Main
                 "GSoC2014");
         */
         
+        /*
+        infoCLI = new HostInfo(
+                "pawel.jitsi.net",
+                "pawel.jitsi.net",
+                5222,
+                "jitsi-videobridge.pawel.jitsi.net",
+                "conference.pawel.jitsi.net",
+                "GSoC2014");
+        */
+        
         //We create a Hammer with only 1 user for now
         Hammer hammer = new Hammer(infoCLI,"JitMeet-Hammer",1);
         

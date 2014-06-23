@@ -7,12 +7,11 @@
 
 package org.jitsi.hammer.utils;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.SourcePacketExtension;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.CandidateType;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.CreatorEnum;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.SendersEnum;
-import net.java.sip.communicator.service.protocol.media.DynamicPayloadTypeRegistry;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
+import net.java.sip.communicator.service.protocol.media.*;
 
 import org.jitsi.hammer.device.*;
 import org.jitsi.hammer.extension.*;
@@ -531,7 +530,7 @@ public class HammerUtils {
         description.addChildExtension(ssrcPacketExtension);
     }
     
-    public static ContentPacketExtension createDescriptionForDATA(
+    public static ContentPacketExtension createDescriptionForDataContent(
             CreatorEnum                  creator,
             SendersEnum                  senders)
     {

@@ -7,8 +7,6 @@
 
 package org.jitsi.hammer;
 
-import java.util.HashMap;
-import java.util.Map;
 
 import org.jivesoftware.smack.*;
 import org.osgi.framework.*;
@@ -16,6 +14,10 @@ import org.osgi.framework.launch.*;
 import org.osgi.framework.startlevel.*;
 
 import net.java.sip.communicator.impl.osgi.framework.launch.*;
+
+import java.util.*;
+
+import org.jitsi.hammer.utils.*;
 
 
 /**

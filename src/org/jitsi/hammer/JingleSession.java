@@ -166,7 +166,7 @@ public class JingleSession implements PacketListener {
                 }
             });
         
-        //config.setDebuggerEnabled(true);
+        config.setDebuggerEnabled(true);
     }
 
 
@@ -250,7 +250,7 @@ public class JingleSession implements PacketListener {
             //differently than the other MediaType
             if(cpe.getName().equalsIgnoreCase("data"))
             {
-                content = HammerUtils.createDescriptionForDATA(
+                content = HammerUtils.createDescriptionForDataContent(
                         CreatorEnum.responder,
                         SendersEnum.both);
             }
@@ -288,9 +288,9 @@ public class JingleSession implements PacketListener {
         }
         
         //We remove the content for the data (because data is not handle
-        //for now by libjitsi, and even an empty content block ICE
+        //for now by libjitsi
         //FIXME
-        //contentMap.remove("data");
+        contentMap.remove("data");
         
         iceMediaStreamGenerator = IceMediaStreamGenerator.getInstance();
         
