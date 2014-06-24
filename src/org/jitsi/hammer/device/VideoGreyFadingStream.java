@@ -79,72 +79,40 @@ public class VideoGreyFadingStream
             if (format != null)
                 buffer.setFormat(format);
         }
-        /*
-        if(format instanceof AVFrameFormat)
+        
+        byte[] bytes = (byte[]) buffer.getData();
+        Dimension size = ((VideoFormat) format).getSize();
+        
+        int frameSizeInBytes
+		= (int) (
+		  size.getHeight()
+		* size.getWidth()
+		* 4);
+        
+        byte[] data
+		= AbstractCodec2.validateByteArraySize(
+				buffer,
+				frameSizeInBytes,
+				false);
+
+        Arrays.fill(data, 0, frameSizeInBytes, (byte) color);
+        
+        if(increment) color+=3;
+        else color-=3;
+        if(color >= 255)
         {
-            Object o = buffer.getData();
-            AVFrame frame;
-
-            if (o instanceof AVFrame)
-                frame = (AVFrame) o;
-            else
-            {
-                frame = new AVFrame();
-                buffer.setData(frame);
-            }
-
-            AVFrameFormat avFrameFormat = (AVFrameFormat) format;
-            Dimension size = avFrameFormat.getSize();
-            
-            int frameSizeInBytes
-			= FFmpeg.FF_INPUT_BUFFER_PADDING_SIZE + (int) (
-			  size.getHeight()
-			* size.getWidth()
-			* 4);
-            
-            ByteBuffer datas = new ByteBuffer(frameSizeInBytes);
-            if (frame.avpicture_fill(datas, avFrameFormat) < 0)
-            {
-                datas.free();
-                throw new IOException("avpicture_fill");
-            }
+        	increment = false;
+        	color=255;
         }
-        else*/
+        else if(color <= 0) 
         {
-            byte[] bytes = (byte[]) buffer.getData();
-            Dimension size = ((VideoFormat) format).getSize();
-            
-            int frameSizeInBytes
-			= (int) (
-			  size.getHeight()
-			* size.getWidth()
-			* 4);
-            
-            byte[] data
-			= AbstractCodec2.validateByteArraySize(
-					buffer,
-					frameSizeInBytes,
-					false);
-
-            Arrays.fill(data, 0, frameSizeInBytes, (byte) color);
-            
-            if(increment) color+=3;
-            else color-=3;
-            if(color >= 255)
-            {
-            	increment = false;
-            	color=255;
-            }
-            else if(color <= 0) 
-            {
-            	increment = true;
-            	color=0;
-            }
-
-            buffer.setData(data);
-            buffer.setOffset(0);
-            buffer.setLength(bytes.length);
+        	increment = true;
+        	color=0;
         }
+
+        buffer.setData(data);
+        buffer.setOffset(0);
+        buffer.setLength(bytes.length);
 		
 		
 		buffer.setTimeStamp(System.nanoTime());
@@ -158,7 +126,7 @@ public class VideoGreyFadingStream
 		//last doRead call
 		
         millis = System.currentTimeMillis() - timeLastRead;
-        millis = (long)(1000.0 / format.getFrameRate()) - millis;
+        millis = (long)(1000.0 / VideoGreyFadingMediaDevice.FRAMERATE) - millis;
         if(millis > 0)
         {
             try
