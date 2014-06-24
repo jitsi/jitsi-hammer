@@ -33,6 +33,7 @@ public class IVFStream
     private long timeLastRead = 0;
     
     IVFFileReader ivfFileReader;
+    IVFHeader header;
     
     private String filePath;
 
@@ -50,6 +51,7 @@ public class IVFStream
         super(dataSource, formatControl);
         filePath = dataSource.getFilePath();
         ivfFileReader = new IVFFileReader(filePath);
+        header=ivfFileReader.getHeader();
     }
 
     
@@ -84,7 +86,7 @@ public class IVFStream
         
         buffer.setData(data);
         buffer.setOffset(0);
-        buffer.setLength(bytes.length);
+        buffer.setLength(data.length);
         
         
         buffer.setTimeStamp(System.nanoTime());
@@ -94,7 +96,7 @@ public class IVFStream
         //seqNo++;
         
         millis = System.currentTimeMillis() - timeLastRead;
-        millis = (long)(1000.0 / format.getFrameRate()) - millis;
+        millis = (long)(1000.0 / (header.getFramerate()/header.getTimeScale())) - millis;
         if(millis > 0)
         {
             try

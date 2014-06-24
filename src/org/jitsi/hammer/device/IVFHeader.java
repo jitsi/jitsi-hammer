@@ -56,8 +56,6 @@ public class IVFHeader
             framerate = stream.readInt();
             timeScale = stream.readInt();
             numberOfFramesInFile = stream.readInt();
-                    
-            //TODO parse header
             
             stream.close();
         }
