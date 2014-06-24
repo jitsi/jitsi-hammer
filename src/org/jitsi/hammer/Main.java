@@ -15,6 +15,9 @@ import net.java.sip.communicator.launcher.ChangeJVMFrame;
 //import net.java.sip.communicator.util.ScStdOut;
 
 
+
+
+import org.jitsi.hammer.device.IVFHeader;
 import org.kohsuke.args4j.*;
 
 /**
@@ -372,6 +375,11 @@ public class Main
                 "conference.pawel.jitsi.net",
                 "GSoC2014");
         */
+        
+        
+        
+        
+        //System.out.println(System.getProperty("user.dir"));
         
         //We create a Hammer with only 1 user for now
         Hammer hammer = new Hammer(infoCLI,"JitMeet-Hammer",1);

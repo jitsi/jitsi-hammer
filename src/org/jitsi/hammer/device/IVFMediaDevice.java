@@ -7,18 +7,14 @@
  
 package org.jitsi.hammer.device;
 
-import java.awt.Dimension;
-
 import javax.media.CaptureDeviceInfo;
 import javax.media.Format;
-import javax.media.format.RGBFormat;
 import javax.media.format.VideoFormat;
 import javax.media.protocol.*;
 
-import org.jitsi.impl.neomedia.codec.FFmpeg;
-import org.jitsi.impl.neomedia.codec.video.AVFrameFormat;
 import org.jitsi.impl.neomedia.device.*;
 import org.jitsi.service.neomedia.*;
+import org.jitsi.service.neomedia.codec.Constants;
 
 
 /**
@@ -27,39 +23,29 @@ import org.jitsi.service.neomedia.*;
  *
  * @author Thomas Kuntz
  */
-public class VideoGreyFadingMediaDevice
+public class IVFMediaDevice
     extends MediaDeviceImpl
 {
-
-    public final static float FRAMERATE = 24;
-    
-    
     /**
      * The list of <tt>Format</tt>s supported by the
-     * <tt>VideoGreyFadingCaptureDevice</tt> instances.
+     * <tt>IVFCaptureDevice</tt> instances.
      */
     public static final Format[] SUPPORTED_FORMATS
         = new Format[]
-        		{
-                new RGBFormat(
-                	 new Dimension(640,480), // size
-                     Format.NOT_SPECIFIED, // maxDataLength
-                     Format.byteArray, // dataType
-                     FRAMERATE, // frameRate
-                     32, // bitsPerPixel
-                     2 /* red */,
-                     3 /* green */,
-                     4 /* blue */)
-        		};
+                {
+                    new VideoFormat(Constants.VP8)
+                };
     
+    private String filename;
  
-    public VideoGreyFadingMediaDevice()
+    public IVFMediaDevice(String filename)
     {
         super(new CaptureDeviceInfo(
-                    "GreyFadingVideo",
+                    "IVF_file",
                     null,
-                    VideoGreyFadingMediaDevice.SUPPORTED_FORMATS),
+                    IVFMediaDevice.SUPPORTED_FORMATS),
                 MediaType.VIDEO);
+        this.filename = filename;
     }
 
     
@@ -72,7 +58,7 @@ public class VideoGreyFadingMediaDevice
     @Override
     protected CaptureDevice createCaptureDevice()
     {
-        return new VideoGreyFadingCaptureDevice();
+        return new IVFCaptureDevice(filename);
     }
 
     

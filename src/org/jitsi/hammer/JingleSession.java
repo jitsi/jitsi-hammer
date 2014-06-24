@@ -399,7 +399,6 @@ public class JingleSession implements PacketListener {
         {
             stream.start();
         }
-        
     }
     
     

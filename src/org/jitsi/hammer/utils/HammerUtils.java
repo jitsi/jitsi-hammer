@@ -114,7 +114,8 @@ public class HammerUtils {
                 returnedDevice = new AudioSilenceMediaDevice();
                 break;
             case VIDEO:
-                returnedDevice = new VideoGreyFadingMediaDevice();
+                //returnedDevice = new VideoGreyFadingMediaDevice();
+                returnedDevice = new IVFMediaDevice("C:\\big-buck-bunny_trailer_track1_eng.ivf");
                 break;
             default :
                 break;
