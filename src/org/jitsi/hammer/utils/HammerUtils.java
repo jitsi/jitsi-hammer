@@ -18,6 +18,7 @@ import org.jitsi.hammer.extension.*;
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.device.*;
+import org.jitsi.impl.neomedia.device.*;
 import org.jitsi.service.neomedia.format.*;
 import org.ice4j.*;
 import org.ice4j.ice.*;
@@ -25,6 +26,8 @@ import org.jitsi.videobridge.*;
 
 import java.net.*;
 import java.util.*;
+
+import javax.media.*;
 
 /**
  * The class contains a number of utility methods that are meant to facilitate
@@ -114,8 +117,22 @@ public class HammerUtils {
                 returnedDevice = new AudioSilenceMediaDevice();
                 break;
             case VIDEO:
+                /*
+                returnedDevice = new MediaDeviceImpl(new CaptureDeviceInfo2(
+                        "GreyFadingVideo",
+                        new MediaLocator("greyfading:"),
+                        null,null, null, null),
+                        MediaType.VIDEO);
+                */
+                
+                returnedDevice = new MediaDeviceImpl(new CaptureDeviceInfo2(
+                        "Bunny",
+                        new MediaLocator("ivffile://./ressources/big-buck-bunny_trailer_track1_eng.ivf"),
+                        null, null, null, null),
+                        MediaType.VIDEO);
+                
                 //returnedDevice = new VideoGreyFadingMediaDevice();
-                returnedDevice = new IVFMediaDevice("C:\\big-buck-bunny_trailer_track1_eng.ivf");
+                //returnedDevice = new IVFMediaDevice("./ressources/big-buck-bunny_trailer_track1_eng.ivf");
                 break;
             default :
                 break;

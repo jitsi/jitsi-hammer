@@ -17,7 +17,9 @@ import net.java.sip.communicator.impl.osgi.framework.launch.*;
 
 import java.util.*;
 
+import org.jitsi.hammer.neomedia.FMJPluginInConfiguration;
 import org.jitsi.hammer.utils.*;
+import org.jitsi.impl.neomedia.codec.FMJPlugInConfiguration;
 
 
 /**
@@ -191,6 +193,8 @@ public class Hammer {
             }
 
             framework.start();
+            
+            FMJPluginInConfiguration.registerCustomPackages();
         }
         catch (BundleException be)
         {
