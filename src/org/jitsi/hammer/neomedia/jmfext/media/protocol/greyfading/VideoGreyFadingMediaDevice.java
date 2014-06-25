@@ -5,7 +5,7 @@
  * See terms of license at gnu.org.
  */
  
-package org.jitsi.hammer.device;
+package org.jitsi.hammer.neomedia.jmfext.media.protocol.greyfading;
 
 import java.awt.Dimension;
 
@@ -72,7 +72,7 @@ public class VideoGreyFadingMediaDevice
     @Override
     protected CaptureDevice createCaptureDevice()
     {
-        return new VideoGreyFadingCaptureDevice();
+        return new DataSource();
     }
 
     

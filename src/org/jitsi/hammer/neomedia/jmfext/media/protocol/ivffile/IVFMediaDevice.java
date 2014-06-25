@@ -5,11 +5,11 @@
  * See terms of license at gnu.org.
  */
  
-package org.jitsi.hammer.device;
+package org.jitsi.hammer.neomedia.jmfext.media.protocol.ivffile;
 
 import javax.media.CaptureDeviceInfo;
-import javax.media.Format;
-import javax.media.format.VideoFormat;
+import javax.media.*;
+import javax.media.format.*;
 import javax.media.protocol.*;
 
 import org.jitsi.impl.neomedia.device.*;
@@ -35,17 +35,14 @@ public class IVFMediaDevice
                 {
                     new VideoFormat(Constants.VP8)
                 };
-    
-    private String filename;
- 
+     
     public IVFMediaDevice(String filename)
     {
         super(new CaptureDeviceInfo(
                     "IVF_file",
-                    null,
+                    new MediaLocator("file:"+filename),
                     IVFMediaDevice.SUPPORTED_FORMATS),
                 MediaType.VIDEO);
-        this.filename = filename;
     }
 
     
@@ -58,7 +55,7 @@ public class IVFMediaDevice
     @Override
     protected CaptureDevice createCaptureDevice()
     {
-        return new IVFCaptureDevice(filename);
+        return new DataSource(getCaptureDeviceInfo());
     }
 
     

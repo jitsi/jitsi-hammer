@@ -13,7 +13,8 @@ import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.Candidat
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
 import net.java.sip.communicator.service.protocol.media.*;
 
-import org.jitsi.hammer.device.*;
+import org.jitsi.hammer.neomedia.jmfext.media.protocol.greyfading.*;
+import org.jitsi.hammer.neomedia.jmfext.media.protocol.ivffile.*;
 import org.jitsi.hammer.extension.*;
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
@@ -127,7 +128,7 @@ public class HammerUtils {
                 
                 returnedDevice = new MediaDeviceImpl(new CaptureDeviceInfo2(
                         "Bunny",
-                        new MediaLocator("ivffile://./ressources/big-buck-bunny_trailer_track1_eng.ivf"),
+                        new MediaLocator("ivffile:./ressources/big-buck-bunny_trailer_track1_eng.ivf"),
                         null, null, null, null),
                         MediaType.VIDEO);
                 

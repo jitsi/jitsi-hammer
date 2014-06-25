@@ -44,6 +44,23 @@ public class DataSource
                 ivfHeader.getFramerate() / ivfHeader.getTimeScale());
     }
     
+    /**
+     * Initializes a new <tt>DataSource</tt> instance with a CaptureDeviceInfo.
+     */
+    public DataSource(CaptureDeviceInfo di)
+    {
+        setCaptureDeviceInfo(di);
+        this.file = getCaptureDeviceInfo().getLocator().getRemainder();
+        ivfHeader = new IVFHeader(this.file);
+        
+        this.SUPPORTED_FORMATS[0] = new VideoFormat(
+                Constants.VP8,
+                ivfHeader.getDimension(),
+                Format.NOT_SPECIFIED,
+                Format.byteArray,
+                ivfHeader.getFramerate() / ivfHeader.getTimeScale());
+    }
+    
     
     
     /**

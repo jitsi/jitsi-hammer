@@ -14,10 +14,6 @@ import java.io.File;
 import net.java.sip.communicator.launcher.ChangeJVMFrame;
 //import net.java.sip.communicator.util.ScStdOut;
 
-
-
-
-import org.jitsi.hammer.device.IVFHeader;
 import org.kohsuke.args4j.*;
 
 /**
