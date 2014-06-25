@@ -174,18 +174,35 @@ public class JingleSession implements PacketListener {
      * Connect to the XMPP server then to the MUC chatroom.
      * @throws XMPPException if the connection to the XMPP server goes wrong
      */
-    public void start()
-        throws XMPPException
+    public void start() throws XMPPException
     {
         connection.connect();
         connection.loginAnonymously();
 
         
         String roomURL = serverInfo.getRoomName()+"@"+serverInfo.getMUCDomain();
-        muc = new MultiUserChat(
-                connection,
-                roomURL);
-        muc.join(username);
+        muc = new MultiUserChat(connection, roomURL);
+        while(true)
+        {
+            try
+            {
+                muc.join(username);
+            }
+            catch (XMPPException e)
+            {
+                /*
+                 * IF the nickname is already taken in the MUC (code 409)
+                 * then we append '_' to the username, and retry
+                 */
+                if(e.getXMPPError().getCode() == 409)
+                {
+                    username=username+'_';
+                    continue;
+                }
+                else throw e;
+            }
+            break;
+        }
         muc.sendMessage("Hello World!");
         
         
