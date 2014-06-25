@@ -27,7 +27,6 @@ public class IVFFileReader
     private int frameNo = 0;
     
     private RandomAccessFile stream;
-    //private LittleEndianDataInputStream stream;
     
     
     public IVFFileReader(String filePath)
@@ -37,8 +36,6 @@ public class IVFFileReader
         try
         {
             stream = new RandomAccessFile(filePath,"r");
-            //stream = new LittleEndianDataInputStream(
-            //        new FileInputStream(filePath));
             stream.seek(32);
         }
         catch (FileNotFoundException e) 
@@ -73,7 +70,7 @@ public class IVFFileReader
         stream.skipBytes(8);//skip the timespamp (or should I? XXX)
         data = new byte[frameSizeInBytes];
         stream.read(data);
-        
+        frameNo++;
         
         return data;
     }

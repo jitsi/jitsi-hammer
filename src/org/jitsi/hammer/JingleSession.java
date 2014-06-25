@@ -166,7 +166,7 @@ public class JingleSession implements PacketListener {
                 }
             });
         
-        config.setDebuggerEnabled(true);
+        //config.setDebuggerEnabled(true);
     }
 
 
