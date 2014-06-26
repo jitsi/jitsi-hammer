@@ -361,7 +361,15 @@ public class Main
                 "conference.beta.meet.jit.si",
                 "GSoC2014");
         */
-        
+        /*
+        infoCLI = new HostInfo(
+                "guest.jit.si",
+                "meet.jit.si",
+                5222,
+                "jitsi-videobridge.meet.jit.si",
+                "meet.jit.si",
+                "TestHammer");
+        */
         /*
         infoCLI = new HostInfo(
                 "pawel.jitsi.net",
@@ -371,12 +379,7 @@ public class Main
                 "conference.pawel.jitsi.net",
                 "GSoC2014");
         */
-        
-        
-        
-        
-        //System.out.println(System.getProperty("user.dir"));
-        
+                
         //We create a Hammer with only 1 user for now
         Hammer hammer = new Hammer(infoCLI,"JitMeet-Hammer",1);
         
