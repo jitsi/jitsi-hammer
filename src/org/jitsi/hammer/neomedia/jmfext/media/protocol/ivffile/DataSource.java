@@ -69,11 +69,12 @@ public class DataSource
      * Overrides the super implementation in order to return the list of
      * <tt>Format</tt>s hardcoded as supported in
      * <tt>IVFCaptureDevice</tt> because the super looks them up by
-     * <tt>CaptureDeviceInfo</tt> and this instance does not have one.
+     * <tt>CaptureDeviceInfo</tt> and it doesn't have some information
+     * (like the framerate etc.).
      */
     @Override
     protected Format[] getSupportedFormats(int streamIndex)
     {
-        return SUPPORTED_FORMATS;
+        return SUPPORTED_FORMATS.clone();
     }
 }

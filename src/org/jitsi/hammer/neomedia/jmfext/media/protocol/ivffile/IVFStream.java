@@ -11,15 +11,9 @@ import javax.media.*;
 import javax.media.control.*;
 import javax.media.format.*;
 
-import org.jitsi.impl.neomedia.codec.*;
-import org.jitsi.impl.neomedia.codec.video.ByteBuffer;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.*;
 
-import com.google.common.io.LittleEndianDataInputStream;
-
-import java.awt.Dimension;
 import java.io.*;
-import java.util.*;
 
 /**
  * Implements a <tt>PullBufferStream</tt> which read an IVF file for the video
