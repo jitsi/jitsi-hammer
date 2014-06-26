@@ -48,7 +48,7 @@ public class IVFStream
     {
         super(dataSource, formatControl);
         this.ivfFileReader = new IVFFileReader(
-                dataSource.getCaptureDeviceInfo().getLocator().getRemainder());
+                dataSource.getLocator().getRemainder());
         
         this.FRAMERATE = ((VideoFormat)getFormat()).getFrameRate();
     }

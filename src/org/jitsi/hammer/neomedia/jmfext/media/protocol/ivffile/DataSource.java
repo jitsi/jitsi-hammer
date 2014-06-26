@@ -7,6 +7,8 @@
  
 package org.jitsi.hammer.neomedia.jmfext.media.protocol.ivffile;
 
+import java.io.IOException;
+
 import javax.media.*;
 import javax.media.control.*;
 import javax.media.format.VideoFormat;
@@ -27,13 +29,15 @@ public class DataSource
     private String file;
     private IVFHeader ivfHeader;
     
-    
     /**
-     * Initializes a new <tt>DataSource</tt> instance.
+     * doConnect allow us to initialize the DataSource with informations that
+     * we couldn't have in the constructor, like the MediaLocator that give us
+     * the path of the ivf file which give us information on the format 
      */
-    public DataSource()
+    public void doConnect() throws IOException
     {
-        this.file = getCaptureDeviceInfo().getLocator().getRemainder();
+        super.doConnect();
+        this.file = getLocator().getRemainder();
         ivfHeader = new IVFHeader(this.file);
         
         this.SUPPORTED_FORMATS[0] = new VideoFormat(
@@ -43,25 +47,6 @@ public class DataSource
                 Format.byteArray,
                 ivfHeader.getFramerate() / ivfHeader.getTimeScale());
     }
-    
-    /**
-     * Initializes a new <tt>DataSource</tt> instance with a CaptureDeviceInfo.
-     */
-    public DataSource(CaptureDeviceInfo di)
-    {
-        setCaptureDeviceInfo(di);
-        this.file = getCaptureDeviceInfo().getLocator().getRemainder();
-        ivfHeader = new IVFHeader(this.file);
-        
-        this.SUPPORTED_FORMATS[0] = new VideoFormat(
-                Constants.VP8,
-                ivfHeader.getDimension(),
-                Format.NOT_SPECIFIED,
-                Format.byteArray,
-                ivfHeader.getFramerate() / ivfHeader.getTimeScale());
-    }
-    
-    
     
     /**
      * {@inheritDoc}

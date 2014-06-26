@@ -7,12 +7,14 @@
  
 package org.jitsi.hammer.neomedia.jmfext.media.protocol.ivffile;
 
-import javax.media.CaptureDeviceInfo;
+import java.io.IOException;
+
 import javax.media.*;
 import javax.media.format.*;
 import javax.media.protocol.*;
 
 import org.jitsi.impl.neomedia.device.*;
+import org.jitsi.impl.neomedia.jmfext.media.protocol.AbstractPullBufferCaptureDevice;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.codec.Constants;
 
@@ -39,8 +41,8 @@ public class IVFMediaDevice
     public IVFMediaDevice(String filename)
     {
         super(new CaptureDeviceInfo(
-                    "IVF_file",
-                    new MediaLocator("file:"+filename),
+                    filename,
+                    new MediaLocator("ivffile:"+filename),
                     IVFMediaDevice.SUPPORTED_FORMATS),
                 MediaType.VIDEO);
     }
@@ -55,7 +57,20 @@ public class IVFMediaDevice
     @Override
     protected CaptureDevice createCaptureDevice()
     {
-        return new DataSource(getCaptureDeviceInfo());
+        DataSource captureDevice = new DataSource();
+        captureDevice.setLocator(getCaptureDeviceInfo().getLocator());
+        try {
+            captureDevice.connect();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        if (captureDevice instanceof AbstractPullBufferCaptureDevice)
+        {
+            ((AbstractPullBufferCaptureDevice) captureDevice)
+                .setCaptureDeviceInfo(getCaptureDeviceInfo());
+        }
+        return captureDevice;
     }
 
     
