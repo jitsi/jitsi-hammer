@@ -8,15 +8,10 @@
 package org.jitsi.hammer.neomedia.jmfext.media.protocol.greyfading;
 
 import java.awt.Dimension;
-import java.io.*;
-import java.util.*;
-
 import javax.media.*;
 import javax.media.control.*;
 import javax.media.format.*;
-import javax.media.protocol.*;
 
-import org.jitsi.impl.neomedia.codec.*;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.*;
 
 /**
