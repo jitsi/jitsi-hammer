@@ -7,12 +7,7 @@
  
 package org.jitsi.hammer.neomedia.jmfext.media.protocol.ivffile;
 
-import java.awt.*;
 import java.io.*;
-
-import org.jitsi.impl.neomedia.codec.AbstractCodec2;
-
-import com.google.common.io.LittleEndianDataInputStream;
 
 /**
  * This class represent an IVF file and provide an API to get the vp8 it contains
