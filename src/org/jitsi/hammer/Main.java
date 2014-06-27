@@ -462,13 +462,13 @@ public class Main
         mediaStream2.setTarget(
                 new MediaStreamTarget(
                         new InetSocketAddress(InetAddress.getByName("localhost"), 10000),
-                        new InetSocketAddress(InetAddress.getByName("localhost"), 10000)));
+                        new InetSocketAddress(InetAddress.getByName("localhost"), 10001)));
         
         
         
         
-        control1.start(MediaType.AUDIO);
-        control2.start(MediaType.AUDIO);
+        //control1.start(MediaType.AUDIO);
+        //control2.start(MediaType.AUDIO);
         
         mediaStream1.start();
         mediaStream2.start();
