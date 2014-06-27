@@ -17,7 +17,7 @@ import java.io.*;
  */
 public class IVFFileReader
 {
-    IVFHeader header;
+    private IVFHeader header;
     
     private int frameNo = 0;
     

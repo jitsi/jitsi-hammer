@@ -21,15 +21,15 @@ import com.google.common.io.LittleEndianDataInputStream;
  */
 public class IVFHeader
 {
-    String signature;
-    short version;
-    short headerLengh;
-    String codec;
-    short width;
-    short height;
-    int framerate;
-    int timeScale;
-    int numberOfFramesInFile;
+    private String signature;
+    private short version;
+    private short headerLengh;
+    private String codec;
+    private short width;
+    private short height;
+    private int framerate;
+    private int timeScale;
+    private int numberOfFramesInFile;
     
     public IVFHeader(String filePath)
     {
