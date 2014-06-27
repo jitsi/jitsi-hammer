@@ -5,7 +5,7 @@
  * See terms of license at gnu.org.
  */
  
-package org.jitsi.hammer.neomedia.jmfext.media.protocol.ivffile;
+package org.jitsi.hammer.neomedia.jmfext.media.protocol.rtpdumpfile;
 
 import java.io.IOException;
 
@@ -16,7 +16,6 @@ import javax.media.protocol.*;
 import org.jitsi.impl.neomedia.device.*;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.AbstractPullBufferCaptureDevice;
 import org.jitsi.service.neomedia.*;
-import org.jitsi.service.neomedia.codec.Constants;
 
 
 /**
@@ -25,25 +24,16 @@ import org.jitsi.service.neomedia.codec.Constants;
  *
  * @author Thomas Kuntz
  */
-public class IVFMediaDevice
+public class RtpdumpMediaDevice
     extends MediaDeviceImpl
 {
-    /**
-     * The list of <tt>Format</tt>s supported by the
-     * <tt>IVFCaptureDevice</tt> instances.
-     */
-    public static final Format[] SUPPORTED_FORMATS
-        = new Format[]
-                {
-                    new VideoFormat(Constants.VP8)
-                };
-     
-    public IVFMediaDevice(String filename)
+    
+    public RtpdumpMediaDevice(String filename, String payloadTypeConstant)
     {
         super(new CaptureDeviceInfo(
                     filename,
-                    new MediaLocator("ivffile:"+filename),
-                    IVFMediaDevice.SUPPORTED_FORMATS),
+                    new MediaLocator("rtpdumpfile:" + filename),
+                    new Format[] { new VideoFormat(payloadTypeConstant) } ),
                 MediaType.VIDEO);
     }
 
@@ -67,7 +57,6 @@ public class IVFMediaDevice
         {
             e.printStackTrace(); //TODO what can I do if an exception is raised?
         }
-        
         
         if (captureDevice instanceof AbstractPullBufferCaptureDevice)
         {

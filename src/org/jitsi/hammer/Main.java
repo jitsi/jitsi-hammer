@@ -368,7 +368,7 @@ public class Main
                 5222,
                 "jitsi-videobridge.meet.jit.si",
                 "meet.jit.si",
-                "TestHammer");
+                "GSoC2014");
         */
         /*
         infoCLI = new HostInfo(
