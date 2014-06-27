@@ -56,9 +56,9 @@
             destdir="${output}"
             debug="true"
             fork="false"
-            source="1.5"
+            source="1.6"
             srcdir="src"
-            target="1.5">
+            target="1.6">
             <exclude name="net/java/sip/communicator/launcher/SIPCommunicator.java" />
         </javac>
     </target>
