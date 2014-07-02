@@ -25,6 +25,8 @@ public class RtpdumpStream
     private long seqNo = 0;
     
     private long timeLastRead = 0;
+    private long rtpTimestamp = 0;
+    private boolean lastReadWasMarked = true;
     
     private RtpdumpFileReader ivfFileReader;
     
@@ -40,8 +42,9 @@ public class RtpdumpStream
     RtpdumpStream(DataSource dataSource, FormatControl formatControl)
     {
         super(dataSource, formatControl);
-        this.ivfFileReader = new RtpdumpFileReader(
-                dataSource.getLocator().getRemainder());
+        
+        String rtpdumpFilePath = dataSource.getLocator().getRemainder();
+        this.ivfFileReader = new RtpdumpFileReader(rtpdumpFilePath);
     }
 
     
@@ -60,6 +63,7 @@ public class RtpdumpStream
         throws IOException
     {
         long millis = 0;
+        long timestamp = 0;
         VideoFormat format;
         
         format = (VideoFormat)buffer.getFormat();
@@ -78,15 +82,23 @@ public class RtpdumpStream
         buffer.setLength(data.length);
         
         
-        buffer.setTimeStamp(System.nanoTime());
+        
         buffer.setFlags(Buffer.FLAG_SYSTEM_TIME | Buffer.FLAG_LIVE_DATA);
+        if(lastReadWasMarked == true)
+        {
+            rtpTimestamp = System.nanoTime();
+        }
+        if( (lastReadWasMarked = rtpPacket.hasMarker()) == true)
+        {
+            buffer.setFlags(buffer.getFlags() | Buffer.FLAG_RTP_MARKER);
+        }
+        buffer.setTimeStamp(rtpTimestamp);
+        
         //buffer.setHeader(null);
         //buffer.setSequenceNumber(seqNo);
         //seqNo++;
         
-        //TODO
-        millis = System.currentTimeMillis() - this.timeLastRead;
-        millis = (long)(1000.0 / 1) - millis;
+        millis = rtpPacket.getRtpdumpTimestamp() - this.timeLastRead;
         if(millis > 0)
         {
             try
@@ -98,6 +110,6 @@ public class RtpdumpStream
                 e.printStackTrace();
             }
         }
-        this.timeLastRead=System.currentTimeMillis();
+        this.timeLastRead=rtpPacket.getRtpdumpTimestamp();
     }
 }
