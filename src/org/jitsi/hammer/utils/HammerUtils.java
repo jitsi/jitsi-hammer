@@ -21,6 +21,7 @@ import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.device.*;
 import org.jitsi.impl.neomedia.device.*;
 import org.jitsi.service.neomedia.format.*;
+import org.jitsi.service.neomedia.codec.*;
 import org.ice4j.*;
 import org.ice4j.ice.*;
 import org.jitsi.videobridge.*;
@@ -29,6 +30,7 @@ import java.net.*;
 import java.util.*;
 
 import javax.media.*;
+import javax.media.format.*;
 
 /**
  * The class contains a number of utility methods that are meant to facilitate
@@ -132,6 +134,13 @@ public class HammerUtils {
                         null, null, null, null),
                         MediaType.VIDEO);
                 
+                /*
+                returnedDevice = new MediaDeviceImpl(new CaptureDeviceInfo2(
+                        "rtpdump",
+                        new MediaLocator("rtpdumpfile:./ressources/rtp_vp8.rtpdump"),
+                        new Format[]{ new VideoFormat(Constants.VP8_RTP) }, null, null, null),
+                        MediaType.VIDEO);
+                */
                 //returnedDevice = new VideoGreyFadingMediaDevice();
                 //returnedDevice = new IVFMediaDevice("./ressources/big-buck-bunny_trailer_track1_eng.ivf");
                 break;
