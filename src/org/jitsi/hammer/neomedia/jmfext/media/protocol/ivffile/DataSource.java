@@ -11,10 +11,10 @@ import java.io.IOException;
 
 import javax.media.*;
 import javax.media.control.*;
-import javax.media.format.VideoFormat;
+import javax.media.format.*;
 
 import org.jitsi.impl.neomedia.jmfext.media.protocol.*;
-import org.jitsi.service.neomedia.codec.Constants;
+import org.jitsi.service.neomedia.codec.*;
 
 /**
  * Implements <tt>CaptureDevice</tt> and <tt>DataSource</tt> for the purposes of
