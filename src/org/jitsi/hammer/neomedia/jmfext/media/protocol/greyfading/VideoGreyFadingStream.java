@@ -109,7 +109,7 @@ public class VideoGreyFadingStream
 
         buffer.setData(data);
         buffer.setOffset(0);
-        buffer.setLength(bytes.length);
+        buffer.setLength(data.length);
 		
 		
 		buffer.setTimeStamp(System.nanoTime());
