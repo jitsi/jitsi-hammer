@@ -9,14 +9,19 @@ package org.jitsi.hammer;
 
 
 import org.jivesoftware.smack.*;
+import org.jivesoftware.smack.provider.ProviderManager;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.*;
 import org.osgi.framework.startlevel.*;
 
 import net.java.sip.communicator.impl.osgi.framework.launch.*;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.JingleIQ;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.JingleIQProvider;
 
 import java.util.*;
 
+import org.jitsi.hammer.extension.MediaProvider;
+import org.jitsi.hammer.extension.SsrcProvider;
 import org.jitsi.hammer.neomedia.FMJPluginInConfiguration;
 import org.jitsi.hammer.utils.*;
 import org.jitsi.impl.neomedia.codec.FMJPlugInConfiguration;
@@ -205,22 +210,42 @@ public class Hammer {
         {
             this.framework = framework;
         }
+        
+        
+        ProviderManager manager = ProviderManager.getInstance();
+        manager.addExtensionProvider(
+                MediaProvider.ELEMENT_NAME,
+                MediaProvider.NAMESPACE,
+                new MediaProvider());
+        manager.addExtensionProvider(
+                SsrcProvider.ELEMENT_NAME,
+                SsrcProvider.NAMESPACE,
+                new SsrcProvider());
+        
+        manager.addIQProvider(
+                JingleIQ.ELEMENT_NAME,
+                JingleIQ.NAMESPACE,
+                new JingleIQProvider());
     }
     
     /**
      * Start the connection of all the virtual user that this <tt>Hammer</tt>
      * handles to the XMPP server(and then a MUC).
      */
-    public void start() {
+    public void start(int wait) {
         try
         {
             for(JingleSession session : sessions)
             {
                 session.start();
+                Thread.sleep(wait);
             }
         }
         catch (XMPPException e)
         {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }

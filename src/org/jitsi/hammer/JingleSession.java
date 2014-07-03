@@ -132,25 +132,6 @@ public class JingleSession implements PacketListener {
         this.username = (username == null) ? "Anonymous" : username;
         
         
-        
-        ProviderManager manager = ProviderManager.getInstance();
-        manager.addExtensionProvider(
-                MediaProvider.ELEMENT_NAME,
-                MediaProvider.NAMESPACE,
-                new MediaProvider());
-        manager.addExtensionProvider(
-                SsrcProvider.ELEMENT_NAME,
-                SsrcProvider.NAMESPACE,
-                new SsrcProvider());
-        
-        manager.addIQProvider(
-                JingleIQ.ELEMENT_NAME,
-                JingleIQ.NAMESPACE,
-                new JingleIQProvider());
-
-        
-        
-        
         config = new ConnectionConfiguration(
                 serverInfo.getXMPPHostname(),
                 serverInfo.getPort(),
@@ -166,7 +147,7 @@ public class JingleSession implements PacketListener {
                 }
             });
         
-        //config.setDebuggerEnabled(true);
+        config.setDebuggerEnabled(true);
     }
 
 

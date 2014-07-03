@@ -117,7 +117,9 @@ public class HammerUtils {
         switch(MediaType.parseString(mediaType))
         {
             case AUDIO:
-                returnedDevice = new AudioSilenceMediaDevice();
+                //FIXME I don't know why but the audio take 100% of a core of
+                //the CPU. I can avoid that if I comment this line
+                //returnedDevice = new AudioSilenceMediaDevice();
                 break;
             case VIDEO:
                 /*
