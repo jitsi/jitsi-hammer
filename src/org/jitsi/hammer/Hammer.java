@@ -233,6 +233,8 @@ public class Hammer {
      * handles to the XMPP server(and then a MUC).
      */
     public void start(int wait) {
+        //if(wait <= 0) wait = 1;
+        
         try
         {
             for(JingleSession session : sessions)
