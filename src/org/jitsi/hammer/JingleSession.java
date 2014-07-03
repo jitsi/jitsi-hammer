@@ -147,7 +147,7 @@ public class JingleSession implements PacketListener {
                 }
             });
         
-        //config.setDebuggerEnabled(true);
+        config.setDebuggerEnabled(true);
     }
 
 
@@ -250,7 +250,7 @@ public class JingleSession implements PacketListener {
             {
                 content = HammerUtils.createDescriptionForDataContent(
                         CreatorEnum.responder,
-                        SendersEnum.both);
+                        SendersEnum.responder);
             }
             else
             {
@@ -275,7 +275,7 @@ public class JingleSession implements PacketListener {
                 content = JingleUtils.createDescription(
                                 CreatorEnum.responder, 
                                 cpe.getName(),
-                                SendersEnum.both,
+                                SendersEnum.responder,
                                 listFormat,
                                 null,
                                 ptRegistry,
@@ -333,7 +333,7 @@ public class JingleSession implements PacketListener {
             mediaPacket.addSource(
                     key,
                     str,
-                    MediaDirection.SENDRECV.toString());
+                    MediaDirection.SENDONLY.toString());
         }
         presencePacket.addExtension(mediaPacket);
         connection.sendPacket(presencePacket);

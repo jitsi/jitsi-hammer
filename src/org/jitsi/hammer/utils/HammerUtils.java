@@ -117,8 +117,6 @@ public class HammerUtils {
         switch(MediaType.parseString(mediaType))
         {
             case AUDIO:
-                //FIXME I don't know why but the audio take 100% of a core of
-                //the CPU. I can avoid that if I comment this line
                 returnedDevice = new AudioSilenceMediaDevice();
                 
                 /* XXX the rtpdump CaptureDevice doesn't work with opus,
@@ -336,6 +334,9 @@ public class HammerUtils {
             
             stream.setName(mediaName);
             stream.setRTPTranslator(mediaService.createRTPTranslator());
+            // XXX if SENDRECV is set instead of SENDONLY or RECVONLY,
+            // the audio stream will take 100% of a core of the CPU
+            stream.setDirection(MediaDirection.SENDONLY);
             
             if(format.getRTPPayloadType()
                ==  MediaFormat.RTP_PAYLOAD_TYPE_UNKNOWN)
