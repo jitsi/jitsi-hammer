@@ -147,7 +147,7 @@ public class JingleSession implements PacketListener {
                 }
             });
         
-        config.setDebuggerEnabled(true);
+        //config.setDebuggerEnabled(true);
     }
 
 
@@ -385,12 +385,12 @@ public class JingleSession implements PacketListener {
         
         //For now the DTLS is not started because there is a bug
         //that made the handshake fail
-        /*for(MediaStream stream : mediaStreamMap.values())
+        for(MediaStream stream : mediaStreamMap.values())
         {
             SrtpControl control = stream.getSrtpControl();
             MediaType type = stream.getFormat().getMediaType();
             control.start(type);
-        }*/
+        }
         
         
         for(MediaStream stream : mediaStreamMap.values())

@@ -334,8 +334,14 @@ public class HammerUtils {
             
             stream.setName(mediaName);
             stream.setRTPTranslator(mediaService.createRTPTranslator());
-            // XXX if SENDRECV is set instead of SENDONLY or RECVONLY,
-            // the audio stream will take 100% of a core of the CPU
+            /* XXX if SENDRECV is set instead of SENDONLY or RECVONLY,
+             * the audio stream will take 100% of a core of the CPU
+             *
+             * It also seems like if I remove the 2 function of the
+             * AudioSilenceMediaDevice createPlayer and createSession, that
+             * return null for the Player, the bug is also avoided : maybe
+             * libjitsi doesn't handle correctly a null player..
+             */
             stream.setDirection(MediaDirection.SENDONLY);
             
             if(format.getRTPPayloadType()

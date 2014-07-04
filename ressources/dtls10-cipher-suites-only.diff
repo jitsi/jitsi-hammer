@@ -1,0 +1,49 @@
+diff --git a/src/org/jitsi/impl/neomedia/transform/dtls/TlsClientImpl.java b/src/org/jitsi/impl/neomedia/transform/dtls/TlsClientImpl.java
+index 681a94b..4775a25 100644
+--- a/src/org/jitsi/impl/neomedia/transform/dtls/TlsClientImpl.java
++++ b/src/org/jitsi/impl/neomedia/transform/dtls/TlsClientImpl.java
+@@ -95,11 +95,11 @@ public class TlsClientImpl
+             new int[]
+                     {
+ /* core/src/main/java/org/bouncycastle/crypto/tls/DefaultTlsClient.java */
+-                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+-                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
++//                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
++//                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+                         CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+-                        CipherSuite.TLS_RSA_WITH_AES_128_GCM_SHA256,
+-                        CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA256,
++//                        CipherSuite.TLS_RSA_WITH_AES_128_GCM_SHA256,
++//                        CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA256,
+                         CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA
+                     };
+     }
+diff --git a/src/org/jitsi/impl/neomedia/transform/dtls/TlsServerImpl.java b/src/org/jitsi/impl/neomedia/transform/dtls/TlsServerImpl.java
+index 8e16953..5df01ab 100644
+--- a/src/org/jitsi/impl/neomedia/transform/dtls/TlsServerImpl.java
++++ b/src/org/jitsi/impl/neomedia/transform/dtls/TlsServerImpl.java
+@@ -106,16 +106,16 @@ public class TlsServerImpl
+             new int[]
+                     {
+ /* core/src/main/java/org/bouncycastle/crypto/tls/DefaultTlsServer.java */
+-                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+-                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+-                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,
+-                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
++//                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
++//                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
++//                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,
++//                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+                         CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+                         CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+-                        CipherSuite.TLS_RSA_WITH_AES_256_GCM_SHA384,
+-                        CipherSuite.TLS_RSA_WITH_AES_128_GCM_SHA256,
+-                        CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA256,
+-                        CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA256,
++//                        CipherSuite.TLS_RSA_WITH_AES_256_GCM_SHA384,
++//                        CipherSuite.TLS_RSA_WITH_AES_128_GCM_SHA256,
++//                        CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA256,
++//                        CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA256,
+                         CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
+                         CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA
+ /* core/src/test/java/org/bouncycastle/crypto/tls/test/MockDTLSServer.java */
