@@ -8,7 +8,6 @@
 
 package org.jitsi.hammer.neomedia;
 
-import java.net.*;
 import java.util.*;
 
 import javax.media.PackageManager;

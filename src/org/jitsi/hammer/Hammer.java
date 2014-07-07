@@ -8,24 +8,22 @@
 package org.jitsi.hammer;
 
 
-import org.jivesoftware.smack.*;
-import org.jivesoftware.smack.provider.ProviderManager;
+
 import org.osgi.framework.*;
 import org.osgi.framework.launch.*;
 import org.osgi.framework.startlevel.*;
 
+import org.jivesoftware.smack.*;
+import org.jivesoftware.smack.provider.*;
+
 import net.java.sip.communicator.impl.osgi.framework.launch.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.JingleIQ;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.JingleIQProvider;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
+import org.jitsi.service.libjitsi.LibJitsi;
+
+import org.jitsi.hammer.extension.*;
+import org.jitsi.hammer.neomedia.*;
 
 import java.util.*;
-
-import org.jitsi.hammer.extension.MediaProvider;
-import org.jitsi.hammer.extension.SsrcProvider;
-import org.jitsi.hammer.neomedia.FMJPluginInConfiguration;
-import org.jitsi.hammer.utils.*;
-import org.jitsi.impl.neomedia.codec.FMJPlugInConfiguration;
-
 
 /**
  * 
@@ -74,9 +72,10 @@ public class Hammer {
      */
     private static final String[][] BUNDLES =
         {
+        
             {
                 "net/java/sip/communicator/impl/libjitsi/LibJitsiActivator"
-            },
+            }/*,
             {
                 "net/java/sip/communicator/util/UtilActivator",
                 "net/java/sip/communicator/impl/fileaccess/FileAccessActivator"
@@ -87,22 +86,22 @@ public class Hammer {
             {
                 "net/java/sip/communicator/impl/resources/ResourceManagementActivator"
             },
-            /*{
+            {
                 "net/java/sip/communicator/util/dns/DnsUtilActivator"
             },
             {
                 "net/java/sip/communicator/impl/netaddr/NetaddrActivator"
             },
-            /*{
+            {
                 "net/java/sip/communicator/impl/packetlogging/PacketLoggingActivator"
-            },*/
-            /*{
+            },
+            {
                 "net/java/sip/communicator/service/gui/internal/GuiServiceActivator"
-            },*/
+            },
             {
                 "net/java/sip/communicator/service/protocol/media/ProtocolMediaActivator"
             },
-            /*{
+            {
                 "org/jitsi/hammer/HammerActivator"
             }*/
         };
@@ -199,6 +198,13 @@ public class Hammer {
 
             framework.start();
             
+            /*
+             * Call to getMediaService to initialize the MediaService
+             * implementation so that the configuration for the
+             * fmj registry are correctly set 
+             * before I write my capture devices in it.
+             */
+            LibJitsi.getMediaService();
             FMJPluginInConfiguration.registerCustomPackages();
         }
         catch (BundleException be)
@@ -246,8 +252,9 @@ public class Hammer {
         catch (XMPPException e)
         {
             e.printStackTrace();
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
+        }
+        catch (InterruptedException e)
+        {
             e.printStackTrace();
         }
     }

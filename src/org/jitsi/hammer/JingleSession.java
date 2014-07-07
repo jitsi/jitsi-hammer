@@ -13,7 +13,6 @@ import org.jivesoftware.smackx.muc.*;
 import org.jivesoftware.smackx.packet.*;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.filter.*;
-import org.jivesoftware.smack.provider.*;
 import org.ice4j.ice.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.format.*;
