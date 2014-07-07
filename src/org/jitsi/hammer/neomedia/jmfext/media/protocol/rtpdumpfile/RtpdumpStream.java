@@ -63,13 +63,12 @@ public class RtpdumpStream
         throws IOException
     {
         long millis = 0;
-        long timestamp = 0;
-        VideoFormat format;
+        Format format;
         
-        format = (VideoFormat)buffer.getFormat();
+        format = buffer.getFormat();
         if (format == null)
         {
-            format = (VideoFormat)getFormat();
+            format = getFormat();
             if (format != null)
                 buffer.setFormat(format);
         }

@@ -118,33 +118,25 @@ public class HammerUtils {
         {
             case AUDIO:
                 returnedDevice = new AudioSilenceMediaDevice();
-                
-                /* XXX the rtpdump CaptureDevice doesn't work with opus,
-                 * and I don't know why... :
-                 * 
-                   [java] Jul 03, 2014 3:17:34 PM org.jitsi.util.Logger warn
-                   [java] WARNING: javax.media.ControllerErrorEvent[source=com.sun.media.processor.unknown.Handler@29fe65c8,message=Internal module net.sf.fmj.media.BasicSourceModule@7494fa66 failed!]
-                   [java] Jul 03, 2014 3:17:34 PM org.jitsi.util.Logger warn
-                   [java] WARNING: javax.media.ControllerClosedEvent[source=com.sun.media.processor.unknown.Handler@29fe65c8]
-                 * 
-                 */
-//                returnedDevice = new AudioMediaDeviceImpl(new CaptureDeviceInfo2(
-//                        "rtpdump",
-//                        new MediaLocator("rtpdumpfile:./ressources/rtp_opus.rtpdump"),
-//                        new Format[]{ new AudioFormat(
-//                                Constants.OPUS_RTP,
-//                                48000,
-//                                /* sampleSizeInBits */ Format.NOT_SPECIFIED,
-//                                2,
-//                                /* endian */ Format.NOT_SPECIFIED,
-//                                /* signed */ Format.NOT_SPECIFIED,
-//                                /* frameSizeInBits */ Format.NOT_SPECIFIED,
-//                                /* frameRate */ Format.NOT_SPECIFIED,
-//                                Format.byteArray) },
-//                        null,
-//                        null,
-//                        null));
-                
+                /*
+                returnedDevice = new AudioMediaDeviceImpl(
+                    new CaptureDeviceInfo2(
+                        "rtpdump",
+                        new MediaLocator("rtpdumpfile:./ressources/rtp_opus.rtpdump"),
+                        new Format[]{ new AudioFormat(
+                                Constants.OPUS_RTP,
+                                48000,
+                                Format.NOT_SPECIFIED, // sampleSizeInBits 
+                                2,
+                                Format.NOT_SPECIFIED, // endian 
+                                Format.NOT_SPECIFIED, // signed
+                                Format.NOT_SPECIFIED, // frameSizeInBits 
+                                Format.NOT_SPECIFIED, // frameRate 
+                                Format.byteArray) },
+                        null,
+                        null,
+                        null));
+                */
                 break;
             case VIDEO:
                 /*
