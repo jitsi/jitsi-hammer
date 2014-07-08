@@ -39,6 +39,7 @@ import javax.media.format.*;
  * @author Thomas Kuntz
  */
 public class HammerUtils {
+    static int label = 1;
     
     /**
      * Select the favorite <tt>MediaFormat</tt> of a list of <tt>MediaFormat</tt>
@@ -553,9 +554,13 @@ public class HammerUtils {
     public static void addSourceExtension(RtpDescriptionPacketExtension description,
                                     long ssrc)
     {
-        MediaType type = MediaType.parseString(description.getMedia());
         MediaService mediaService = LibJitsi.getMediaService();
         String msLabel = UUID.randomUUID().toString();
+        /*
+         * IMPORTANT : The label need to be an unique ID for this stream.
+         * At first, I copied part of Jitsi's code 
+         */
+        String label = UUID.randomUUID().toString();
 
         SourcePacketExtension sourcePacketExtension = 
                 new SourcePacketExtension();
@@ -566,23 +571,22 @@ public class HammerUtils {
         sourcePacketExtension.setSSRC(ssrc);
         sourcePacketExtension.addChildExtension(
                 new ParameterPacketExtension("cname",
-                                             LibJitsi.getMediaService()
-                                                .getRtpCname()));
+                                             mediaService.getRtpCname()));
         sourcePacketExtension.addChildExtension(
-                new ParameterPacketExtension("msid", msLabel + " " + type.toString()));
+                new ParameterPacketExtension("msid", msLabel + " " + label));
         sourcePacketExtension.addChildExtension(
                 new ParameterPacketExtension("mslabel", msLabel));
         sourcePacketExtension.addChildExtension(
-                new ParameterPacketExtension("label", type.toString()));
+                new ParameterPacketExtension("label", label));
         description.addChildExtension(sourcePacketExtension);
         
         
         
-        ssrcPacketExtension.setSsrc(""+ssrc);
+        ssrcPacketExtension.setSsrc(String.valueOf(ssrc));
         ssrcPacketExtension.setCname(mediaService.getRtpCname());
-        ssrcPacketExtension.setMsid(msLabel + " " + type.toString());
+        ssrcPacketExtension.setMsid(msLabel + " " + label);
         ssrcPacketExtension.setMslabel(msLabel);
-        ssrcPacketExtension.setLabel(type.toString());
+        ssrcPacketExtension.setLabel(label);
         description.addChildExtension(ssrcPacketExtension);
     }
     

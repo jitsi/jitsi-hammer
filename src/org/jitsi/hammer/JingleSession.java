@@ -68,10 +68,25 @@ public class JingleSession implements PacketListener {
     private MultiUserChat muc;
     
     
-    
+    /**
+     * The registry containing the dynamic payload types learned in the
+     * session-initiate (to use back in the session-accept)
+     */
     DynamicPayloadTypeRegistry ptRegistry = new DynamicPayloadTypeRegistry();
+    
+    /**
+     * A Map mapping a media type (audio, video, data), with a list of format
+     * that can be handle by libjitsi
+     */
     Map<String,List<MediaFormat>> possibleFormatMap =
             new HashMap<String,List<MediaFormat>>();
+    
+    /**
+     * A Map mapping a media type (audio, video, data), with a <tt>MediaFormat</tt>
+     * representing the selected format for the stream handling this media type.
+     * 
+     * The MediaFormat in this Map has been chosen in <tt>possibleFormatMap</tt>
+     */
     Map<String,MediaFormat> selectedFormat = new HashMap<String,MediaFormat>();
     
     /**
@@ -104,6 +119,11 @@ public class JingleSession implements PacketListener {
      */
     private Agent agent;
     
+    /**
+     * <tt>Presence</tt> packet containing the SSRC of the streams of this
+     * <tt>JingleSession</tt> (ns = http://estos.de/ns/mjs).
+     */
+    private Packet presencePacketWithSSRC;
     
     /**
      * Instantiates a <tt>JingleSession</tt> with a default username that
@@ -191,7 +211,7 @@ public class JingleSession implements PacketListener {
          * nickname is correctly displayed in jitmeet
          */
         Packet presencePacket = new Presence(Presence.Type.available);
-        presencePacket.setTo(roomURL);
+        presencePacket.setTo(roomURL + "/" + username);
         presencePacket.addExtension(new Nick(username));
         connection.sendPacket(presencePacket);
         
@@ -249,7 +269,7 @@ public class JingleSession implements PacketListener {
             {
                 content = HammerUtils.createDescriptionForDataContent(
                         CreatorEnum.responder,
-                        SendersEnum.responder);
+                        SendersEnum.both);
             }
             else
             {
@@ -274,7 +294,7 @@ public class JingleSession implements PacketListener {
                 content = JingleUtils.createDescription(
                                 CreatorEnum.responder, 
                                 cpe.getName(),
-                                SendersEnum.responder,
+                                SendersEnum.both,
                                 listFormat,
                                 null,
                                 ptRegistry,
@@ -283,14 +303,14 @@ public class JingleSession implements PacketListener {
             
             contentMap.put(cpe.getName(),content);
         }
-        
         //We remove the content for the data (because data is not handle
         //for now by libjitsi
         //FIXME
         contentMap.remove("data");
         
-        iceMediaStreamGenerator = IceMediaStreamGenerator.getInstance();
         
+        
+        iceMediaStreamGenerator = IceMediaStreamGenerator.getInstance();
         try
         {
             agent = iceMediaStreamGenerator.generateIceMediaStream(
@@ -320,11 +340,25 @@ public class JingleSession implements PacketListener {
         
         
         
-        //Send the SSRC of the different media in a "media" tag
-        //It's not necessary but its a copy of Jitsi Meet behavior
-        Packet presencePacket = new Presence(Presence.Type.available);
-        String recipient = serverInfo.getRoomName()+"@"+serverInfo.getMUCDomain();
-        presencePacket.setTo(recipient);
+        /*
+         * Send the SSRC of the different media in a "media" tag
+         * It's not necessary but its a copy of Jitsi Meet behavior
+         * 
+         * Also, without sending this packet, there are error logged
+         *  in the javascript console of the Jitsi Meet initiator :
+         * "No video type for ssrc: 13365845"
+         * It seems like Jitsi Meet can work arround this error,
+         * but better safe than sorry.
+         */
+        presencePacketWithSSRC = new Presence(Presence.Type.available);
+        String recipient = 
+                serverInfo.getRoomName()
+                +"@"
+                +serverInfo.getMUCDomain()
+                + "/"
+                + username;
+        presencePacketWithSSRC.setTo(recipient);
+        presencePacketWithSSRC.addExtension(new Nick(username));
         MediaPacketExtension mediaPacket = new MediaPacketExtension();
         for(String key : mediaStreamMap.keySet())
         {
@@ -332,10 +366,11 @@ public class JingleSession implements PacketListener {
             mediaPacket.addSource(
                     key,
                     str,
-                    MediaDirection.SENDONLY.toString());
+                    MediaDirection.SENDRECV.toString());
         }
-        presencePacket.addExtension(mediaPacket);
-        connection.sendPacket(presencePacket);
+        presencePacketWithSSRC.addExtension(mediaPacket);
+        //connection.sendPacket(presencePacketWithSSRC);
+
         
         
         
@@ -365,7 +400,6 @@ public class JingleSession implements PacketListener {
         
         
         agent.startConnectivityEstablishment();
-        
         while(IceProcessingState.TERMINATED != agent.getState())
         {
             System.out.println("Connectivity Establishment in process");
@@ -379,8 +413,12 @@ public class JingleSession implements PacketListener {
             }
         }
         
+        
+        
         //Add socket to the MediaStream
         HammerUtils.addSocketToMediaStream(agent, mediaStreamMap);
+        
+        
         
         //For now the DTLS is not started because there is a bug
         //that made the handshake fail
@@ -415,12 +453,16 @@ public class JingleSession implements PacketListener {
                 sessionInitiate = jiq;
                 acceptJingleSession();
                 break;
+            case ADDSOURCE:
+                break;
+            case REMOVESOURCE:
+                break;
             default:
                 System.out.println("Unknown Jingle IQ");
                 break;
         }
     }
-
+    
     
     /**
      * This function simply create an ACK packet to acknowledge the Jingle IQ
