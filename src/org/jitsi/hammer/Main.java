@@ -221,6 +221,15 @@ public class Main
         */
         /*
         infoCLI = new HostInfo(
+                "jitmeet.example.com",
+                "jitmeet.example.com",
+                5222,
+                "jitsi-videobridge.jitmeet.example.com",
+                "conference.jitmeet.example.com",
+                "TestHammer");
+        */
+        /*
+        infoCLI = new HostInfo(
                 "pawel.jitsi.net",
                 "pawel.jitsi.net",
                 5222,
@@ -237,7 +246,7 @@ public class Main
         //After the initialization we start the Hammer (all its users will
         //connect to the XMPP server and try to setup media stream with it bridge
         
-        hammer.start(0);
+        hammer.start(10000);
         while(true) Thread.sleep(3600000);
     }
 }
