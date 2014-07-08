@@ -23,7 +23,7 @@ import org.jitsi.impl.neomedia.jmfext.media.protocol.*;
 public class DataSource
     extends AbstractVideoPullBufferCaptureDevice
 {
-    protected final static float FRAMERATE = 25;
+    protected final static float FRAMERATE = 10;
     
     
     /**
