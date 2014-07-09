@@ -122,8 +122,14 @@ public class JingleSession implements PacketListener {
     /**
      * <tt>Presence</tt> packet containing the SSRC of the streams of this
      * <tt>JingleSession</tt> (ns = http://estos.de/ns/mjs).
+     * 
+     * The packet is saved in these variable because it can be send multiple
+     * times if needed (to copy Jitsi Meet behavior), but now it's only send
+     * once (during the jingle accept).
      */
     private Packet presencePacketWithSSRC;
+    
+    
     
     /**
      * Instantiates a <tt>JingleSession</tt> with a default username that
@@ -145,7 +151,21 @@ public class JingleSession implements PacketListener {
      * connection.
      * 
      */
-    public JingleSession(HostInfo hostInfo,String username)
+    public JingleSession(HostInfo hostInfo, String username)
+    {
+        this(hostInfo, username, false);
+    }
+
+    /**
+     * Instantiates a <tt>JingleSession</tt> with a specified <tt>username</tt>
+     * that will connect to the XMPP server contained in <tt>hostInfo</tt>.
+     * 
+     * @param hostInfo the XMPP server informations needed for the connection.
+     * @param username the username used by this <tt>JingleSession</tt> in the
+     * connection.
+     * @param smackDebug the boolean activating or not the debug screen of smack
+     */
+    public JingleSession(HostInfo hostInfo, String username, boolean smackDebug)
     {
         this.serverInfo = hostInfo;
         this.username = (username == null) ? "Anonymous" : username;
@@ -155,9 +175,9 @@ public class JingleSession implements PacketListener {
                 serverInfo.getXMPPHostname(),
                 serverInfo.getPort(),
                 serverInfo.getXMPPDomain());
+        config.setDebuggerEnabled(smackDebug);
         
         connection = new XMPPConnection(config);
-        
         connection.addPacketListener(this,new PacketFilter()
             {
                 public boolean accept(Packet packet)
@@ -165,10 +185,7 @@ public class JingleSession implements PacketListener {
                     return (packet instanceof JingleIQ);
                 }
             });
-        
-        //config.setDebuggerEnabled(true);
     }
-
 
     /**
      * Connect to the XMPP server then to the MUC chatroom.
@@ -303,9 +320,11 @@ public class JingleSession implements PacketListener {
             
             contentMap.put(cpe.getName(),content);
         }
-        //We remove the content for the data (because data is not handle
-        //for now by libjitsi
-        //FIXME
+        /*
+         * We remove the content for the data (because data is not handle
+         * for now by libjitsi)
+         * FIXME
+         */
         contentMap.remove("data");
         
         
@@ -323,6 +342,8 @@ public class JingleSession implements PacketListener {
             System.err.println(e);
         }
         
+        //Add the remote candidate to my agent, and add my local candidate of
+        //my stream to the content list of the future session-accept
         HammerUtils.addRemoteCandidateToAgent(
                 agent,
                 sessionInitiate.getContentList());
@@ -333,11 +354,15 @@ public class JingleSession implements PacketListener {
         
         
         
-        //create mediastream
+        //create mediastream from the selected MediaFormat, and with
+        //the selected MediaDevice.
         mediaStreamMap = HammerUtils.generateMediaStream(
                 selectedFormat,
                 ptRegistry);
         
+        //Now that the MediaStream are created, I can add their SSRC to the
+        //content list of the future session-accept
+        HammerUtils.addSSRCToContent(contentMap, mediaStreamMap);
         
         
         /*
@@ -369,7 +394,7 @@ public class JingleSession implements PacketListener {
                     MediaDirection.SENDRECV.toString());
         }
         presencePacketWithSSRC.addExtension(mediaPacket);
-        //connection.sendPacket(presencePacketWithSSRC);
+        connection.sendPacket(presencePacketWithSSRC);
 
         
         
@@ -383,22 +408,19 @@ public class JingleSession implements PacketListener {
         sessionAccept.setInitiator(sessionInitiate.getFrom());
         
         
-        HammerUtils.addSSRCToContent(contentMap, mediaStreamMap);
-        
-        
-        
-        //Set fingerprint
+        //Set the remote fingerprint on my streams and add the fingerprints
+        //of my streams to the content list of the session-accept
         HammerUtils.setDtlsEncryptionOnTransport(
                 mediaStreamMap,
                 sessionAccept.getContentList(),
                 sessionInitiate.getContentList());
         
         
-        //Sending of the session-accept IQ
+        //Send the session-accept IQ
         connection.sendPacket(sessionAccept);
         System.out.println("Jingle accept-session message sent");
         
-        
+        //Run ICE protocol on my streams.
         agent.startConnectivityEstablishment();
         while(IceProcessingState.TERMINATED != agent.getState())
         {
@@ -415,13 +437,11 @@ public class JingleSession implements PacketListener {
         
         
         
-        //Add socket to the MediaStream
+        //Add socket created by ice4j to their associated MediaStreams
         HammerUtils.addSocketToMediaStream(agent, mediaStreamMap);
         
         
-        
-        //For now the DTLS is not started because there is a bug
-        //that made the handshake fail
+        //Start the encryption of the MediaStreams
         for(MediaStream stream : mediaStreamMap.values())
         {
             SrtpControl control = stream.getSrtpControl();
@@ -429,7 +449,7 @@ public class JingleSession implements PacketListener {
             control.start(type);
         }
         
-        
+        //Start the MediaStream
         for(MediaStream stream : mediaStreamMap.values())
         {
             stream.start();
@@ -445,17 +465,26 @@ public class JingleSession implements PacketListener {
     public void processPacket(Packet packet)
     {
         JingleIQ jiq = (JingleIQ)packet;
-        System.out.println("Jingle initiate-session message received");
         ackJingleIQ(jiq);
         switch(jiq.getAction())
         {
             case SESSION_INITIATE:
-                sessionInitiate = jiq;
-                acceptJingleSession();
+                System.out.println("Jingle session-initiate received");
+                if(sessionInitiate == null)
+                {
+                    sessionInitiate = jiq;
+                    acceptJingleSession();
+                }
+                else
+                {
+                    System.out.println("but not processed (already got one)");
+                }
                 break;
             case ADDSOURCE:
+                System.out.println("Jingle addsource received");
                 break;
             case REMOVESOURCE:
+                System.out.println("Jingle addsource received");
                 break;
             default:
                 System.out.println("Unknown Jingle IQ");

@@ -7,11 +7,7 @@
  
 package org.jitsi.hammer.neomedia.jmfext.media.protocol.rtpdumpfile;
 
-import java.awt.*;
-import java.io.*;
 import java.util.Arrays;
-
-import com.google.common.io.LittleEndianDataInputStream;
 
 /**
  * This class represent a RTP packet (header+payload) of a RTP stream recorded
@@ -22,26 +18,91 @@ import com.google.common.io.LittleEndianDataInputStream;
  */
 public class RTPPacket
 {
-    private int rtpdump_timestamp;
+    /**
+     * The version of RTP of the packet
+     */
     private short version;
+
+    /**
+     * The padding flag of the RTP packet
+     * (if true, the flag is set, else it's not)
+     */
     private boolean padding;
+
+    /**
+     * The extension flag of the RTP packet
+     * (if true, the flag is set, else it's not)
+     */
     private boolean extension;
+
+    /**
+     * The number of CSRC identifiers that follow the fixed header.
+     */
     private short CSRCCount;
+
+    /**
+     * The marker flag of the RTP packet
+     * (if true, the flag is set, else it's not)
+     */
     private boolean marker;
-    private int sequenceNumber;
+
+    /**
+     * The payload type of the RTP packet.
+     * It identifies the format of the RTP payload.
+     */
     private short payloadType;
+    
+    /**
+     * The sequence number of the RTP packet.
+     */
+    private int sequenceNumber;
+
+    /**
+     * The timestamp of the RTP packet.
+     */
     private long timestamp;
+
+    /**
+     * The ssrc of the RTP packet.
+     */
     private long ssrc;
+
+    /**
+     * The list of CSRC contained in the RTP packet.
+     */
     private long[] CSRC;
+
+    /**
+     * The payload of the RTP packet.
+     */
     private byte[] payload;
+
+    /**
+     * The rtpdump timestamp (the timestamp of the sending/receiving of the
+     * RTP packet).
+     */
+    private long rtpdump_timestamp;
     
     
-    public RTPPacket(byte[] rtpPacket,int timestamp)
+    /**
+     * Initialize a new instance of <tt>RTPPacket</tt>, by parsing the byte
+     * array <tt>rtpPacket</tt> of the RTP packet.
+     * @param rtpPacket the data of the RTP packet, as a byte array.
+     * @param rtpdump_timestamp the timestamp of the sending/receiving of
+     * the RTP packet.
+     */
+    public RTPPacket(byte[] rtpPacket,long rtpdump_timestamp)
     {
         this(rtpPacket);
-        rtpdump_timestamp = timestamp;
+        this.rtpdump_timestamp = rtpdump_timestamp;
     }
     
+    
+    /**
+     * Initialize a new instance of <tt>RTPPacket</tt>, by parsing the byte
+     * array <tt>rtpPacket</tt> of the RTP packet.
+     * @param rtpPacket the data of the RTP packet, as a byte array.
+     */
     public RTPPacket(byte[] rtpPacket)
     {
         version = (short) ((rtpPacket[0] & 0xC0) >> 6);
@@ -87,63 +148,111 @@ public class RTPPacket
                 rtpPacket.length);
     }
     
-    public int getRtpdumpTimestamp()
-    {
-        return rtpdump_timestamp;
-    }
-    
+    /**
+     * Get the version of the RTP packet.
+     * @return the version of the RTP packet.
+     */
     public short getVersion()
     {
         return version;
     }
     
+    /**
+     * Indicate if the RTP packet has the padding flag set.
+     * @return true if the padding flag was set in the header, false if not.
+     */
     public boolean hasPadding()
     {
         return padding;
     }
     
+    /**
+     * Indicate if the RTP packet has the extension flag set.
+     * @return true if the extension flag was set in the header, false if not.
+     */
     public boolean hasExtension()
     {
         return extension;
     }
     
+    /**
+     * Get the number of CSRC identifiers that follow the fixed header.
+     * @return the number of CSRC identifiers that follow the fixed header.
+     */
     public short getCSRCCount()
     {
         return CSRCCount;
     }
     
+    /**
+     * Indicate if the RTP packet has the marker flag set.
+     * @return true if the marker flag was set in the header, false if not.
+     */
     public boolean hasMarker()
     {
         return marker;
     }
     
+    /**
+     * Get the payload type of the RTP packet.
+     * @return the payload type of the RTP packet.
+     */
     public short getPayloadType()
     {
         return payloadType;
     }
     
+    /**
+     * Get the sequence number of the RTP packet.
+     * @return the sequence number of the RTP packet.
+     */
     public int getSequenceNumber()
     {
         return sequenceNumber;
     }
     
+    /**
+     * Get the timestamp of the RTP packet.
+     * @return the timestamp type of the RTP packet.
+     */
     public long getTimestamp()
     {
         return timestamp;
     }
     
+    /**
+     * Get the SSRC of the RTP packet.
+     * @return the SSRC of the RTP packet.
+     */
     public long getSSRC()
     {
         return ssrc;
     }
     
+    /**
+     * Get the array of CSRC this RTP packet contains.
+     * @return the array of CSRC this RTP packet contains.
+     */
     public long[] getCSRC()
     {
         return CSRC;
     }
     
+    /**
+     * Get the payload as a byte array of the RTP packet.
+     * @return the payload of the RTP packet.
+     */
     public byte[] getPayload()
     {
         return payload;
+    }
+
+    /**
+     * Get the rtpdump timestamp (the timestamp of the sending/receiving).
+     * @return the rtpdump timestamp (the timestamp of the sending/receiving).
+     */
+    public long getRtpdumpTimestamp()
+    {
+        return rtpdump_timestamp;
     }
 }

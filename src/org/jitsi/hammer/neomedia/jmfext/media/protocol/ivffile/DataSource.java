@@ -18,15 +18,28 @@ import org.jitsi.service.neomedia.codec.*;
 
 /**
  * Implements <tt>CaptureDevice</tt> and <tt>DataSource</tt> for the purposes of
- * ivf (vp8 raw file, extracted from webm) file streaming
+ * ivf (vp8 raw file, extracted from webm) file streaming.
  *
  * @author Thomas Kuntz
  */
 public class DataSource
     extends AbstractVideoPullBufferCaptureDevice
 {
+    /**
+     * The format of the VP8 video contained in the IVF file.
+     */
     private Format[] SUPPORTED_FORMATS = new Format[1];
-    private String file;
+    
+    /**
+     * The location of the IVF file this <tt>DataSource</tt> will use for the
+     * VP8 frames.
+     */
+    private String fileLocation;
+    
+    /**
+     * The header of the IVF file this <tt>DataSource</tt> will use for the
+     * VP8 frames.
+     */
     private IVFHeader ivfHeader;
     
     /**
@@ -37,9 +50,13 @@ public class DataSource
     public void doConnect() throws IOException
     {
         super.doConnect();
-        this.file = getLocator().getRemainder();
-        ivfHeader = new IVFHeader(this.file);
+        this.fileLocation = getLocator().getRemainder();
+        ivfHeader = new IVFHeader(this.fileLocation);
         
+        /*
+         * The real framerate of an ivf file is the framerate in the header of
+         * the file divided by the timescale (also given in the header).
+         */
         this.SUPPORTED_FORMATS[0] = new VideoFormat(
                 Constants.VP8,
                 ivfHeader.getDimension(),

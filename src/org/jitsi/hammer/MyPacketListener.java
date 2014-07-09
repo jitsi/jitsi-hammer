@@ -11,7 +11,14 @@ import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smackx.muc.*;
 
-
+/**
+ * 
+ * @author Thomas Kuntz
+ *
+ * An implement of <tt>PacketListener</tt> that should listen to the message
+ * of a MUC to display them in the terminal, and send automatic replies.
+ *
+ */
 public class MyPacketListener implements PacketListener 
 {
     /**
@@ -37,7 +44,7 @@ public class MyPacketListener implements PacketListener
     public void processPacket(Packet packet) 
     {
         /*
-         * When a packet is received, it check is this packet is a Message.
+         * When a packet is received, it checks if this packet is a Message.
          * If it is, it print its body and sender.
          * If the Message received isn't from this client,
          * this client replies with "C'est pas faux.".
