@@ -20,10 +20,11 @@ import java.io.*;
 /**
  * 
  * @author Thomas Kuntz
+ * 
  * This class is used to generate <tt>IceMediaStream</tt> without overlapping
  * the port numbers used for each.
  * 
- * This class propose a static instance of itself (with default value for min
+ * This class proposes a static instance of itself (with default value for min
  * and max port number) to directly use it without having to instantiate one.
  */
 public class IceMediaStreamGenerator

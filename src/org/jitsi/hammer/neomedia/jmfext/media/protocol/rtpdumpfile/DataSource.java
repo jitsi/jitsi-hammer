@@ -13,17 +13,15 @@ import javax.media.control.*;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.*;
 
 /**
- * Implements <tt>CaptureDevice</tt> and <tt>DataSource</tt> for the purposes of
- * rtpdump file streaming.
+ * Implements the <tt>CaptureDevice</tt> and <tt>DataSource</tt> for the
+ *  purpose of rtpdump file streaming.
  * 
  * 
  * @author Thomas Kuntz
  */
 public class DataSource
     extends AbstractVideoPullBufferCaptureDevice
-{
-    //new VideoFormat(Constants.VP8_RTP)
-    
+{    
     /**
      * {@inheritDoc}
      *

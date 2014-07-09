@@ -7,77 +7,39 @@
  
 package org.jitsi.hammer.neomedia.jmfext.media.protocol.rtpdumpfile;
 
-import java.io.IOException;
 
 import javax.media.*;
 import javax.media.format.*;
-import javax.media.protocol.*;
 
 import org.jitsi.impl.neomedia.device.*;
-import org.jitsi.impl.neomedia.jmfext.media.protocol.AbstractPullBufferCaptureDevice;
 import org.jitsi.service.neomedia.*;
 
 
 /**
- * Implements a <tt>MediaDevice</tt> which provides a fading animation from
- * white to black to white... in form of video.
+ * Implements a <tt>MediaDevice</tt> that represent a CaptureDevice that
+ * read a rtpdump file to provide recorded rtp packet.
  *
  * @author Thomas Kuntz
  */
 public class RtpdumpMediaDevice
     extends MediaDeviceImpl
 {
-    
-    public RtpdumpMediaDevice(String filename, String payloadTypeConstant)
+    /**
+     * Initializes a new <tt>RtpdumpMediaDevice</tt> instance which will read
+     * the rtpdump file located at <tt>filename</tt>, and which will have the
+     * type <tt>payloadTypeConstant</tt>.
+     * 
+     * @param filename filename the location of the IVF the <tt>RtpdumpStream<tt>.
+     * @param formatConstant the format this <tt>MediaDevice</tt> will have.
+     * You can find the list of possible format in the class <tt>Constants</tt>
+     * of libjitsi.
+     */
+    public RtpdumpMediaDevice(String filePath, String formatConstant)
     {
         super(new CaptureDeviceInfo(
-                    filename,
-                    new MediaLocator("rtpdumpfile:" + filename),
-                    new Format[] { new VideoFormat(payloadTypeConstant) } ),
+                    filePath,
+                    new MediaLocator("rtpdumpfile:" + filePath),
+                    new Format[] { new VideoFormat(formatConstant) } ),
                 MediaType.VIDEO);
-    }
-
-    
-    /**
-     * {@inheritDoc}
-     *
-     * Overrides the super implementation to initialize a <tt>CaptureDevice</tt>
-     * without asking FMJ to initialize one for a <tt>CaptureDeviceInfo</tt>.
-     */
-    @Override
-    protected CaptureDevice createCaptureDevice()
-    {
-        DataSource captureDevice = new DataSource();
-        captureDevice.setLocator(getCaptureDeviceInfo().getLocator());
-        try
-        {
-            captureDevice.connect();
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace(); //TODO what can I do if an exception is raised?
-        }
-        
-        if (captureDevice instanceof AbstractPullBufferCaptureDevice)
-        {
-            ((AbstractPullBufferCaptureDevice) captureDevice)
-                .setCaptureDeviceInfo(getCaptureDeviceInfo());
-        }
-        return captureDevice;
-    }
-
-    
-    /**
-     * {@inheritDoc}
-     *
-     * Overrides the super implementation to always return
-     * {@link MediaDirection#SENDRECV} because this instance stands for a relay
-     * and because the super bases the <tt>MediaDirection</tt> on the
-     * <tt>CaptureDeviceInfo</tt> which this instance does not have.
-     */
-    @Override
-    public MediaDirection getDirection()
-    {
-        return MediaDirection.SENDRECV;
     }
 }

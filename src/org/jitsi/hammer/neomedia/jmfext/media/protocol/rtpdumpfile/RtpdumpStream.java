@@ -9,7 +9,6 @@ package org.jitsi.hammer.neomedia.jmfext.media.protocol.rtpdumpfile;
 
 import javax.media.*;
 import javax.media.control.*;
-import javax.media.format.*;
 
 import org.jitsi.impl.neomedia.jmfext.media.protocol.*;
 
@@ -17,18 +16,37 @@ import java.io.*;
 
 /**
  * Implements a <tt>PullBufferStream</tt> which read an rtpdump file to generate
- * a RTP stream for the payloads contained in the rtpdump file.
+ * a RTP stream from the payloads recorded in a rtpdump file.
+ * 
+ * @author Thomas Kuntz
  */
 public class RtpdumpStream
     extends AbstractVideoPullBufferStream<DataSource>
 {
-    private long seqNo = 0;
-    
+    /**
+     * The timestamp of the last time the <tt>doRead</tt> function returned
+     * (the timestamp is taken just before the return).
+     */
     private long timeLastRead = 0;
+    
+    /**
+     * The timestamp used for the rtp packet (the timestamp change only when
+     * a marked packet has been sent).
+     */
     private long rtpTimestamp = 0;
+    
+    /**
+     * Boolean indicating if the last call to <tt>doRead</tt> return a marked
+     * rtp packet (to know if <tt>rtpTimestamp</tt> needs to be updated).
+     */
     private boolean lastReadWasMarked = true;
     
-    private RtpdumpFileReader ivfFileReader;
+    /**
+     * The <tt>RtpdumpFileReader</tt> used by this stream to get the rtp payload.
+     */
+    private RtpdumpFileReader rtpFileReader;
+    
+    
     
     /**
      * Initializes a new <tt>ImageStream</tt> instance which is to have a
@@ -44,7 +62,7 @@ public class RtpdumpStream
         super(dataSource, formatControl);
         
         String rtpdumpFilePath = dataSource.getLocator().getRemainder();
-        this.ivfFileReader = new RtpdumpFileReader(rtpdumpFilePath);
+        this.rtpFileReader = new RtpdumpFileReader(rtpdumpFilePath);
     }
 
     
@@ -72,15 +90,14 @@ public class RtpdumpStream
             if (format != null)
                 buffer.setFormat(format);
         }
-                
-        RTPPacket rtpPacket = ivfFileReader.getNextPacket(true);
+           
+        
+        RTPPacket rtpPacket = rtpFileReader.getNextPacket(true);
         byte[] data = rtpPacket.getPayload(); 
         
         buffer.setData(data);
         buffer.setOffset(0);
         buffer.setLength(data.length);
-        
-        
         
         buffer.setFlags(Buffer.FLAG_SYSTEM_TIME | Buffer.FLAG_LIVE_DATA);
         if(lastReadWasMarked == true)
@@ -93,9 +110,6 @@ public class RtpdumpStream
         }
         buffer.setTimeStamp(rtpTimestamp);
         
-        //buffer.setHeader(null);
-        //buffer.setSequenceNumber(seqNo);
-        //seqNo++;
         
         millis = rtpPacket.getRtpdumpTimestamp() - this.timeLastRead;
         if(millis > 0)

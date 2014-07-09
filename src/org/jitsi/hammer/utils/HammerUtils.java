@@ -7,6 +7,9 @@
 
 package org.jitsi.hammer.utils;
 
+import javax.media.*;
+import javax.media.format.*;
+
 import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.CandidateType;
@@ -15,6 +18,7 @@ import net.java.sip.communicator.service.protocol.media.*;
 
 import org.jitsi.hammer.neomedia.jmfext.media.protocol.greyfading.*;
 import org.jitsi.hammer.neomedia.jmfext.media.protocol.ivffile.*;
+import org.jitsi.hammer.neomedia.jmfext.media.protocol.rtpdumpfile.RtpdumpMediaDevice;
 import org.jitsi.hammer.extension.*;
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
@@ -29,8 +33,6 @@ import org.jitsi.videobridge.*;
 import java.net.*;
 import java.util.*;
 
-import javax.media.*;
-import javax.media.format.*;
 
 /**
  * The class contains a number of utility methods that are meant to facilitate
@@ -38,9 +40,8 @@ import javax.media.format.*;
  *
  * @author Thomas Kuntz
  */
-public class HammerUtils {
-    static int label = 1;
-    
+public class HammerUtils
+{    
     /**
      * Select the favorite <tt>MediaFormat</tt> of a list of <tt>MediaFormat</tt>
      * 
@@ -140,6 +141,7 @@ public class HammerUtils {
                 */
                 break;
             case VIDEO:
+                //returnedDevice = new VideoGreyFadingMediaDevice();
                 /*
                 returnedDevice = new MediaDeviceImpl(new CaptureDeviceInfo2(
                         "GreyFadingVideo",
@@ -147,13 +149,15 @@ public class HammerUtils {
                         null,null, null, null),
                         MediaType.VIDEO);
                 */
-                
+                //returnedDevice = new IVFMediaDevice("./ressources/big-buck-bunny_trailer_track1_eng.ivf");
+                /*
                 returnedDevice = new MediaDeviceImpl(new CaptureDeviceInfo2(
                         "Bunny",
                         new MediaLocator("ivffile:./ressources/big-buck-bunny_trailer_track1_eng.ivf"),
                         null, null, null, null),
                         MediaType.VIDEO);
-                
+                */
+                returnedDevice = new RtpdumpMediaDevice("./ressources/rtp_vp8.rtpdump", Constants.VP8_RTP);
                 /*
                 returnedDevice = new MediaDeviceImpl(new CaptureDeviceInfo2(
                         "rtpdump",
@@ -161,8 +165,6 @@ public class HammerUtils {
                         new Format[]{ new VideoFormat(Constants.VP8_RTP) }, null, null, null),
                         MediaType.VIDEO);
                 */
-                //returnedDevice = new VideoGreyFadingMediaDevice();
-                //returnedDevice = new IVFMediaDevice("./ressources/big-buck-bunny_trailer_track1_eng.ivf");
                 break;
             default :
                 break;
@@ -191,52 +193,59 @@ public class HammerUtils {
         {
             contentName = content.getName();
             stream = agent.getStream(contentName);
+            if(stream == null) continue;
             
-            if(stream != null)
+            
+            transports = content.getFirstChildOfType(IceUdpTransportPacketExtension.class);
+        
+            stream.setRemotePassword(transports.getPassword());
+            stream.setRemoteUfrag(transports.getUfrag());
+        
+            candidates = transports.getChildExtensionsOfType(CandidatePacketExtension.class);
+            Collections.sort(candidates);
+        
+            for(CandidatePacketExtension candidate : candidates)
             {
-
-                transports = content.getFirstChildOfType(IceUdpTransportPacketExtension.class);
+                component = stream.getComponent(candidate.getComponent());
             
-                stream.setRemotePassword(transports.getPassword());
-                stream.setRemoteUfrag(transports.getUfrag());
-            
-                candidates = transports.getChildExtensionsOfType(CandidatePacketExtension.class);
-                Collections.sort(candidates);
-            
-                for(CandidatePacketExtension candidate : candidates)
+                if( (component != null)
+                 && (candidate.getGeneration() == agent.getGeneration()))
                 {
-                    component = stream.getComponent(candidate.getComponent());
-                
-                    if((component != null) && (candidate.getGeneration() == agent.getGeneration()))
+                    if((candidate.getIP() != null) && (candidate.getPort() > 0))
                     {
-                        if((candidate.getIP() != null) && (candidate.getPort() > 0))
-                        {
 
-                            mainAddr = new TransportAddress(candidate.getIP(), candidate.getPort(), Transport.parse(candidate.getProtocol().toLowerCase()));
-                    
-                    
-                            relatedCandidate = null;
-                            if ((candidate.getRelAddr() != null) && (candidate.getRelPort() > 0))
-                            {
-                                relatedAddr = new TransportAddress(candidate.getRelAddr(), candidate.getRelPort(), Transport.parse(candidate.getProtocol().toLowerCase()));
-                                relatedCandidate = component.findRemoteCandidate(relatedAddr);
-                            }
-                        
-                            remoteCandidate = new RemoteCandidate(
-                                mainAddr,
-                                component,
-                                org.ice4j.ice.CandidateType.parse(candidate.getType().toString()),
-                                candidate.getFoundation(),
-                                candidate.getPriority(),
-                                relatedCandidate);
-                        
-                            component.addRemoteCandidate(remoteCandidate);
+                        mainAddr = new TransportAddress(
+                                candidate.getIP(),
+                                candidate.getPort(),
+                                Transport.parse(candidate.getProtocol().toLowerCase()));
+                
+                
+                        relatedCandidate = null;
+                        if( (candidate.getRelAddr() != null)
+                         && (candidate.getRelPort() > 0))
+                        {
+                            relatedAddr = new TransportAddress(
+                                    candidate.getRelAddr(),
+                                    candidate.getRelPort(),
+                                    Transport.parse(candidate.getProtocol().toLowerCase()));
+                            relatedCandidate = component.findRemoteCandidate(relatedAddr);
                         }
+                    
+                        remoteCandidate = new RemoteCandidate(
+                            mainAddr,
+                            component,
+                            org.ice4j.ice.CandidateType.parse(candidate.getType().toString()),
+                            candidate.getFoundation(),
+                            candidate.getPriority(),
+                            relatedCandidate);
+                    
+                        component.addRemoteCandidate(remoteCandidate);
                     }
                 }
             }   
         }
     }
+    
     
     public static void addLocalCandidateToContentList(
             Agent agent,
@@ -450,7 +459,7 @@ public class HammerUtils {
                                 fingerprint.getFingerprint());
                         
                         //get the setup attribute of the fingerprint
-                        //(the first encounter setup will be taken)
+                        //(the first setup found will be taken)
                         if(dtlsSetup == null)
                         {
                             String setup = fingerprint.getAttributeAsString("setup");

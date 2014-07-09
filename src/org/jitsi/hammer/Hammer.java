@@ -75,7 +75,10 @@ public class Hammer {
         
             {
                 "net/java/sip/communicator/impl/libjitsi/LibJitsiActivator"
-            }/*,
+            }
+            //These bundles are used in Jitsi-Videobridge from which I copied
+            //some code, but these bundle doesn't seems necessary for the hammer
+            /*,
             {
                 "net/java/sip/communicator/util/UtilActivator",
                 "net/java/sip/communicator/impl/fileaccess/FileAccessActivator"

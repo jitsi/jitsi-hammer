@@ -6,7 +6,6 @@
  */
 package org.jitsi.videobridge;
 
-import javax.media.*;
 import javax.media.protocol.*;
 
 import org.jitsi.impl.neomedia.device.*;
@@ -32,46 +31,6 @@ public class AudioSilenceMediaDevice
     protected CaptureDevice createCaptureDevice()
     {
         return new AudioSilenceCaptureDevice();
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * Overrides the super implementation to disable the very playback because
-     * Jitsi Videobridge is a server-side technology.
-     */
-    @Override
-    protected Processor createPlayer(DataSource dataSource)
-    {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * Overrides the super implementation to initialize a
-     * <tt>MediaDeviceSession</tt> which disables the very playback because
-     * Jitsi Videobridge is a server-side technology.
-     */
-    @Override
-    public MediaDeviceSession createSession()
-    {
-        return
-            new AudioMediaDeviceSession(this)
-                    {
-                        /**
-                         * {@inheritDoc}
-                         *
-                         * Overrides the super implementation to disable the
-                         * very playback because Jitsi Videobridge is a
-                         * server-side technology.
-                         */
-                        @Override
-                        protected Player createPlayer(DataSource dataSource)
-                        {
-                            return null;
-                        }
-                    };
     }
 
     /**

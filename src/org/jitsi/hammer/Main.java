@@ -246,7 +246,7 @@ public class Main
         //After the initialization we start the Hammer (all its users will
         //connect to the XMPP server and try to setup media stream with it bridge
         
-        hammer.start(10000);
+        hammer.start(1000);
         while(true) Thread.sleep(3600000);
     }
 }

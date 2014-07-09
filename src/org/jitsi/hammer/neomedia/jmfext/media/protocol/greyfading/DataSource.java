@@ -7,10 +7,7 @@
  
 package org.jitsi.hammer.neomedia.jmfext.media.protocol.greyfading;
 
-import java.awt.Dimension;
-import javax.media.*;
 import javax.media.control.*;
-import javax.media.format.*;
 
 import org.jitsi.impl.neomedia.jmfext.media.protocol.*;
 
@@ -23,30 +20,6 @@ import org.jitsi.impl.neomedia.jmfext.media.protocol.*;
 public class DataSource
     extends AbstractVideoPullBufferCaptureDevice
 {
-    protected final static float FRAMERATE = 10;
-    
-    
-    /**
-     * The list of <tt>Format</tt>s supported by the
-     * <tt>DataSource</tt> instances of <tt>VideoGreyFadingStream</tt>.
-     */
-    protected static final Format[] SUPPORTED_FORMATS
-        = new Format[]
-                {
-                    new RGBFormat(
-                         new Dimension(640,480), // size
-                         Format.NOT_SPECIFIED, // maxDataLength
-                         Format.byteArray, // dataType
-                         FRAMERATE, // frameRate
-                         32, // bitsPerPixel
-                         2 /* red */,
-                         3 /* green */,
-                         4 /* blue */)
-                };
-    
-    
-    
-    
     /**
      * {@inheritDoc}
      *
@@ -58,21 +31,5 @@ public class DataSource
             FormatControl formatControl)
     {
         return new VideoGreyFadingStream(this, formatControl);
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * Overrides the super implementation in order to return the list of
-     * <tt>Format</tt>s hardcoded as supported in
-     * <tt>DataSource</tt> because the super looks them up by
-     * <tt>CaptureDeviceInfo</tt> and this instance does not have one. FIXME
-     * 
-     * For now it doesn't have a CaptureDeviceInfo, but it will have one soon
-     */
-    @Override
-    protected Format[] getSupportedFormats(int streamIndex)
-    {
-        return SUPPORTED_FORMATS.clone();
     }
 }

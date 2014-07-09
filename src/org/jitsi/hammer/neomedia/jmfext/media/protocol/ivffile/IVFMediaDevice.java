@@ -7,14 +7,10 @@
  
 package org.jitsi.hammer.neomedia.jmfext.media.protocol.ivffile;
 
-import java.io.IOException;
-
 import javax.media.*;
 import javax.media.format.*;
-import javax.media.protocol.*;
 
 import org.jitsi.impl.neomedia.device.*;
-import org.jitsi.impl.neomedia.jmfext.media.protocol.AbstractPullBufferCaptureDevice;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.codec.Constants;
 
@@ -32,12 +28,19 @@ public class IVFMediaDevice
      * The list of <tt>Format</tt>s supported by the
      * <tt>IVFCaptureDevice</tt> instances.
      */
-    public static final Format[] SUPPORTED_FORMATS
+    protected static final Format[] SUPPORTED_FORMATS
         = new Format[]
                 {
                     new VideoFormat(Constants.VP8)
                 };
-     
+    
+    /**
+     * Initializes a new <tt>IVFMediaDevice</tt> instance which will read
+     * the IVF file located at <tt>filename</tt>.
+     * 
+     * @param filename the location of the IVF the <tt>IVFStream<tt>
+     * will read.
+     */
     public IVFMediaDevice(String filename)
     {
         super(new CaptureDeviceInfo(
@@ -45,50 +48,5 @@ public class IVFMediaDevice
                     new MediaLocator("ivffile:"+filename),
                     IVFMediaDevice.SUPPORTED_FORMATS),
                 MediaType.VIDEO);
-    }
-
-    
-    /**
-     * {@inheritDoc}
-     *
-     * Overrides the super implementation to initialize a <tt>CaptureDevice</tt>
-     * without asking FMJ to initialize one for a <tt>CaptureDeviceInfo</tt>.
-     */
-    @Override
-    protected CaptureDevice createCaptureDevice()
-    {
-        DataSource captureDevice = new DataSource();
-        captureDevice.setLocator(getCaptureDeviceInfo().getLocator());
-        try
-        {
-            captureDevice.connect();
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace(); //TODO what can I do if an exception is raised?
-        }
-        
-        
-        if (captureDevice instanceof AbstractPullBufferCaptureDevice)
-        {
-            ((AbstractPullBufferCaptureDevice) captureDevice)
-                .setCaptureDeviceInfo(getCaptureDeviceInfo());
-        }
-        return captureDevice;
-    }
-
-    
-    /**
-     * {@inheritDoc}
-     *
-     * Overrides the super implementation to always return
-     * {@link MediaDirection#SENDRECV} because this instance stands for a relay
-     * and because the super bases the <tt>MediaDirection</tt> on the
-     * <tt>CaptureDeviceInfo</tt> which this instance does not have.
-     */
-    @Override
-    public MediaDirection getDirection()
-    {
-        return MediaDirection.SENDRECV;
     }
 }

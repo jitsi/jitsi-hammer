@@ -5,9 +5,6 @@ import javax.media.control.*;
 import javax.media.format.*;
 
 import org.jitsi.impl.neomedia.codec.*;
-import org.jitsi.impl.neomedia.codec.video.AVFrame;
-import org.jitsi.impl.neomedia.codec.video.AVFrameFormat;
-import org.jitsi.impl.neomedia.codec.video.ByteBuffer;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.*;
 
 import java.awt.Dimension;
@@ -17,18 +14,28 @@ import java.util.*;
 /**
  * Implements a <tt>PullBufferStream</tt> which provides a fading animation from
  * white to black to white... in form of video.
+ * 
+ * @author Thomas Kuntz
  */
 public class VideoGreyFadingStream
 	extends AbstractVideoPullBufferStream<DataSource>
 {
-	private long seqNo = 0;
-	
+    /**
+     * The value for the color of the RGB bytes
+     */
 	private int color = 0;
+	
+	/**
+	 * Indicate if the video is fading toward white (if true) or toward
+	 * black (if false)
+	 */
 	private boolean increment = true;
 	
+	/**
+     * The timestamp of the last time the <tt>doRead</tt> function returned
+     * (the timestamp is taken just before the return).
+     */
 	private long timeLastRead = 0;
-	
-	private float FRAMERATE = 1;
 
 	/**
 	 * Initializes a new <tt>VideoGreyFadingStream</tt> which is to be exposed
@@ -47,7 +54,6 @@ public class VideoGreyFadingStream
 			FormatControl formatControl)
 	{
 		super(dataSource, formatControl);
-		this.FRAMERATE = ((VideoFormat)getFormat()).getFrameRate();
 	}
 
 	/**
@@ -77,9 +83,7 @@ public class VideoGreyFadingStream
                 buffer.setFormat(format);
         }
         
-        byte[] bytes = (byte[]) buffer.getData();
         Dimension size = ((VideoFormat) format).getSize();
-        
         int frameSizeInBytes
 		= (int) (
 		  size.getHeight()
@@ -113,17 +117,12 @@ public class VideoGreyFadingStream
 		
 		
 		buffer.setTimeStamp(System.nanoTime());
-		buffer.setFlags(Buffer.FLAG_SYSTEM_TIME | Buffer.FLAG_LIVE_DATA);
-		//buffer.setHeader(null);
-        //buffer.setSequenceNumber(seqNo);
-        //seqNo++;
         
         
         //To respect the framerate, we wait for the remaing milliseconds since
-		//last doRead call
-		
+		//last doRead call.
         millis = System.currentTimeMillis() - timeLastRead;
-        millis = (long)(1000.0 / this.FRAMERATE) - millis;
+        millis = (long)(1000.0 / format.getFrameRate()) - millis;
         if(millis > 0)
         {
             try

@@ -9,14 +9,10 @@ package org.jitsi.hammer.neomedia.jmfext.media.protocol.greyfading;
 
 import java.awt.Dimension;
 
-import javax.media.CaptureDeviceInfo;
-import javax.media.Format;
-import javax.media.format.RGBFormat;
-import javax.media.format.VideoFormat;
+import javax.media.*;
+import javax.media.format.*;
 import javax.media.protocol.*;
 
-import org.jitsi.impl.neomedia.codec.FFmpeg;
-import org.jitsi.impl.neomedia.codec.video.AVFrameFormat;
 import org.jitsi.impl.neomedia.device.*;
 import org.jitsi.service.neomedia.*;
 
@@ -30,13 +26,9 @@ import org.jitsi.service.neomedia.*;
 public class VideoGreyFadingMediaDevice
     extends MediaDeviceImpl
 {
-
-    public final static float FRAMERATE = 24;
-    
-    
     /**
      * The list of <tt>Format</tt>s supported by the
-     * <tt>VideoGreyFadingCaptureDevice</tt> instances.
+     * <tt>DataSource</tt> and instances of <tt>VideoGreyFadingStream</tt>.
      */
     public static final Format[] SUPPORTED_FORMATS
         = new Format[]
@@ -45,7 +37,7 @@ public class VideoGreyFadingMediaDevice
                 	 new Dimension(640,480), // size
                      Format.NOT_SPECIFIED, // maxDataLength
                      Format.byteArray, // dataType
-                     FRAMERATE, // frameRate
+                     10, // frameRate
                      32, // bitsPerPixel
                      2 /* red */,
                      3 /* green */,
@@ -53,11 +45,14 @@ public class VideoGreyFadingMediaDevice
         		};
     
  
+    /**
+     * Initializes a new <tt>VideoGreyFadingMediaDevice</tt>
+     */
     public VideoGreyFadingMediaDevice()
     {
         super(new CaptureDeviceInfo(
                     "GreyFadingVideo",
-                    null,
+                    new MediaLocator("greyfading:"),
                     VideoGreyFadingMediaDevice.SUPPORTED_FORMATS),
                 MediaType.VIDEO);
     }
