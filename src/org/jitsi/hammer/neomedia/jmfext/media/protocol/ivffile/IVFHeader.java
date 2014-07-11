@@ -10,8 +10,6 @@ package org.jitsi.hammer.neomedia.jmfext.media.protocol.ivffile;
 import java.awt.*;
 import java.io.*;
 
-import com.google.common.io.LittleEndianDataInputStream;
-
 /**
  * This class represent the 32 bytes header of an IVF file.
  * http://wiki.multimedia.cx/index.php?title=IVF
@@ -80,26 +78,26 @@ public class IVFHeader
         try
         {
             InputStream input = new FileInputStream(filePath);
-            LittleEndianDataInputStream stream =
-                    new LittleEndianDataInputStream(input);
+            DataInputStream stream =
+                    new DataInputStream(input);
             
             signature = "" +
                     (char)stream.readByte() +
                     (char)stream.readByte() +
                     (char)stream.readByte() +
                     (char)stream.readByte();
-            version = stream.readShort();
-            headerLengh = stream.readShort();
+            version = IVFFileReader.changeEndianness(stream.readShort());
+            headerLengh = IVFFileReader.changeEndianness(stream.readShort());
             codec = "" +
                     (char)stream.readByte() +
                     (char)stream.readByte() +
                     (char)stream.readByte() +
                     (char)stream.readByte();
-            width = stream.readShort();
-            height = stream.readShort();
-            framerate = stream.readInt();
-            timeScale = stream.readInt();
-            numberOfFramesInFile = stream.readInt();
+            width = IVFFileReader.changeEndianness(stream.readShort());
+            height = IVFFileReader.changeEndianness(stream.readShort());
+            framerate = IVFFileReader.changeEndianness(stream.readInt());
+            timeScale = IVFFileReader.changeEndianness(stream.readInt());
+            numberOfFramesInFile = IVFFileReader.changeEndianness(stream.readInt());
             
             stream.close();
         }

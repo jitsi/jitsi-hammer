@@ -105,12 +105,24 @@ public class IVFFileReader
      * @param value the value which you want to change the endianness.
      * @return the <tt>value</tt> with a changed endianness
      */
-    private static int changeEndianness(int value)
+    public static int changeEndianness(int value)
     {
         return 
         (((value << 24) & 0xFF000000) |
         ((value << 8) & 0x00FF0000) |
         ((value >> 8) & 0x0000FF00) |
         ((value >> 24) & 0x000000FF));
+    }
+    
+    /**
+     * Change the endianness of a 16bits short.
+     * @param value the value which you want to change the endianness.
+     * @return the <tt>value</tt> with a changed endianness
+     */
+    public static short changeEndianness(short value)
+    {
+        return (short) (
+        ((value << 8) & 0xFF00) |
+        ((value >> 8) & 0x00FF) );
     }
 }

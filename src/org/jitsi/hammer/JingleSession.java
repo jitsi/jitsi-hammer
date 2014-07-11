@@ -233,6 +233,7 @@ public class JingleSession implements PacketListener {
         connection.sendPacket(presencePacket);
         
         
+        
         /*
          * Add a simple message listener that will just display in the terminal
          * received message (and respond back with a "C'est pas faux");
@@ -296,7 +297,6 @@ public class JingleSession implements PacketListener {
                 
                 
                 //extractRTPExtensions() TODO ?
-                
                 
                 
                 possibleFormatMap.put(
