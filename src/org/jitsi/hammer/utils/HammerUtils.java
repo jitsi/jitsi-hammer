@@ -174,7 +174,16 @@ public class HammerUtils
     }
 
 
-
+    /**
+     * Add the remote transport candidates of each
+     * <tt>ContentPacketExtension</tt> in <tt>contentList</tt> to their
+     * associated <tt>IceMediaStream</tt> inside <tt>agent</tt>.
+     * 
+     * @param agent the <tt>Agent</tt> containing the IceMediaStream to which
+     * will be added the remote transport candidates.
+     * @param contentList the list of <tt>ContentPacketExtension</tt> containing
+     * the remote transport candidates to add to the <tt>Agent</tt>.
+     */
     public static void addRemoteCandidateToAgent(
             Agent agent,
             Collection<ContentPacketExtension> contentList)
@@ -247,6 +256,16 @@ public class HammerUtils
     }
     
     
+    /**
+     * Add the local transport candidates contained in <tt>agent</tt> to
+     * their associated (by the stream/content name)
+     * <tt>ContentPacketExtension</tt>.
+     * 
+     * @param agent the <tt>Agent</tt> from which we will get the local
+     * transport candidates.
+     * @param contentList the list of <tt>ContentPacketExtension</tt> to which
+     * will be added the local transport candidates.
+     */
     public static void addLocalCandidateToContentList(
             Agent agent,
             Collection<ContentPacketExtension> contentList)
@@ -306,6 +325,27 @@ public class HammerUtils
     }
 
     
+    /**
+     * Create a <tt>Map</tt> of MediaStream (indexed by the String
+     * corresponding to a <tt>MediaType<tt>) from a <tt>Map</tt> of
+     * <tt>MediaFormat</tt>.
+     * 
+     * It will create streams which names will be the keys of the 
+     * <tt>mediaFormatMap</tt>, with the <tt>MediaFormat</tt> associated to its
+     * name/key, and with the selected <tt>MediaDevice</tt> returned by
+     * <tt>selectMediaDevice</tt> for the <tt>MediaType</tt> of the
+     * <tt>MediaFormat</tt> of the stream.
+     * It will also create the streams with a <tt>DtlsControl</tt> that need
+     * to be configured later.
+     * The stream will be set to SENDONLY.
+     * 
+     * @param mediaFormatMap a <tt>Map</tt> of <tt>MediaFormat</tt> indexed by
+     * the name/<tt>MediaType</tt> of the MediaStreams to be created with this
+     * <tt>MediaFormat</tt>.
+     * @param ptRegistry the <tt>DynamicPayloadTypeRegistry</tt> containing
+     * the dynamic payload type of the <tt>MediaFormat</tt> (if necessary).
+     * @return
+     */
     public static Map<String,MediaStream> generateMediaStream(
             Map<String, MediaFormat> mediaFormatMap,
             DynamicPayloadTypeRegistry ptRegistry)
@@ -371,6 +411,18 @@ public class HammerUtils
     }
     
     
+    /**
+     * Add the <tt>DatagramSocket</tt> created by the IceMediaStreams of an
+     * <tt>Agent</tt> (so after ICE was TERMINATED) to their associated
+     * <tt>MediaStream</tt> contained in a <tt>Map</tt> and indexed by the
+     * name of their associated IceMediaStream.
+     * 
+     * @param agent the <tt>Agent</tt> containing the <tt>IceMediaStream</tt>
+     * from which we will get the <tt>DatagramSocket</tt>
+     * @param mediaStreamMap the <tt>Map</tt> of <tt>MediaStream</tt> to which
+     * will be added the <tt>DatagramSocket</tt> of their corresponding
+     * <tt>IceMediaStream</tt> contained in the <tt>Agent</tt>.
+     */
     public static void addSocketToMediaStream(
             Agent agent,
             Map<String,MediaStream> mediaStreamMap)
@@ -411,9 +463,21 @@ public class HammerUtils
     
     
     
-    
-    
-
+    /**
+     * Add the remote fingerprint & hash function contained in
+     * <tt>remoteContentList</tt> to the <tt>DtlsControl</tt> of the
+     * <tt>MediaStream</tt>.
+     * Add the local fingerprint & hash function from the <tt>DtlsControl</tt> of
+     * the <tt>MediaStream</tt> to the <tt>localContentList</tt>.
+     * 
+     * @param mediaStreamMap a Map containing the <tt>MediaStream</tt> to
+     * which will be added the remote fingerprints, from which we will get
+     * the local fingerprints.
+     * @param localContentList The list of <tt>ContentPacketExtension</tt> to
+     * which will be added the local fingerprints
+     * @param remoteContentList The list of <tt>ContentPacketExtension</tt> from
+     * which we will get the remote fingerprints
+     */
     public static void setDtlsEncryptionOnTransport(
     		Map<String,MediaStream> mediaStreamMap,
             List<ContentPacketExtension> localContentList,
@@ -506,6 +570,13 @@ public class HammerUtils
         }
     }
     
+    /**
+     * Get a correct DTLS Setup SDP attribute for the local DTLS engine from
+     * the Setup offered by the remote target. 
+     * @param setup The DTLS Setup offered by the remote target.
+     * @return a correct DTLS Setup SDP attribute for the local DTLS engine from
+     * the Setup offered by the remote target. 
+     */
     public static DtlsControl.Setup getDtlsSetupForAnswer(DtlsControl.Setup setup)
     {
         DtlsControl.Setup returnedSetup = null;
@@ -523,6 +594,16 @@ public class HammerUtils
         return returnedSetup;
     }
     
+    /**
+     * Set the ssrc attribute of each <tt>MediaStream</tt> to their corresponding
+     * <tt>RtpDescriptionPacketExtension</tt>, and also add a 'source' element
+     * to it, describing the msid,mslabel,label and cname of the stream.
+     * 
+     * @param contentMap the Map of <tt>ContentPacketExtension</tt> to which
+     * will be set the ssrc and addec the "source" element.
+     * @param mediaStreamMap the Map of <tt>MediaStream</tt> from which will be
+     * gotten the ssrc and other informations.
+     */
     public static void addSSRCToContent(
             Map<String,ContentPacketExtension> contentMap,
             Map<String,MediaStream> mediaStreamMap)
@@ -560,15 +641,12 @@ public class HammerUtils
      * a child element will be added.
      * @param ssrc the SSRC for the <tt>SourcePacketExtension</tt> to use.
      */
-    public static void addSourceExtension(RtpDescriptionPacketExtension description,
-                                    long ssrc)
+    public static void addSourceExtension(
+            RtpDescriptionPacketExtension description,
+            long ssrc)
     {
         MediaService mediaService = LibJitsi.getMediaService();
         String msLabel = UUID.randomUUID().toString();
-        /*
-         * IMPORTANT : The label need to be an unique ID for this stream.
-         * At first, I copied part of Jitsi's code 
-         */
         String label = UUID.randomUUID().toString();
 
         SourcePacketExtension sourcePacketExtension = 
@@ -599,6 +677,16 @@ public class HammerUtils
         description.addChildExtension(ssrcPacketExtension);
     }
     
+    /**
+     * Create a relatively empty <tt>ContentPacketExtension</tt> for 'data'
+     * (<tt>MediaType.DATA</tt>) rtp content type, because
+     * <tt>JingleUtils.createDescription</tt> doesn't handle this type for now.
+     * 
+     * @param creator indicates whether the person who originally created this
+     * content was the initiator or the responder of the jingle session.
+     * @param senders indicates the direction of the media in this stream.
+     * @return a <tt>ContentPacketExtension</tt> for 'data' content.
+     */
     public static ContentPacketExtension createDescriptionForDataContent(
             CreatorEnum                  creator,
             SendersEnum                  senders)
