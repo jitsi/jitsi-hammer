@@ -7,9 +7,6 @@
 
 package org.jitsi.hammer.utils;
 
-import javax.media.*;
-import javax.media.format.*;
-
 import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.CandidateType;
@@ -18,14 +15,13 @@ import net.java.sip.communicator.service.protocol.media.*;
 
 import org.jitsi.hammer.neomedia.jmfext.media.protocol.greyfading.*;
 import org.jitsi.hammer.neomedia.jmfext.media.protocol.ivffile.*;
-import org.jitsi.hammer.neomedia.jmfext.media.protocol.rtpdumpfile.RtpdumpMediaDevice;
+import org.jitsi.hammer.neomedia.jmfext.media.protocol.rtpdumpfile.*;
 import org.jitsi.hammer.extension.*;
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
+import org.jitsi.service.neomedia.codec.Constants;
 import org.jitsi.service.neomedia.device.*;
-import org.jitsi.impl.neomedia.device.*;
 import org.jitsi.service.neomedia.format.*;
-import org.jitsi.service.neomedia.codec.*;
 import org.ice4j.*;
 import org.ice4j.ice.*;
 import org.jitsi.videobridge.*;
@@ -142,29 +138,8 @@ public class HammerUtils
                 break;
             case VIDEO:
                 //returnedDevice = new VideoGreyFadingMediaDevice();
-                /*
-                returnedDevice = new MediaDeviceImpl(new CaptureDeviceInfo2(
-                        "GreyFadingVideo",
-                        new MediaLocator("greyfading:"),
-                        null,null, null, null),
-                        MediaType.VIDEO);
-                */
                 returnedDevice = new IVFMediaDevice("./ressources/big-buck-bunny_trailer_track1_eng.ivf");
-                /*
-                returnedDevice = new MediaDeviceImpl(new CaptureDeviceInfo2(
-                        "Bunny",
-                        new MediaLocator("ivffile:./ressources/big-buck-bunny_trailer_track1_eng.ivf"),
-                        null, null, null, null),
-                        MediaType.VIDEO);
-                */
                 //returnedDevice = new RtpdumpMediaDevice("./ressources/rtp_vp8.rtpdump", Constants.VP8_RTP);
-                /*
-                returnedDevice = new MediaDeviceImpl(new CaptureDeviceInfo2(
-                        "rtpdump",
-                        new MediaLocator("rtpdumpfile:./ressources/rtp_vp8.rtpdump"),
-                        new Format[]{ new VideoFormat(Constants.VP8_RTP) }, null, null, null),
-                        MediaType.VIDEO);
-                */
                 break;
             default :
                 break;

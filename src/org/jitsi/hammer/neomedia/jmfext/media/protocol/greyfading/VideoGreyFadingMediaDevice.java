@@ -56,32 +56,4 @@ public class VideoGreyFadingMediaDevice
                     VideoGreyFadingMediaDevice.SUPPORTED_FORMATS),
                 MediaType.VIDEO);
     }
-
-    
-    /**
-     * {@inheritDoc}
-     *
-     * Overrides the super implementation to initialize a <tt>CaptureDevice</tt>
-     * without asking FMJ to initialize one for a <tt>CaptureDeviceInfo</tt>.
-     */
-    @Override
-    protected CaptureDevice createCaptureDevice()
-    {
-        return new DataSource();
-    }
-
-    
-    /**
-     * {@inheritDoc}
-     *
-     * Overrides the super implementation to always return
-     * {@link MediaDirection#SENDRECV} because this instance stands for a relay
-     * and because the super bases the <tt>MediaDirection</tt> on the
-     * <tt>CaptureDeviceInfo</tt> which this instance does not have.
-     */
-    @Override
-    public MediaDirection getDirection()
-    {
-        return MediaDirection.SENDRECV;
-    }
 }
