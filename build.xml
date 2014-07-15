@@ -39,9 +39,7 @@
         <path refid="compile.classpath" />
         <pathelement location="${output}" />
     </path>
-    <manifestclasspath property="jar.classpath" jarfile="jitsi-hammer.jar">
-      <classpath refid="run.classpath" />
-    </manifestclasspath>
+    
 
 
     <target name="clean">
@@ -161,6 +159,9 @@
 	</target>
 	
 	<target name="manifest">
+		<manifestclasspath property="jar.classpath" jarfile="jitsi-hammer.jar">
+		      <classpath refid="run.classpath" />
+		</manifestclasspath>
 	    <manifest file="MANIFEST.MF">
 	        <section name="common">
 	            <attribute name="Main-Class" value="org.jitsi.hammer.Main"/>
