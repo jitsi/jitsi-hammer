@@ -39,6 +39,9 @@
         <path refid="compile.classpath" />
         <pathelement location="${output}" />
     </path>
+    <manifestclasspath property="jar.classpath" jarfile="jitsi-hammer.jar">
+      <classpath refid="run.classpath" />
+    </manifestclasspath>
 
 
     <target name="clean">
@@ -157,16 +160,24 @@
 	        </antcall>
 	</target>
 	
+	<target name="manifest">
+	    <manifest file="MANIFEST.MF">
+	        <section name="common">
+	            <attribute name="Main-Class" value="org.jitsi.hammer.Main"/>
+	            <attribute name="Class-Path" value="${jar.classpath}"/>
+	        </section>
+	    </manifest>
+	</target>
 	
 	
-	
-    <target name="jar" depends="compile">
+    <target name="jar" depends="compile, manifest">
         <jar
             compress="true"
+        	manifest="MANIFEST.MF"
             destfile="jitsi-hammer.jar">
         <fileset casesensitive="no" dir="${output}">
             <include name="**/*.class" />
-            <include name="**/*.properties" />
+        	<include name="**/*.properties" />
             <exclude name="${output}/jitsi-hammer.jar" />
         </fileset>
         </jar>
