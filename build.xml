@@ -110,7 +110,56 @@
         </java>
     </target>
 
-
+	
+	
+    <target name="run-meet.jit.si"
+               description="Launch the Jitsi-Hammer that will connect to TestHammer@meet.jit.si">
+            <antcall target="run">
+                <param name="run.arg.line" value="
+                -XMPPdomain guest.jit.si
+                -XMPPhost meet.jit.si
+                -MUCDomain meet.jit.si
+                -room TestHammer" />
+            </antcall>
+    </target>
+	
+	<target name="run-beta.meet.jit.si"
+	           description="Launch the Jitsi-Hammer that will connect to GSoC2014@beta.jit.si">
+	        <antcall target="run">
+	            <param name="run.arg.line" value="
+	            -XMPPdomain beta.meet.jit.si
+	            -XMPPhost beta.meet.jit.si
+	            -MUCDomain conference.beta.meet.jit.si
+	            -room GSoC2014" />
+	        </antcall>
+	</target>
+	
+   
+    <target name="run-pawel.jitsi.net"
+               description="Launch the Jitsi-Hammer that will connect to GSoC2014@beta.jit.si">
+            <antcall target="run">
+                <param name="run.arg.line" value="
+                -XMPPdomain pawel.jitsi.net
+                -XMPPhost pawel.jitsi.net
+                -MUCDomain conference.pawel.jitsi.net
+                -room GSoC2014" />
+            </antcall>
+    </target>
+	
+	<target name="run-jitmeet.example.com"
+	           description="Launch the Jitsi-Hammer that will connect to TestHammer@jitmeet.example.com">
+	        <antcall target="run">
+	            <param name="run.arg.line" value="
+	            -XMPPdomain jitmeet.example.com
+	            -XMPPhost jitmeet.example.com
+	            -MUCDomain conference.jitmeet.example.com
+	            -room TestHammer" />
+	        </antcall>
+	</target>
+	
+	
+	
+	
     <target name="jar" depends="compile">
         <jar
             compress="true"

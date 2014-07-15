@@ -187,59 +187,26 @@ public class Main
         java.util.logging.Logger l = java.util.logging.Logger.getLogger("");
         l.setLevel(java.util.logging.Level.WARNING);
         
-        HostInfo infoCLI = new HostInfo();
+        CmdLineArguments infoCLI = new CmdLineArguments();
         CmdLineParser parser = new CmdLineParser(infoCLI);
-        try {
+        try
+        {
             parser.parseArgument(args);
         }
         catch(CmdLineException e)
         {
             System.err.println(e.getMessage());
-            parser.printUsage(System.err);
+            System.out.println("Jitsi-Hammer usage :");
+            parser.printUsage(System.out);
             return;
         }
         
-        //These HostInfo are used to test the hammer on different
-        //jitsi meet server
-        /*
-        infoCLI = new HostInfo(
-                "beta.meet.jit.si",
-                "beta.meet.jit.si",
-                5222,
-                "jitsi-videobridge.beta.meet.jit.si",
-                "conference.beta.meet.jit.si",
-                "GSoC2014");
-        */
-        /*
-        infoCLI = new HostInfo(
-                "guest.jit.si",
-                "meet.jit.si",
-                5222,
-                "jitsi-videobridge.meet.jit.si",
-                "meet.jit.si",
-                "GSoC2014");
-        */
-        /*
-        infoCLI = new HostInfo(
-                "jitmeet.example.com",
-                "jitmeet.example.com",
-                5222,
-                "jitsi-videobridge.jitmeet.example.com",
-                "conference.jitmeet.example.com",
-                "TestHammer");
-        */
-        /*
-        infoCLI = new HostInfo(
-                "pawel.jitsi.net",
-                "pawel.jitsi.net",
-                5222,
-                "jitsi-videobridge.pawel.jitsi.net",
-                "conference.pawel.jitsi.net",
-                "GSoC2014");
-        */
-                
-        //We create a Hammer with only 1 user for now
-        Hammer hammer = new Hammer(infoCLI,"JitMeet-Hammer",1);
+        HostInfo hostInfo = infoCLI.getHostInfoFromArguments();
+        
+        Hammer hammer = new Hammer(
+                hostInfo,
+                "JitMeet-Hammer",
+                infoCLI.getNumberOfFakeUsers());
         
         //We call initialize the Hammer (registering OSGi bundle for example)
         hammer.init();
@@ -247,6 +214,15 @@ public class Main
         //connect to the XMPP server and try to setup media stream with it bridge
         
         hammer.start(1000);
-        while(true) Thread.sleep(3600000);
+        
+        if(infoCLI.getRunLength() > 0)
+        {
+            Thread.sleep(infoCLI.getRunLength() * 1000);
+        }
+        else
+        {
+            while(true) Thread.sleep(3600000);
+        }
+        hammer.stop();
     }
 }

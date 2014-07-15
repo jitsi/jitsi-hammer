@@ -240,9 +240,13 @@ public class Hammer {
     /**
      * Start the connection of all the virtual user that this <tt>Hammer</tt>
      * handles to the XMPP server(and then a MUC).
+     * 
+     * @param wait the number of milliseconds the Hammer will wait during the
+     * start of two consecutive fake users.
      */
-    public void start(int wait) {
-        //if(wait <= 0) wait = 1;
+    public void start(int wait)
+    {
+        if(wait <= 0) wait = 1;
         
         try
         {
@@ -259,6 +263,19 @@ public class Hammer {
         catch (InterruptedException e)
         {
             e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * Stop the streams of all the fake users created, and disconnect them
+     * from the MUC and the XMPP server.
+     */
+    public void stop()
+    {
+        for(JingleSession session : sessions)
+        {
+            session.stop();
         }
     }
 }
