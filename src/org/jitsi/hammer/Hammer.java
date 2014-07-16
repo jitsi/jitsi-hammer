@@ -12,16 +12,16 @@ package org.jitsi.hammer;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.*;
 import org.osgi.framework.startlevel.*;
-
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.provider.*;
 
 import net.java.sip.communicator.impl.osgi.framework.launch.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-import org.jitsi.service.libjitsi.LibJitsi;
 
+import org.jitsi.service.libjitsi.LibJitsi;
 import org.jitsi.hammer.extension.*;
 import org.jitsi.hammer.neomedia.*;
+import org.jitsi.hammer.utils.MediaDeviceChooser;
 
 import java.util.*;
 
@@ -51,6 +51,12 @@ public class Hammer {
      * try to connect.
      */
     private HostInfo serverInfo;
+    
+    /**
+     * The <tt>MediaDeviceChooser</tt> that will be used by all the
+     * <tt>JingleSession</tt> to choose their <tt>MediaDevice</tt>
+     */
+    private MediaDeviceChooser mediaDeviceChooser;
     
     
     /**
@@ -125,19 +131,24 @@ public class Hammer {
      * 
      * @param host The information about the XMPP server to which all
      * virtual users will try to connect.
+     * @param mdc 
      * @param username The base of the username used by all the virtual users.
      * @param numberOfUser The number of virtual users this <tt>Hammer</tt>
      * will create and handle.
      */
-    public Hammer(HostInfo host, String username, int numberOfUser)
+    public Hammer(HostInfo host, MediaDeviceChooser mdc, String username, int numberOfUser)
     {
         this.username = username;
         this.serverInfo = host;
+        this.mediaDeviceChooser = mdc;
         sessions = new JingleSession[numberOfUser];
         
         for(int i = 0; i<numberOfUser; i++)
         {
-            sessions[i] = new JingleSession(this.serverInfo,this.username+"_"+i);    
+            sessions[i] = new JingleSession(
+                    this.serverInfo,
+                    this.mediaDeviceChooser,
+                    this.username+"_"+i);    
         }
     }
 
