@@ -4,6 +4,7 @@
 
 package org.jitsi.hammer;
 
+import org.jitsi.hammer.utils.*;
 import org.kohsuke.args4j.*;
 
 /**
@@ -60,9 +61,34 @@ public class CmdLineArguments
     /**
      * The length of the run (in seconds).
      */
-    @Option(name="-length",usage="The length of the run in second."
-            + "If zero or negative, the run will never stop itself")
+    @Option(name="-length",usage="The length of the run in second "
+            + "(If zero or negative, the run will never stop)")
     private int runLength = 0;
+    
+    /**
+     * The path of an ivf file that will be read for vp8 frame
+     */
+    @Option(name="-ivf",usage="The path of an ivf file that will"
+            + " be read for the video stream")
+    private String ivffile = null;
+    
+    /**
+     * The path of a rtpdump file containing recorded VP8 RTP packets
+     * that will be read for the video stream
+     */
+    @Option(name="-videortpdump",usage="The path of a rtpdump file"
+            + " containing recorded VP8 RTP packets"
+            + " that will be read for the video stream")
+    private String videoRtpdumpFile = null;
+    
+    /**
+     * The path of a rtpdump file containing recorded Opus RTP packets
+     * that will be read for the video stream
+     */
+    @Option(name="-audiortpdump",usage="The path of a rtpdump file"
+            + " containing recorded Opus RTP packets"
+            + " that will be read for the audio stream")
+    private String audioRtpdumpFile = null;
     
     /**
      * Create a HostInfo from the CLI options
@@ -89,5 +115,47 @@ public class CmdLineArguments
     public int getRunLength()
     {
         return runLength;
+    }
+    
+    /**
+     * Get the path of an ivf file that will be read for vp8 frame if it was
+     * given as option to the program, or null if not.
+     * @return the path of an ivf file that will be read for vp8 frame if it was
+     * given as option to the program, or null if not.
+     */
+    public String getIVFFile()
+    {
+        return ivffile;
+    }
+    
+    /**
+     * Get The path of a rtpdump file containing recorded VP8 RTP packets
+     * that will be read for the video stream if it was
+     * given as option to the program, or null if not.
+     * @return The path of a rtpdump file containing recorded VP8 RTP packets
+     * that will be read for the video stream if it was
+     * given as option to the program, or null if not.
+     */
+    public String getVideoRtpdumpFile()
+    {
+        return videoRtpdumpFile;
+    }
+    
+    /**
+     * Get The path of a rtpdump file containing recorded Opus RTP packets
+     * that will be read for the audio stream if it was
+     * given as option to the program, or null if not.
+     * @return The path of a rtpdump file containing recorded Opus RTP packets
+     * that will be read for the audio stream if it was
+     * given as option to the program, or null if not.
+     */
+    public String getAudioRtpdumpFile()
+    {
+        return videoRtpdumpFile;
+    }
+
+    public MediaDeviceChooser getMediaDeviceChooser()
+    {
+        return new MediaDeviceChooser(this);
     }
 }

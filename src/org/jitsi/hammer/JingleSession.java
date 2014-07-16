@@ -46,6 +46,12 @@ public class JingleSession implements PacketListener {
     private HostInfo serverInfo;
     
     /**
+     * The <tt>MediaDeviceChooser</tt> that will be used to choose the
+     * <tt>MediaDevice</tt>s of this <tt>JingleSession</tt>
+     */
+    private MediaDeviceChooser mediaDeviceChooser;
+    
+    /**
      * The username/nickname taken by this <tt>JingleSession</tt> in the
      * MUC chatroom
      */
@@ -137,9 +143,9 @@ public class JingleSession implements PacketListener {
      *  
      * @param hostInfo the XMPP server informations needed for the connection.
      */
-    public JingleSession(HostInfo hostInfo)
+    public JingleSession(HostInfo hostInfo, MediaDeviceChooser mdc)
     {
-        this(hostInfo,null);
+        this(hostInfo, mdc, null);
     }
     
     /**
@@ -151,9 +157,9 @@ public class JingleSession implements PacketListener {
      * connection.
      * 
      */
-    public JingleSession(HostInfo hostInfo, String username)
+    public JingleSession(HostInfo hostInfo, MediaDeviceChooser mdc, String username)
     {
-        this(hostInfo, username, false);
+        this(hostInfo, mdc, username, false);
     }
 
     /**
@@ -165,9 +171,14 @@ public class JingleSession implements PacketListener {
      * connection.
      * @param smackDebug the boolean activating or not the debug screen of smack
      */
-    public JingleSession(HostInfo hostInfo, String username, boolean smackDebug)
+    public JingleSession(
+            HostInfo hostInfo,
+            MediaDeviceChooser mdc,
+            String username,
+            boolean smackDebug)
     {
         this.serverInfo = hostInfo;
+        this.mediaDeviceChooser = mdc;
         this.username = (username == null) ? "Anonymous" : username;
         
         
@@ -358,6 +369,7 @@ public class JingleSession implements PacketListener {
         //the selected MediaDevice.
         mediaStreamMap = HammerUtils.generateMediaStream(
                 selectedFormat,
+                this.mediaDeviceChooser,
                 ptRegistry);
         
         //Now that the MediaStream are created, I can add their SSRC to the

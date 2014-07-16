@@ -13,18 +13,13 @@ import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.Candidat
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
 import net.java.sip.communicator.service.protocol.media.*;
 
-import org.jitsi.hammer.neomedia.jmfext.media.protocol.greyfading.*;
-import org.jitsi.hammer.neomedia.jmfext.media.protocol.ivffile.*;
-import org.jitsi.hammer.neomedia.jmfext.media.protocol.rtpdumpfile.*;
 import org.jitsi.hammer.extension.*;
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
-import org.jitsi.service.neomedia.codec.Constants;
 import org.jitsi.service.neomedia.device.*;
 import org.jitsi.service.neomedia.format.*;
 import org.ice4j.*;
 import org.ice4j.ice.*;
-import org.jitsi.videobridge.*;
 
 import java.net.*;
 import java.util.*;
@@ -96,56 +91,6 @@ public class HammerUtils
         }
         
         return returnedFormat;
-    }
-
-    
-    /**
-     * Select the favorite <tt>MediaDevice</tt> for a given media type.
-     * 
-     * @param mediaType The type of the <tt>MediaDevice</tt> that you wish
-     * to get.
-     * 
-     * @return the favorite <tt>MediaDevice</tt> for a given media type.
-     */
-    public static MediaDevice selectMediaDevice(String mediaType)
-    {
-        MediaDevice returnedDevice = null;
-        
-        
-        switch(MediaType.parseString(mediaType))
-        {
-            case AUDIO:
-                returnedDevice = new AudioSilenceMediaDevice();
-                /*
-                returnedDevice = new AudioMediaDeviceImpl(
-                    new CaptureDeviceInfo2(
-                        "rtpdump",
-                        new MediaLocator("rtpdumpfile:./ressources/rtp_opus.rtpdump"),
-                        new Format[]{ new AudioFormat(
-                                Constants.OPUS_RTP,
-                                48000,
-                                Format.NOT_SPECIFIED, // sampleSizeInBits 
-                                2,
-                                Format.NOT_SPECIFIED, // endian 
-                                Format.NOT_SPECIFIED, // signed
-                                Format.NOT_SPECIFIED, // frameSizeInBits 
-                                Format.NOT_SPECIFIED, // frameRate 
-                                Format.byteArray) },
-                        null,
-                        null,
-                        null));
-                */
-                break;
-            case VIDEO:
-                //returnedDevice = new VideoGreyFadingMediaDevice();
-                returnedDevice = new IVFMediaDevice("./ressources/big-buck-bunny_trailer_track1_eng.ivf");
-                //returnedDevice = new RtpdumpMediaDevice("./ressources/rtp_vp8.rtpdump", Constants.VP8_RTP);
-                break;
-            default :
-                break;
-        }
-        
-        return returnedDevice;
     }
 
 
@@ -317,13 +262,15 @@ public class HammerUtils
      * @param mediaFormatMap a <tt>Map</tt> of <tt>MediaFormat</tt> indexed by
      * the name/<tt>MediaType</tt> of the MediaStreams to be created with this
      * <tt>MediaFormat</tt>.
+     * @param mediaDeviceChooser used to chose the MediaDevice for each stream
      * @param ptRegistry the <tt>DynamicPayloadTypeRegistry</tt> containing
      * the dynamic payload type of the <tt>MediaFormat</tt> (if necessary).
-     * @return
+     * @return a Map that contained the created streams indexed by
+     * their <tt>MediaType</tt> 
      */
     public static Map<String,MediaStream> generateMediaStream(
             Map<String, MediaFormat> mediaFormatMap,
-            DynamicPayloadTypeRegistry ptRegistry)
+            MediaDeviceChooser mediaDeviceChooser, DynamicPayloadTypeRegistry ptRegistry)
     {
         MediaStream stream = null;
         MediaFormat format = null;
@@ -345,7 +292,7 @@ public class HammerUtils
                     format.getMediaType(),
                     mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
             
-            device = selectMediaDevice(format.getMediaType().toString());
+            device = mediaDeviceChooser.getMediaDevice(format.getMediaType());
             if(device != null) stream.setDevice(device);
             stream.setFormat(format);
             
@@ -370,15 +317,13 @@ public class HammerUtils
             }
             
             
-            //FIXME
             //I just add the dynamic payload type of RED (116) so that
             //the MediaStream don't complain when it will received RED packet
             //from the Jitsi Meet user
             if(format.getMediaType() == MediaType.VIDEO)
                 stream.addDynamicRTPPayloadType(
                         (byte) 116,
-                        format);
-            
+                        mediaService.getFormatFactory().createMediaFormat("red"));
             
             mediaStreamMap.put(mediaName, stream);
         }

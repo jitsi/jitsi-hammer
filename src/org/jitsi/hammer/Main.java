@@ -14,6 +14,8 @@ import java.io.File;
 import net.java.sip.communicator.launcher.ChangeJVMFrame;
 //import net.java.sip.communicator.util.ScStdOut;
 
+
+import org.jitsi.hammer.utils.*;
 import org.kohsuke.args4j.*;
 
 /**
@@ -195,16 +197,18 @@ public class Main
         }
         catch(CmdLineException e)
         {
-            System.err.println(e.getMessage());
-            System.out.println("Jitsi-Hammer usage :");
-            parser.printUsage(System.out);
-            return;
+            System.err.println(e.getMessage() + '\n');
+            System.err.println("Jitsi-Hammer options :");
+            parser.printUsage(System.err);
+            System.exit(1);
         }
         
         HostInfo hostInfo = infoCLI.getHostInfoFromArguments();
+        MediaDeviceChooser mdc = infoCLI.getMediaDeviceChooser();
         
         Hammer hammer = new Hammer(
                 hostInfo,
+                mdc,
                 "JitMeet-Hammer",
                 infoCLI.getNumberOfFakeUsers());
         
@@ -213,7 +217,7 @@ public class Main
         //After the initialization we start the Hammer (all its users will
         //connect to the XMPP server and try to setup media stream with it bridge
         
-        hammer.start(1000);
+        hammer.start(2000);
         
         if(infoCLI.getRunLength() > 0)
         {
