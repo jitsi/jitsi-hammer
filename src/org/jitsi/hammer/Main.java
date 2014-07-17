@@ -186,8 +186,8 @@ public class Main
          ************************************************************
          */
         
-        java.util.logging.Logger l = java.util.logging.Logger.getLogger("");
-        l.setLevel(java.util.logging.Level.WARNING);
+        //java.util.logging.Logger l = java.util.logging.Logger.getLogger("");
+        //l.setLevel(java.util.logging.Level.WARNING);
         
         CmdLineArguments infoCLI = new CmdLineArguments();
         CmdLineParser parser = new CmdLineParser(infoCLI);
@@ -197,9 +197,26 @@ public class Main
         }
         catch(CmdLineException e)
         {
-            System.err.println(e.getMessage() + '\n');
-            System.err.println("Jitsi-Hammer options :");
-            parser.printUsage(System.err);
+            if(infoCLI.getHelpOption())
+            {
+                System.out.println("Required options of the program :");
+                
+                System.out.println("-XMPPdomain , -XMPPhost , -MUCDomain\n");
+            }
+            else
+            {
+                System.out.println(e.getMessage() + '\n');
+            }
+            System.out.println("Jitsi-Hammer options usage :");
+            parser.printUsage(System.out);
+            System.exit(1);
+        }
+        if(infoCLI.getHelpOption())
+        {
+            System.out.println("Required options of the program :");
+            System.out.println("-XMPPdomain , -XMPPhost , -MUCDomain\n");
+            System.out.println("Jitsi-Hammer options usage :");
+            parser.printUsage(System.out);
             System.exit(1);
         }
         

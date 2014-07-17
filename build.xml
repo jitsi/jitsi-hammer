@@ -4,7 +4,7 @@
     <property file="local.properties" />
     <property name="output" value="classes" />
     <property name="run.arg.line" value="" />
-    <property name="run.jvmarg.line" value="" />
+    <property name="run.jvmarg.line" value="-Djava.util.logging.config.file=lib/logging.properties" />
     <property name="dist" value="dist" />
     <property name="doc" value="doc"/>
     <property name="java.doc" value="${doc}/api"/>
@@ -117,6 +117,7 @@
                description="Launch the Jitsi-Hammer that will connect to TestHammer@meet.jit.si">
             <antcall target="run">
                 <param name="run.arg.line" value="
+                --help
                 -XMPPdomain guest.jit.si
                 -XMPPhost meet.jit.si
                 -MUCDomain meet.jit.si

@@ -21,6 +21,10 @@ public class CmdLineArguments
      * for this program.
      */
     
+    @Option(name="-h", aliases= { "--help", "-help" }, usage="Get help and usage"
+            + " to run the program")
+    private boolean help = false;
+    
     /**
      * The domain name of the XMPP server.
      */
@@ -154,8 +158,19 @@ public class CmdLineArguments
         return videoRtpdumpFile;
     }
 
+    /**
+     * Create an return a <tt>MediaDeviceChooser</tt> based on the options and
+     * arguments this <tt>CmdLineArguments</tt> has collected and parsed.
+     * @return a <tt>MediaDeviceChooser</tt> based on the options and
+     * arguments this <tt>CmdLineArguments</tt> has collected and parsed.
+     */
     public MediaDeviceChooser getMediaDeviceChooser()
     {
         return new MediaDeviceChooser(this);
+    }
+    
+    public boolean getHelpOption()
+    {
+        return help;
     }
 }
