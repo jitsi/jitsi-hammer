@@ -137,15 +137,26 @@ public class JingleSession implements PacketListener {
     
     
     
+    
+    
     /**
      * Instantiates a <tt>JingleSession</tt> with a default username that
      * will connect to the XMPP server contained in <tt>hostInfo</tt>.
      *  
      * @param hostInfo the XMPP server informations needed for the connection.
+     * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
+     * <tt>JingleSession</tt> to choose the <tt>MediaDevice</tt> for each of its
+     * <tt>MediaStream</tt>s.
+     * @param hammerStats The <tt>HammerStat</tt> to which this
+     * <tt>JingleSession</tt> will register its <tt>MediaStream</tt>s for their
+     * stats.
      */
-    public JingleSession(HostInfo hostInfo, MediaDeviceChooser mdc)
+    public JingleSession(
+            HostInfo hostInfo,
+            MediaDeviceChooser mdc, 
+            HammerStats hammerStats)
     {
-        this(hostInfo, mdc, null);
+        this(hostInfo, mdc, null, hammerStats);
     }
     
     /**
@@ -153,13 +164,23 @@ public class JingleSession implements PacketListener {
      * that will connect to the XMPP server contained in <tt>hostInfo</tt>.
      * 
      * @param hostInfo the XMPP server informations needed for the connection.
+     * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
+     * <tt>JingleSession</tt> to choose the <tt>MediaDevice</tt> for each of its
+     * <tt>MediaStream</tt>s.
+     * @param hammerStats The <tt>HammerStat</tt> to which this
+     * <tt>JingleSession</tt> will register its <tt>MediaStream</tt>s for their
+     * stats.
      * @param username the username used by this <tt>JingleSession</tt> in the
      * connection.
      * 
      */
-    public JingleSession(HostInfo hostInfo, MediaDeviceChooser mdc, String username)
+    public JingleSession(
+            HostInfo hostInfo, 
+            MediaDeviceChooser mdc,
+            String username,
+            HammerStats hammerStats)
     {
-        this(hostInfo, mdc, username, false);
+        this(hostInfo, mdc, username, hammerStats, false);
     }
 
     /**
@@ -167,14 +188,21 @@ public class JingleSession implements PacketListener {
      * that will connect to the XMPP server contained in <tt>hostInfo</tt>.
      * 
      * @param hostInfo the XMPP server informations needed for the connection.
+     * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
+     * <tt>JingleSession</tt> to choose the <tt>MediaDevice</tt> for each of its
+     * <tt>MediaStream</tt>s.
      * @param username the username used by this <tt>JingleSession</tt> in the
      * connection.
+     * @param hammerStats The <tt>HammerStat</tt> to which this
+     * <tt>JingleSession</tt> will register its <tt>MediaStream</tt>s for their
+     * stats.
      * @param smackDebug the boolean activating or not the debug screen of smack
      */
     public JingleSession(
             HostInfo hostInfo,
             MediaDeviceChooser mdc,
             String username,
+            HammerStats hammerStats,
             boolean smackDebug)
     {
         this.serverInfo = hostInfo;
@@ -196,6 +224,15 @@ public class JingleSession implements PacketListener {
                     return (packet instanceof JingleIQ);
                 }
             });
+        
+        /*
+         * Creation in advance of the MediaStream that will be used later
+         * so the HammerStats can register their MediaStreamStats now.
+         */
+        mediaStreamMap = HammerUtils.createMediaStreams();
+        hammerStats.addStreams(
+                (AudioMediaStream) mediaStreamMap.get(MediaType.AUDIO.toString()),
+                (VideoMediaStream) mediaStreamMap.get(MediaType.VIDEO.toString()));
     }
 
     /**
@@ -254,13 +291,15 @@ public class JingleSession implements PacketListener {
     }
 
     /**
-     * Stop all media stream and disconnect from the MUC and the XMPP server
+     * Stop and close all media stream
+     * and disconnect from the MUC and the XMPP server
      */
     public void stop()
     {
         for(MediaStream stream : mediaStreamMap.values())
         {
             stream.stop();
+            stream.close();
         }
         
         connection.sendPacket(
@@ -365,11 +404,15 @@ public class JingleSession implements PacketListener {
         
         
         
-        //create mediastream from the selected MediaFormat, and with
-        //the selected MediaDevice.
-        mediaStreamMap = HammerUtils.generateMediaStream(
+        /* 
+         * configure the MediaStream created in the constructor with the
+         * selected MediaFormat, and with the selected MediaDevice (through the
+         * MediaDeviceChooser.
+         */
+        HammerUtils.configureMediaStream(
+                mediaStreamMap,
                 selectedFormat,
-                this.mediaDeviceChooser,
+                mediaDeviceChooser,
                 ptRegistry);
         
         //Now that the MediaStream are created, I can add their SSRC to the

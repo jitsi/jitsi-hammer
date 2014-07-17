@@ -122,6 +122,12 @@ public class Hammer {
      */
     private JingleSession sessions[] = null;
     
+    /**
+     * The <tt>HammerStats/tt> that will be used by this <tt>Hammer</tt>
+     * to keep track of the streams' stats of all the <tt>JingleSession</tt>
+     * etc..
+     */
+    private HammerStats hammerStats = new HammerStats();
     
 
     /**
@@ -142,14 +148,6 @@ public class Hammer {
         this.serverInfo = host;
         this.mediaDeviceChooser = mdc;
         sessions = new JingleSession[numberOfUser];
-        
-        for(int i = 0; i<numberOfUser; i++)
-        {
-            sessions[i] = new JingleSession(
-                    this.serverInfo,
-                    this.mediaDeviceChooser,
-                    this.username+"_"+i);    
-        }
     }
 
 
@@ -246,6 +244,16 @@ public class Hammer {
                 JingleIQ.ELEMENT_NAME,
                 JingleIQ.NAMESPACE,
                 new JingleIQProvider());
+        
+        
+        for(int i = 0; i<sessions.length; i++)
+        {
+            sessions[i] = new JingleSession(
+                    this.serverInfo,
+                    this.mediaDeviceChooser,
+                    this.username+"_"+i,
+                    hammerStats);
+        }
     }
     
     /**

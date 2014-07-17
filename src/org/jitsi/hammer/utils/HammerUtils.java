@@ -244,38 +244,72 @@ public class HammerUtils
         }
     }
 
+    /**
+     * Create a Map of <tt>MediaStream</tt> containing an AUDIO and VIDEO stream,
+     * indexed by the String equivalent of their <tt>MediaType</tt> , with
+     * just the <tt>MediaType</tt> set and with a <tt>DtlsControl</tt> for
+     * <tt>SrtpControl</tt>. Anything else need to be set later
+     * 
+     * @return a Map of newly created <tt>MediaStream</tt>, indexed by
+     * the String equivalent of their <tt>MediaType</tt>*
+     */
+    public static Map<String,MediaStream> createMediaStreams()
+    {
+        MediaService mediaService = LibJitsi.getMediaService();
+        Map<String,MediaStream> mediaStreamMap = new HashMap<String,MediaStream>();
+        MediaStream stream = null;
+        
+        /*
+         * AUDIO STREAM
+         */
+        stream = mediaService.createMediaStream(
+                null,
+                MediaType.AUDIO,
+                mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
+        mediaStreamMap.put(MediaType.AUDIO.toString(), stream);
+        
+        /*
+         * VIDEO STREAM
+         */
+        stream = mediaService.createMediaStream(
+                null,
+                MediaType.VIDEO,
+                mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
+        mediaStreamMap.put(MediaType.VIDEO.toString(), stream);
+        
+        return mediaStreamMap;
+    }
+    
     
     /**
-     * Create a <tt>Map</tt> of MediaStream (indexed by the String
-     * corresponding to a <tt>MediaType<tt>) from a <tt>Map</tt> of
-     * <tt>MediaFormat</tt>.
+     * Configure the <tt>MediaStream</tt> contained in <tt>mediaStreamMap</tt>
+     * with the informations the others arguments gives.
      * 
-     * It will create streams which names will be the keys of the 
-     * <tt>mediaFormatMap</tt>, with the <tt>MediaFormat</tt> associated to its
-     * name/key, and with the selected <tt>MediaDevice</tt> returned by
-     * <tt>selectMediaDevice</tt> for the <tt>MediaType</tt> of the
+     * It will set the streams with the <tt>MediaFormat</tt> associated to its
+     * name/MediaType, and with the selected <tt>MediaDevice</tt> returned by
+     * <tt>mediaDeviceChooser</tt> for the <tt>MediaType</tt> of the
      * <tt>MediaFormat</tt> of the stream.
+     * 
      * It will also create the streams with a <tt>DtlsControl</tt> that need
      * to be configured later.
      * The stream will be set to SENDONLY.
      * 
      * @param mediaFormatMap a <tt>Map</tt> of <tt>MediaFormat</tt> indexed by
-     * the name/<tt>MediaType</tt> of the MediaStreams to be created with this
+     * the name/<tt>MediaType</tt> of the MediaStreams set with this
      * <tt>MediaFormat</tt>.
      * @param mediaDeviceChooser used to chose the MediaDevice for each stream
      * @param ptRegistry the <tt>DynamicPayloadTypeRegistry</tt> containing
      * the dynamic payload type of the <tt>MediaFormat</tt> (if necessary).
-     * @return a Map that contained the created streams indexed by
-     * their <tt>MediaType</tt> 
      */
-    public static Map<String,MediaStream> generateMediaStream(
+    public static void configureMediaStream(
+            Map<String,MediaStream> mediaStreamMap,
             Map<String, MediaFormat> mediaFormatMap,
-            MediaDeviceChooser mediaDeviceChooser, DynamicPayloadTypeRegistry ptRegistry)
+            MediaDeviceChooser mediaDeviceChooser,
+            DynamicPayloadTypeRegistry ptRegistry)
     {
         MediaStream stream = null;
         MediaFormat format = null;
         MediaDevice device = null;
-        Map<String,MediaStream> mediaStreamMap = new HashMap<String,MediaStream>();
         
         
 
@@ -287,10 +321,7 @@ public class HammerUtils
             if(format == null) continue;
             
             
-            stream = mediaService.createMediaStream(
-                    null,
-                    format.getMediaType(),
-                    mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
+            stream = mediaStreamMap.get(mediaName);
             
             device = mediaDeviceChooser.getMediaDevice(format.getMediaType());
             if(device != null) stream.setDevice(device);
@@ -327,7 +358,6 @@ public class HammerUtils
             
             mediaStreamMap.put(mediaName, stream);
         }
-        return mediaStreamMap;
     }
     
     
