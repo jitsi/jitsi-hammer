@@ -201,7 +201,7 @@ public class Main
             {
                 System.out.println("Required options of the program :");
                 
-                System.out.println("-XMPPdomain , -XMPPhost , -MUCDomain\n");
+                System.out.println("-XMPPdomain , -XMPPhost , -MUCdomain\n");
             }
             else
             {

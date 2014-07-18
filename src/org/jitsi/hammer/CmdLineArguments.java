@@ -41,7 +41,7 @@ public class CmdLineArguments
     /**
      * The hostname used by the XMPP server (used to access to the MUC).
      */
-    @Option(name="-MUCDomain",usage="The MUC domain name",required=true)
+    @Option(name="-MUCdomain",usage="The MUC domain name",required=true)
     private String MUCdomain;
     
     /**
