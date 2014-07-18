@@ -117,10 +117,9 @@
                description="Launch the Jitsi-Hammer that will connect to TestHammer@meet.jit.si">
             <antcall target="run">
                 <param name="run.arg.line" value="
-                --help
                 -XMPPdomain guest.jit.si
                 -XMPPhost meet.jit.si
-                -MUCDomain meet.jit.si
+                -MUCdomain meet.jit.si
                 -room TestHammer
                 -ivf ./ressources/big-buck-bunny_trailer_track1_eng.ivf" />
             </antcall>
@@ -132,7 +131,7 @@
 	            <param name="run.arg.line" value="
 	            -XMPPdomain beta.meet.jit.si
 	            -XMPPhost beta.meet.jit.si
-	            -MUCDomain conference.beta.meet.jit.si
+	            -MUCdomain conference.beta.meet.jit.si
 	            -room GSoC2014
 	            -ivf ./ressources/big-buck-bunny_trailer_track1_eng.ivf" />
 	        </antcall>
@@ -145,7 +144,7 @@
                 <param name="run.arg.line" value="
                 -XMPPdomain pawel.jitsi.net
                 -XMPPhost pawel.jitsi.net
-                -MUCDomain conference.pawel.jitsi.net
+                -MUCdomain conference.pawel.jitsi.net
                 -room GSoC2014
                 -ivf ./ressources/big-buck-bunny_trailer_track1_eng.ivf" />
             </antcall>
@@ -157,7 +156,7 @@
 	            <param name="run.arg.line" value="
 	            -XMPPdomain jitmeet.example.com
 	            -XMPPhost jitmeet.example.com
-	            -MUCDomain conference.jitmeet.example.com
+	            -MUCdomain conference.jitmeet.example.com
 	            -room TestHammer
 	            -ivf ./ressources/big-buck-bunny_trailer_track1_eng.ivf" />
 	        </antcall>
