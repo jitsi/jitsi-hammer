@@ -13,6 +13,7 @@ import javax.media.format.*;
 import org.jitsi.hammer.*;
 import org.jitsi.hammer.neomedia.jmfext.media.protocol.greyfading.*;
 import org.jitsi.hammer.neomedia.jmfext.media.protocol.ivffile.*;
+import org.jitsi.hammer.neomedia.jmfext.media.protocol.rtpdumpfile.RtpdumpMediaDevice;
 import org.jitsi.impl.neomedia.device.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.codec.*;
@@ -66,25 +67,11 @@ public class MediaDeviceChooser
              */
             if(cmdArg.getAudioRtpdumpFile() != null)
             {
-                audioMediaDevice = new AudioMediaDeviceImpl(
-                        new CaptureDeviceInfo2(
-                                "Audio rtpdump file",
-                                new MediaLocator(
-                                        "rtpdumpfile:" + 
-                                        cmdArg.getAudioRtpdumpFile()),
-                                new Format[]{ new AudioFormat(
-                                        Constants.OPUS_RTP,
-                                        48000,
-                                        Format.NOT_SPECIFIED, // sampleSizeInBits 
-                                        2,
-                                        Format.NOT_SPECIFIED, // endian 
-                                        Format.NOT_SPECIFIED, // signed
-                                        Format.NOT_SPECIFIED, // frameSizeInBits 
-                                        Format.NOT_SPECIFIED, // frameRate 
-                                        Format.byteArray) },
-                                null,
-                                null,
-                                null));
+                audioMediaDevice = RtpdumpMediaDevice.createRtpdumpMediaDevice(
+                        cmdArg.getAudioRtpdumpFile(),
+                        Constants.OPUS_RTP,
+                        48000,
+                        MediaType.AUDIO);
             }
             else
             {
@@ -99,13 +86,10 @@ public class MediaDeviceChooser
              */
             if(cmdArg.getVideoRtpdumpFile() != null)
             {
-                videoMediaDevice = new MediaDeviceImpl(
-                        new CaptureDeviceInfo(
-                                "Video rtpdump file",
-                                new MediaLocator(
-                                        "rtpdumpfile:" +
-                                         cmdArg.getVideoRtpdumpFile()),
-                                new Format[]{new VideoFormat(Constants.VP8_RTP)}),
+                videoMediaDevice = RtpdumpMediaDevice.createRtpdumpMediaDevice(
+                        cmdArg.getAudioRtpdumpFile(),
+                        Constants.VP8_RTP,
+                        0,
                         MediaType.VIDEO);
             }
             else if(cmdArg.getIVFFile() != null)
