@@ -54,16 +54,27 @@ public class Main
     public static final String PNAME_SC_HOME_DIR_NAME
         = "net.java.sip.communicator.SC_HOME_DIR_NAME";
 
+    
     /**
-     * Sets the system properties net.java.sip.communicator.SC_HOME_DIR_LOCATION
-     * and net.java.sip.communicator.SC_HOME_DIR_NAME (if they aren't already
-     * set) for the hammer.
-     *
-     * Please leave the access modifier as package (default) to allow launch-
-     * wrappers to call it.
-     */
-    static void setScHomeDir()
+      * Sets the system properties net.java.sip.communicator.SC_HOME_DIR_LOCATION
+      * and net.java.sip.communicator.SC_HOME_DIR_NAME (if they aren't already
+      * set) in accord with the OS conventions specified by the name of the OS.
+      *
+      * Please leave the access modifier as package (default) to allow launch-
+      * wrappers to call it.
+      *
+      * @param osName the name of the OS according to which the SC_HOME_DIR_*
+      * properties are to be set
+      */
+    static void setScHomeDir(String osName)
     {
+        /*
+         * Though we'll be setting the SC_HOME_DIR_* property values depending
+         * on the OS running the application, we have to make sure we are
+         * compatible with earlier releases i.e. use
+         * ${user.home}/.sip-communicator if it exists (and the new path isn't
+         * already in use).
+         */
         String profileLocation = System.getProperty(PNAME_SC_HOME_DIR_LOCATION);
         String cacheLocation = System.getProperty(PNAME_SC_CACHE_DIR_LOCATION);
         String logLocation = System.getProperty(PNAME_SC_LOG_DIR_LOCATION);
@@ -74,8 +85,47 @@ public class Main
             || logLocation == null
             || name == null)
         {
-            String defaultLocation = System.getProperty("user.dir");
-            String defaultName = ".jitsi-hammer";
+            String defaultLocation = System.getProperty("user.home");
+            String defaultName = ".Jitsi-Hammer";
+
+            if (osName.startsWith("Mac"))
+            {
+                if (profileLocation == null)
+                    profileLocation =
+                            System.getProperty("user.home") + File.separator
+                            + "Library" + File.separator
+                            + "Application Support";
+                if (cacheLocation == null)
+                    cacheLocation =
+                        System.getProperty("user.home") + File.separator
+                        + "Library" + File.separator
+                        + "Caches";
+                if (logLocation == null)
+                    logLocation =
+                        System.getProperty("user.home") + File.separator
+                        + "Library" + File.separator
+                        + "Logs";
+
+                if (name == null)
+                    name = "Jitsi-Hammer";
+            }
+            else if (osName.startsWith("Windows"))
+            {
+                /*
+                * Primarily important on Vista because Windows Explorer opens
+                * in %USERPROFILE% so .sip-communicator is always visible. But
+                * it may be a good idea to follow the OS recommendations and
+                * use APPDATA on pre-Vista systems as well.
+                */
+                if (profileLocation == null)
+                    profileLocation = System.getenv("APPDATA");
+                if (cacheLocation == null)
+                    cacheLocation = System.getenv("LOCALAPPDATA");
+                if (logLocation == null)
+                    logLocation = System.getenv("LOCALAPPDATA");
+                if (name == null)
+                    name = "Jitsi-Hammer";
+            }
 
             /* If there're no OS specifics, use the defaults. */
             if (profileLocation == null)
@@ -126,11 +176,8 @@ public class Main
                 "false");
         }
     }
-    
-    
-    
-    
-    
+
+
     public static void main(String[] args)
         throws InterruptedException
     {
@@ -139,7 +186,7 @@ public class Main
         String osName = System.getProperty("os.name");
 
         setSystemProperties(osName);
-        setScHomeDir();
+        setScHomeDir(osName);
 
         // this needs to be set before any DNS lookup is run
         File f
