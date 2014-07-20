@@ -155,7 +155,7 @@ public class CmdLineArguments
      */
     public String getAudioRtpdumpFile()
     {
-        return videoRtpdumpFile;
+        return audioRtpdumpFile;
     }
 
     /**
