@@ -7,17 +7,16 @@
 
 package org.jitsi.hammer.utils;
 
-import javax.media.*;
-import javax.media.format.*;
 
 import org.jitsi.hammer.*;
-import org.jitsi.hammer.neomedia.jmfext.media.protocol.greyfading.*;
-import org.jitsi.hammer.neomedia.jmfext.media.protocol.ivffile.*;
-import org.jitsi.hammer.neomedia.jmfext.media.protocol.rtpdumpfile.RtpdumpMediaDevice;
-import org.jitsi.impl.neomedia.device.*;
+import org.jitsi.impl.neomedia.jmfext.media.protocol.greyfading.*;
+import org.jitsi.impl.neomedia.jmfext.media.protocol.ivffile.*;
+import org.jitsi.hammer.neomedia.jmfext.media.protocol.rtpdumpfile.*;
+import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.codec.*;
 import org.jitsi.service.neomedia.device.*;
+import org.jitsi.service.neomedia.format.MediaFormatFactory;
 import org.jitsi.videobridge.*;
 
 
@@ -61,6 +60,9 @@ public class MediaDeviceChooser
     {
         if(cmdArg != null)
         {
+            MediaService service = LibJitsi.getMediaService();
+            MediaFormatFactory factory = service.getFormatFactory();
+            
             /*
              * If an rtpdump file is given, it has priority over
              * AudioSilence
@@ -70,8 +72,7 @@ public class MediaDeviceChooser
                 audioMediaDevice = RtpdumpMediaDevice.createRtpdumpMediaDevice(
                         cmdArg.getAudioRtpdumpFile(),
                         Constants.OPUS_RTP,
-                        48000,
-                        MediaType.AUDIO);
+                        factory.createMediaFormat("Opus", 48000, 2));
             }
             else
             {
@@ -87,10 +88,9 @@ public class MediaDeviceChooser
             if(cmdArg.getVideoRtpdumpFile() != null)
             {
                 videoMediaDevice = RtpdumpMediaDevice.createRtpdumpMediaDevice(
-                        cmdArg.getAudioRtpdumpFile(),
+                        cmdArg.getVideoRtpdumpFile(),
                         Constants.VP8_RTP,
-                        0,
-                        MediaType.VIDEO);
+                        factory.createMediaFormat("vp8", 90000));
             }
             else if(cmdArg.getIVFFile() != null)
             {

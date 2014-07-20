@@ -1,10 +1,10 @@
 /*
- * Jitsi-Hammer, A traffic generator for Jitsi Videobridge.
- * 
+ * Jitsi, the OpenSource Java VoIP and Instant Messaging client.
+ *
  * Distributable under LGPL license.
  * See terms of license at gnu.org.
  */
- 
+
 package org.jitsi.hammer.neomedia.jmfext.media.protocol.rtpdumpfile;
 
 
@@ -15,13 +15,13 @@ import org.jitsi.impl.neomedia.jmfext.media.protocol.*;
 /**
  * Implements the <tt>CaptureDevice</tt> and <tt>DataSource</tt> for the
  *  purpose of rtpdump file streaming.
- * 
- * 
+ *
+ *
  * @author Thomas Kuntz
  */
 public class DataSource
     extends AbstractVideoPullBufferCaptureDevice
-{    
+{
     /**
      * {@inheritDoc}
      *
