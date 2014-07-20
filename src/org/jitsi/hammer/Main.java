@@ -267,6 +267,9 @@ public class Main
             System.exit(1);
         }
         
+        //We call initialize the Hammer (registering OSGi bundle for example)
+        Hammer.init();
+        
         HostInfo hostInfo = infoCLI.getHostInfoFromArguments();
         MediaDeviceChooser mdc = infoCLI.getMediaDeviceChooser();
         
@@ -276,8 +279,7 @@ public class Main
                 "JitMeet-Hammer",
                 infoCLI.getNumberOfFakeUsers());
         
-        //We call initialize the Hammer (registering OSGi bundle for example)
-        hammer.init();
+        
         //After the initialization we start the Hammer (all its users will
         //connect to the XMPP server and try to setup media stream with it bridge
         

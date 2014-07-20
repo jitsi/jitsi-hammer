@@ -63,12 +63,12 @@ public class Hammer {
      * The <tt>org.osgi.framework.launch.Framework</tt> instance which
      * represents the OSGi instance launched by this <tt>ComponentImpl</tt>.
      */
-    private Framework framework;
+    private static Framework framework;
     
     /**
      * The <tt>Object</tt> which synchronizes the access to {@link #framework}.
      */
-    private final Object frameworkSyncRoot = new Object();
+    private static final Object frameworkSyncRoot = new Object();
     
     /**
      * The locations of the OSGi bundles (or rather of the path of the class
@@ -148,6 +148,15 @@ public class Hammer {
         this.serverInfo = host;
         this.mediaDeviceChooser = mdc;
         sessions = new JingleSession[numberOfUser];
+        
+        for(int i = 0; i<sessions.length; i++)
+        {
+            sessions[i] = new JingleSession(
+                    this.serverInfo,
+                    this.mediaDeviceChooser,
+                    this.username+"_"+i,
+                    hammerStats);
+        }
     }
 
 
@@ -156,7 +165,7 @@ public class Hammer {
      * Initialize the Hammer by launching the OSGi Framework and
      * installing/registering the needed bundle (LibJitis and more..).
      */
-    public void init()
+    public static void init()
     {
         /**
          * This code is a slightly modified copy of the one found in
@@ -167,7 +176,7 @@ public class Hammer {
          */  	
         synchronized (frameworkSyncRoot)
         {
-            if (this.framework != null)
+            if (Hammer.framework != null)
                 return;
         }
 
@@ -226,7 +235,7 @@ public class Hammer {
 
         synchronized (frameworkSyncRoot)
         {
-            this.framework = framework;
+            Hammer.framework = framework;
         }
         
         
@@ -244,16 +253,6 @@ public class Hammer {
                 JingleIQ.ELEMENT_NAME,
                 JingleIQ.NAMESPACE,
                 new JingleIQProvider());
-        
-        
-        for(int i = 0; i<sessions.length; i++)
-        {
-            sessions[i] = new JingleSession(
-                    this.serverInfo,
-                    this.mediaDeviceChooser,
-                    this.username+"_"+i,
-                    hammerStats);
-        }
     }
     
     /**
