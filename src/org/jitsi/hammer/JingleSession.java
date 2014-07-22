@@ -33,7 +33,7 @@ import java.util.*;
  * @author Thomas Kuntz
  *
  * <tt>JingleSession</tt> represent a Jingle,ICE and RTP/RTCP session with
- * jitsi-videobridge : it simulate a jitmeet user by setting up an 
+ * jitsi-videobridge : it simulate a jitmeet user by setting up an
  * ICE stream and then sending fake audio/video data using RTP
  * to the videobridge.
  *
@@ -44,57 +44,74 @@ public class JingleSession implements PacketListener {
      * communicate
      */
     private HostInfo serverInfo;
-    
+
     /**
      * The <tt>MediaDeviceChooser</tt> that will be used to choose the
      * <tt>MediaDevice</tt>s of this <tt>JingleSession</tt>
      */
     private MediaDeviceChooser mediaDeviceChooser;
-    
+
     /**
      * The username/nickname taken by this <tt>JingleSession</tt> in the
      * MUC chatroom
      */
     private String username;
-    
-    
+
+
     /**
      * The <tt>ConnectionConfiguration</tt> equivalent of <tt>serverInfo</tt>.
      */
     private ConnectionConfiguration config;
-    
+
     /**
      * The object use to connect to and then communicate with the XMPP server.
      */
     private XMPPConnection connection;
-    
+
     /**
      * The object use to connect to and then send message to the MUC chatroom.
      */
     private MultiUserChat muc;
-    
-    
+
+
     /**
      * The registry containing the dynamic payload types learned in the
      * session-initiate (to use back in the session-accept)
      */
-    DynamicPayloadTypeRegistry ptRegistry = new DynamicPayloadTypeRegistry();
-    
+    DynamicPayloadTypeRegistry ptRegistry =
+        new DynamicPayloadTypeRegistry();
+
+    /**
+     * The registry containing the dynamic RTP extensions learned in the
+     * session-initiate
+     */
+    DynamicRTPExtensionsRegistry rtpExtRegistry =
+        new DynamicRTPExtensionsRegistry();
+
     /**
      * A Map mapping a media type (audio, video, data), with a list of format
      * that can be handle by libjitsi
      */
     Map<String,List<MediaFormat>> possibleFormatMap =
-            new HashMap<String,List<MediaFormat>>();
-    
+        new HashMap<String,List<MediaFormat>>();
+
     /**
      * A Map mapping a media type (audio, video, data), with a <tt>MediaFormat</tt>
      * representing the selected format for the stream handling this media type.
      * 
      * The MediaFormat in this Map has been chosen in <tt>possibleFormatMap</tt>
      */
-    Map<String,MediaFormat> selectedFormat = new HashMap<String,MediaFormat>();
-    
+    Map<String,MediaFormat> selectedFormat =
+        new HashMap<String,MediaFormat>();
+
+    /**
+     * A Map mapping a media type (audio, video, data), with a list of
+     * RTPExtension representing the selected RTP extensions for the format
+     * (and its corresponding <tt>MediaDevice</tt>)
+     */
+    Map<String,List<RTPExtension>> selectedRtpExtension =
+        new HashMap<String,List<RTPExtension>>();
+
     /**
      * The IQ message received by the XMPP server to initiate the Jingle session.
      * 
@@ -103,14 +120,14 @@ public class JingleSession implements PacketListener {
      * and their corresponding transport information (IP, port, etc...).
      */
     private JingleIQ sessionInitiate;
-    
+
     /**
      * The IQ message send by this <tt>JingleSession</tt> to the XMPP server
      * to accept the Jingle session.
      * 
      * It contains a list of <tt>ContentPacketExtension</tt> representing
      * the media and format, with their corresponding transport information,
-     * that this <tt>JingleSession</tt> accept to receive and send. 
+     * that this <tt>JingleSession</tt> accept to receive and send.
      */
     private JingleIQ sessionAccept;
 
@@ -119,12 +136,12 @@ public class JingleSession implements PacketListener {
      * handles.
      */
     private Map<String,MediaStream> mediaStreamMap;
-    
+
     /**
      * The <tt>Agent</tt> handling the ICE protocol of the stream
      */
     private Agent agent;
-    
+
     /**
      * <tt>Presence</tt> packet containing the SSRC of the streams of this
      * <tt>JingleSession</tt> (ns = http://estos.de/ns/mjs).
@@ -134,15 +151,15 @@ public class JingleSession implements PacketListener {
      * once (during the jingle accept).
      */
     private Packet presencePacketWithSSRC;
-    
-    
-    
-    
-    
+
+
+
+
+
     /**
      * Instantiates a <tt>JingleSession</tt> with a default username that
      * will connect to the XMPP server contained in <tt>hostInfo</tt>.
-     *  
+     * 
      * @param hostInfo the XMPP server informations needed for the connection.
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
      * <tt>JingleSession</tt> to choose the <tt>MediaDevice</tt> for each of its
@@ -152,13 +169,13 @@ public class JingleSession implements PacketListener {
      * stats.
      */
     public JingleSession(
-            HostInfo hostInfo,
-            MediaDeviceChooser mdc, 
-            HammerStats hammerStats)
+        HostInfo hostInfo,
+        MediaDeviceChooser mdc,
+        HammerStats hammerStats)
     {
         this(hostInfo, mdc, null, hammerStats);
     }
-    
+
     /**
      * Instantiates a <tt>JingleSession</tt> with a specified <tt>username</tt>
      * that will connect to the XMPP server contained in <tt>hostInfo</tt>.
@@ -175,10 +192,10 @@ public class JingleSession implements PacketListener {
      * 
      */
     public JingleSession(
-            HostInfo hostInfo, 
-            MediaDeviceChooser mdc,
-            String username,
-            HammerStats hammerStats)
+        HostInfo hostInfo,
+        MediaDeviceChooser mdc,
+        String username,
+        HammerStats hammerStats)
     {
         this(hostInfo, mdc, username, hammerStats, false);
     }
@@ -199,40 +216,40 @@ public class JingleSession implements PacketListener {
      * @param smackDebug the boolean activating or not the debug screen of smack
      */
     public JingleSession(
-            HostInfo hostInfo,
-            MediaDeviceChooser mdc,
-            String username,
-            HammerStats hammerStats,
-            boolean smackDebug)
+        HostInfo hostInfo,
+        MediaDeviceChooser mdc,
+        String username,
+        HammerStats hammerStats,
+        boolean smackDebug)
     {
         this.serverInfo = hostInfo;
         this.mediaDeviceChooser = mdc;
         this.username = (username == null) ? "Anonymous" : username;
-        
-        
+
+
         config = new ConnectionConfiguration(
-                serverInfo.getXMPPHostname(),
-                serverInfo.getPort(),
-                serverInfo.getXMPPDomain());
+            serverInfo.getXMPPHostname(),
+            serverInfo.getPort(),
+            serverInfo.getXMPPDomain());
         config.setDebuggerEnabled(smackDebug);
-        
+
         connection = new XMPPConnection(config);
         connection.addPacketListener(this,new PacketFilter()
+        {
+            public boolean accept(Packet packet)
             {
-                public boolean accept(Packet packet)
-                {
-                    return (packet instanceof JingleIQ);
-                }
-            });
-        
+                return (packet instanceof JingleIQ);
+            }
+        });
+
         /*
          * Creation in advance of the MediaStream that will be used later
          * so the HammerStats can register their MediaStreamStats now.
          */
         mediaStreamMap = HammerUtils.createMediaStreams();
         hammerStats.addStreams(
-                (AudioMediaStream) mediaStreamMap.get(MediaType.AUDIO.toString()),
-                (VideoMediaStream) mediaStreamMap.get(MediaType.VIDEO.toString()));
+            (AudioMediaStream) mediaStreamMap.get(MediaType.AUDIO.toString()),
+            (VideoMediaStream) mediaStreamMap.get(MediaType.VIDEO.toString()));
     }
 
     /**
@@ -244,7 +261,7 @@ public class JingleSession implements PacketListener {
         connection.connect();
         connection.loginAnonymously();
 
-        
+
         String roomURL = serverInfo.getRoomName()+"@"+serverInfo.getMUCDomain();
         muc = new MultiUserChat(connection, roomURL);
         while(true)
@@ -269,8 +286,8 @@ public class JingleSession implements PacketListener {
             break;
         }
         muc.sendMessage("Hello World!");
-        
-        
+
+
         /*
          * Send a Presence packet containing a Nick extension so that the
          * nickname is correctly displayed in jitmeet
@@ -279,9 +296,9 @@ public class JingleSession implements PacketListener {
         presencePacket.setTo(roomURL + "/" + username);
         presencePacket.addExtension(new Nick(username));
         connection.sendPacket(presencePacket);
-        
-        
-        
+
+
+
         /*
          * Add a simple message listener that will just display in the terminal
          * received message (and respond back with a "C'est pas faux");
@@ -301,34 +318,39 @@ public class JingleSession implements PacketListener {
             stream.stop();
             stream.close();
         }
-        
+
         connection.sendPacket(
-                JinglePacketFactory.createSessionTerminate(
-                        sessionAccept.getFrom(),
-                        sessionAccept.getTo(),
-                        sessionAccept.getSID(),
-                        Reason.GONE,
-                        "Bye Bye"));
-        
+            JinglePacketFactory.createSessionTerminate(
+                sessionAccept.getFrom(),
+                sessionAccept.getTo(),
+                sessionAccept.getSID(),
+                Reason.GONE,
+                "Bye Bye"));
+
         muc.leave();
         connection.disconnect();
     }
-    
-    
+
+
     /**
      * acceptJingleSession create a accept-session Jingle message and
      * send it to the initiator of the session.
-     * The initiator is taken from the From attribute 
+     * The initiator is taken from the From attribute
      * of the initiate-session message.
      */
     private void acceptJingleSession()
     {
         IceMediaStreamGenerator iceMediaStreamGenerator = null;
         List<MediaFormat> listFormat = null;
-        Map<String,ContentPacketExtension> contentMap =
-                new HashMap<String,ContentPacketExtension>();
+        List<RTPExtension> remoteRtpExtension = null;
+        List<RTPExtension> supportedRtpExtension = null;
+        List<RTPExtension> listRtpExtension = null;
         ContentPacketExtension content = null;
-        
+        RtpDescriptionPacketExtension description = null;
+        Map<String,ContentPacketExtension> contentMap =
+            new HashMap<String,ContentPacketExtension>();
+
+
         for(ContentPacketExtension cpe : sessionInitiate.getContentList())
         {
             //data isn't correctly handle by libjitsi for now, so we handle it
@@ -336,38 +358,51 @@ public class JingleSession implements PacketListener {
             if(cpe.getName().equalsIgnoreCase("data"))
             {
                 content = HammerUtils.createDescriptionForDataContent(
-                        CreatorEnum.responder,
-                        SendersEnum.both);
+                    CreatorEnum.responder,
+                    SendersEnum.both);
             }
             else
             {
+                description = cpe.getFirstChildOfType(
+                    RtpDescriptionPacketExtension.class);
+
+
                 listFormat = JingleUtils.extractFormats(
-                        cpe.getFirstChildOfType(RtpDescriptionPacketExtension.class),
-                        ptRegistry);
-                
-                
-                //extractRTPExtensions() TODO ?
-                
-                
+                    description,
+                    ptRegistry);
+                remoteRtpExtension = JingleUtils.extractRTPExtensions(
+                    description,
+                    rtpExtRegistry);
+                supportedRtpExtension = getExtensionsForType(
+                    MediaType.parseString(cpe.getName()));
+                listRtpExtension = intersectRTPExtensions(
+                    remoteRtpExtension,
+                    supportedRtpExtension);
+
+
                 possibleFormatMap.put(
-                        cpe.getName(),
-                        listFormat);
-                
+                    cpe.getName(),
+                    listFormat);
+
                 selectedFormat.put(
-                        cpe.getName(),
-                        HammerUtils.selectFormat(cpe.getName(),listFormat));
-                
-                
+                    cpe.getName(),
+                    HammerUtils.selectFormat(cpe.getName(),listFormat));
+
+                selectedRtpExtension.put(
+                    cpe.getName(),
+                    listRtpExtension);
+
+
                 content = JingleUtils.createDescription(
-                                CreatorEnum.responder, 
-                                cpe.getName(),
-                                SendersEnum.both,
-                                listFormat,
-                                null,
-                                ptRegistry,
-                                null);
+                    CreatorEnum.responder,
+                    cpe.getName(),
+                    SendersEnum.both,
+                    listFormat,
+                    listRtpExtension,
+                    ptRegistry,
+                    rtpExtRegistry);
             }
-            
+
             contentMap.put(cpe.getName(),content);
         }
         /*
@@ -376,50 +411,52 @@ public class JingleSession implements PacketListener {
          * FIXME
          */
         contentMap.remove("data");
-        
-        
-        
+
+
+
         iceMediaStreamGenerator = IceMediaStreamGenerator.getInstance();
         try
         {
             agent = iceMediaStreamGenerator.generateIceMediaStream(
-                    contentMap.keySet(),
-                    null,
-                    null);
+                contentMap.keySet(),
+                null,
+                null);
         }
         catch (IOException e)
         {
             System.err.println(e);
         }
-        
+
         //Add the remote candidate to my agent, and add my local candidate of
         //my stream to the content list of the future session-accept
         HammerUtils.addRemoteCandidateToAgent(
-                agent,
-                sessionInitiate.getContentList());
+            agent,
+            sessionInitiate.getContentList());
         HammerUtils.addLocalCandidateToContentList(
-                agent,
-                contentMap.values());
-        
-        
-        
-        
-        /* 
+            agent,
+            contentMap.values());
+
+
+
+
+        /*
          * configure the MediaStream created in the constructor with the
          * selected MediaFormat, and with the selected MediaDevice (through the
          * MediaDeviceChooser.
          */
         HammerUtils.configureMediaStream(
-                mediaStreamMap,
-                selectedFormat,
-                mediaDeviceChooser,
-                ptRegistry);
-        
+            mediaStreamMap,
+            selectedFormat,
+            selectedRtpExtension,
+            mediaDeviceChooser,
+            ptRegistry,
+            rtpExtRegistry);
+
         //Now that the MediaStream are created, I can add their SSRC to the
         //content list of the future session-accept
         HammerUtils.addSSRCToContent(contentMap, mediaStreamMap);
-        
-        
+
+
         /*
          * Send the SSRC of the different media in a "media" tag
          * It's not necessary but its a copy of Jitsi Meet behavior
@@ -431,12 +468,12 @@ public class JingleSession implements PacketListener {
          * but better safe than sorry.
          */
         presencePacketWithSSRC = new Presence(Presence.Type.available);
-        String recipient = 
-                serverInfo.getRoomName()
-                +"@"
-                +serverInfo.getMUCDomain()
-                + "/"
-                + username;
+        String recipient =
+            serverInfo.getRoomName()
+            +"@"
+            +serverInfo.getMUCDomain()
+            + "/"
+            + username;
         presencePacketWithSSRC.setTo(recipient);
         presencePacketWithSSRC.addExtension(new Nick(username));
         MediaPacketExtension mediaPacket = new MediaPacketExtension();
@@ -444,37 +481,37 @@ public class JingleSession implements PacketListener {
         {
             String str = String.valueOf(mediaStreamMap.get(key).getLocalSourceID());
             mediaPacket.addSource(
-                    key,
-                    str,
-                    MediaDirection.SENDRECV.toString());
+                key,
+                str,
+                MediaDirection.SENDRECV.toString());
         }
         presencePacketWithSSRC.addExtension(mediaPacket);
         connection.sendPacket(presencePacketWithSSRC);
 
-        
-        
-        
+
+
+
         //Creation of a session-accept message
         sessionAccept = JinglePacketFactory.createSessionAccept(
-                sessionInitiate.getTo(),
-                sessionInitiate.getFrom(),
-                sessionInitiate.getSID(),
-                contentMap.values());
+            sessionInitiate.getTo(),
+            sessionInitiate.getFrom(),
+            sessionInitiate.getSID(),
+            contentMap.values());
         sessionAccept.setInitiator(sessionInitiate.getFrom());
-        
-        
+
+
         //Set the remote fingerprint on my streams and add the fingerprints
         //of my streams to the content list of the session-accept
         HammerUtils.setDtlsEncryptionOnTransport(
-                mediaStreamMap,
-                sessionAccept.getContentList(),
-                sessionInitiate.getContentList());
-        
-        
+            mediaStreamMap,
+            sessionAccept.getContentList(),
+            sessionInitiate.getContentList());
+
+
         //Send the session-accept IQ
         connection.sendPacket(sessionAccept);
         System.out.println("Jingle accept-session message sent");
-        
+
         //Run ICE protocol on my streams.
         agent.startConnectivityEstablishment();
         while(IceProcessingState.TERMINATED != agent.getState())
@@ -489,13 +526,13 @@ public class JingleSession implements PacketListener {
                 e.printStackTrace();
             }
         }
-        
-        
-        
+
+
+
         //Add socket created by ice4j to their associated MediaStreams
         HammerUtils.addSocketToMediaStream(agent, mediaStreamMap);
-        
-        
+
+
         //Start the encryption of the MediaStreams
         for(MediaStream stream : mediaStreamMap.values())
         {
@@ -503,19 +540,19 @@ public class JingleSession implements PacketListener {
             MediaType type = stream.getFormat().getMediaType();
             control.start(type);
         }
-        
+
         //Start the MediaStream
         for(MediaStream stream : mediaStreamMap.values())
         {
             stream.start();
         }
     }
-    
-    
-  
+
+
+
     /**
      * Callback function used when a JingleIQ is received by the XMPP connector.
-     * @param packet the packet received by the <tt>JingleSession</tt> 
+     * @param packet the packet received by the <tt>JingleSession</tt>
      */
     public void processPacket(Packet packet)
     {
@@ -523,31 +560,31 @@ public class JingleSession implements PacketListener {
         ackJingleIQ(jiq);
         switch(jiq.getAction())
         {
-            case SESSION_INITIATE:
-                System.out.println("Jingle session-initiate received");
-                if(sessionInitiate == null)
-                {
-                    sessionInitiate = jiq;
-                    acceptJingleSession();
-                }
-                else
-                {
-                    System.out.println("but not processed (already got one)");
-                }
-                break;
-            case ADDSOURCE:
-                System.out.println("Jingle addsource received");
-                break;
-            case REMOVESOURCE:
-                System.out.println("Jingle addsource received");
-                break;
-            default:
-                System.out.println("Unknown Jingle IQ");
-                break;
+        case SESSION_INITIATE:
+            System.out.println("Jingle session-initiate received");
+            if(sessionInitiate == null)
+            {
+                sessionInitiate = jiq;
+                acceptJingleSession();
+            }
+            else
+            {
+                System.out.println("but not processed (already got one)");
+            }
+            break;
+        case ADDSOURCE:
+            System.out.println("Jingle addsource received");
+            break;
+        case REMOVESOURCE:
+            System.out.println("Jingle addsource received");
+            break;
+        default:
+            System.out.println("Unknown Jingle IQ");
+            break;
         }
     }
-    
-    
+
+
     /**
      * This function simply create an ACK packet to acknowledge the Jingle IQ
      * packet <tt>packetToAck</tt>.
@@ -558,5 +595,108 @@ public class JingleSession implements PacketListener {
         IQ ackPacket = IQ.createResultIQ(packetToAck);
         connection.sendPacket(ackPacket);
         System.out.println("Ack sent for JingleIQ");
+    }
+
+
+    /**
+     * Copy from CallPeerMediaHandler class of Jitsi
+     * 
+     * Returns a (possibly empty) <tt>List</tt> of <tt>RTPExtension</tt>s
+     * supported by the device that this <tt>JingleSession</tt> uses to
+     * handle media of the specified <tt>type</tt>.
+     *
+     * @param type the <tt>MediaType</tt> of the device whose
+     * <tt>RTPExtension</tt>s we are interested in.
+     *
+     * @return a (possibly empty) <tt>List</tt> of <tt>RTPExtension</tt>s
+     * supported by the device that this <tt>JingleSession</tt>
+     * uses to handle media of the specified <tt>type</tt>.
+     */
+    protected List<RTPExtension> getExtensionsForType(MediaType type)
+    {
+        return mediaDeviceChooser.getMediaDevice(type).getSupportedExtensions();
+    }
+
+
+    /**
+     * Copy from CallPeerMediaHandler class of Jitsi
+     * 
+     * Compares a list of <tt>RTPExtension</tt>s offered by a remote party
+     * to the list of locally supported <tt>RTPExtension</tt>s as returned
+     * by one of our local <tt>MediaDevice</tt>s and returns a third
+     * <tt>List</tt> that contains their intersection. The returned
+     * <tt>List</tt> contains extensions supported by both the remote party and
+     * the local device that we are dealing with. Direction attributes of both
+     * lists are also intersected and the returned <tt>RTPExtension</tt>s have
+     * directions valid from a local perspective. In other words, if
+     * <tt>remoteExtensions</tt> contains an extension that the remote party
+     * supports in a <tt>SENDONLY</tt> mode, and we support that extension in a
+     * <tt>SENDRECV</tt> mode, the corresponding entry in the returned list will
+     * have a <tt>RECVONLY</tt> direction.
+     *
+     * @param remoteExtensions the <tt>List</tt> of <tt>RTPExtension</tt>s as
+     * advertised by the remote party.
+     * @param supportedExtensions the <tt>List</tt> of <tt>RTPExtension</tt>s
+     * that a local <tt>MediaDevice</tt> returned as supported.
+     *
+     * @return the (possibly empty) intersection of both of the extensions lists
+     * in a form that can be used for generating an SDP media description or
+     * for configuring a stream.
+     */
+    protected List<RTPExtension> intersectRTPExtensions(
+        List<RTPExtension> remoteExtensions,
+        List<RTPExtension> supportedExtensions)
+        {
+        if(remoteExtensions == null || supportedExtensions == null)
+            return new ArrayList<RTPExtension>();
+
+        List<RTPExtension> intersection = new ArrayList<RTPExtension>(
+            Math.min(remoteExtensions.size(), supportedExtensions.size()));
+
+        //loop through the list that the remote party sent
+        for(RTPExtension remoteExtension : remoteExtensions)
+        {
+            RTPExtension localExtension = findExtension(
+                supportedExtensions, remoteExtension.getURI().toString());
+
+            if(localExtension == null)
+                continue;
+
+            MediaDirection localDir  = localExtension.getDirection();
+            MediaDirection remoteDir = remoteExtension.getDirection();
+
+            RTPExtension intersected = new RTPExtension(
+                localExtension.getURI(),
+                localDir.getDirectionForAnswer(remoteDir),
+                remoteExtension.getExtensionAttributes());
+
+            intersection.add(intersected);
+        }
+
+        return intersection;
+        }
+
+    /**
+     * Copy from CallPeerMediaHandler class of Jitsi
+     * 
+     * Returns the first <tt>RTPExtension</tt> in <tt>extList</tt> that uses
+     * the specified <tt>extensionURN</tt> or <tt>null</tt> if <tt>extList</tt>
+     * did not contain such an extension.
+     *
+     * @param extList the <tt>List</tt> that we will be looking through.
+     * @param extensionURN the URN of the <tt>RTPExtension</tt> that we are
+     * looking for.
+     *
+     * @return the first <tt>RTPExtension</tt> in <tt>extList</tt> that uses
+     * the specified <tt>extensionURN</tt> or <tt>null</tt> if <tt>extList</tt>
+     * did not contain such an extension.
+     */
+    private RTPExtension findExtension(List<RTPExtension> extList,
+        String extensionURN)
+    {
+        for(RTPExtension rtpExt : extList)
+            if (rtpExt.getURI().toASCIIString().equals(extensionURN))
+                return rtpExt;
+        return null;
     }
 }
