@@ -110,7 +110,7 @@ public class RtpdumpFileReader
      * @throws IOException if an error occur during the seek and reading of the
      * file.
      */
-    private void resetFile() throws IOException
+    public void resetFile() throws IOException
     {
         stream.seek( 0 );
         stream.readLine();//read the first line that is in ascii

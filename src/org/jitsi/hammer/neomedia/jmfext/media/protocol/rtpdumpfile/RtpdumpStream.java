@@ -158,7 +158,6 @@ public class RtpdumpStream
                 e.printStackTrace();
             }
         }
-        //System.out.println(nanos / 1000000);
         this.lastRtpTimestamp=rtpPacket.getTimestamp();
     }
 }
