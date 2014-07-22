@@ -44,32 +44,32 @@ public class Hammer {
      * The base of the username use by all the virtual users this Hammer
      * will create.
      */
-    private String username;
-    
+    private final String username;
+
     /**
      * The information about the XMPP server to which all virtual users will
      * try to connect.
      */
-    private HostInfo serverInfo;
-    
+    private final HostInfo serverInfo;
+
     /**
      * The <tt>MediaDeviceChooser</tt> that will be used by all the
      * <tt>JingleSession</tt> to choose their <tt>MediaDevice</tt>
      */
-    private MediaDeviceChooser mediaDeviceChooser;
-    
-    
+    private final MediaDeviceChooser mediaDeviceChooser;
+
+
     /**
      * The <tt>org.osgi.framework.launch.Framework</tt> instance which
      * represents the OSGi instance launched by this <tt>ComponentImpl</tt>.
      */
     private static Framework framework;
-    
+
     /**
      * The <tt>Object</tt> which synchronizes the access to {@link #framework}.
      */
     private static final Object frameworkSyncRoot = new Object();
-    
+
     /**
      * The locations of the OSGi bundles (or rather of the path of the class
      * files of their <tt>BundleActivator</tt> implementations).
@@ -77,14 +77,14 @@ public class Hammer {
      * and represents an OSGi start level.
      */
     private static final String[][] BUNDLES =
+    {
+
         {
-        
-            {
-                "net/java/sip/communicator/impl/libjitsi/LibJitsiActivator"
-            }
-            //These bundles are used in Jitsi-Videobridge from which I copied
-            //some code, but these bundle doesn't seems necessary for the hammer
-            /*,
+            "net/java/sip/communicator/impl/libjitsi/LibJitsiActivator"
+        }
+        //These bundles are used in Jitsi-Videobridge from which I copied
+        //some code, but these bundle doesn't seems necessary for the hammer
+        /*,
             {
                 "net/java/sip/communicator/util/UtilActivator",
                 "net/java/sip/communicator/impl/fileaccess/FileAccessActivator"
@@ -113,7 +113,7 @@ public class Hammer {
             {
                 "org/jitsi/hammer/HammerActivator"
             }*/
-        };
+    };
 
     /**
      * The array containing all the <tt>JingleSession</tt> that this Hammer
@@ -121,14 +121,19 @@ public class Hammer {
      * server and start MediaStream with its jitsi-videobridge
      */
     private JingleSession sessions[] = null;
-    
+
     /**
      * The <tt>HammerStats/tt> that will be used by this <tt>Hammer</tt>
      * to keep track of the streams' stats of all the <tt>JingleSession</tt>
      * etc..
      */
-    private HammerStats hammerStats = new HammerStats();
-    
+    private final HammerStats hammerStats = new HammerStats();
+
+    /**
+     * The thread that run the <tt>HammerStats</tt> of this <tt>Hammer</tt>
+     */
+    private Thread hammerStatsThread;
+
 
     /**
      * Instantiate a <tt>Hammer</tt> object with <tt>numberOfUser</tt> virtual
@@ -137,7 +142,7 @@ public class Hammer {
      * 
      * @param host The information about the XMPP server to which all
      * virtual users will try to connect.
-     * @param mdc 
+     * @param mdc
      * @param username The base of the username used by all the virtual users.
      * @param numberOfUser The number of virtual users this <tt>Hammer</tt>
      * will create and handle.
@@ -148,14 +153,14 @@ public class Hammer {
         this.serverInfo = host;
         this.mediaDeviceChooser = mdc;
         sessions = new JingleSession[numberOfUser];
-        
+
         for(int i = 0; i<sessions.length; i++)
         {
             sessions[i] = new JingleSession(
-                    this.serverInfo,
-                    this.mediaDeviceChooser,
-                    this.username+"_"+i,
-                    hammerStats);
+                this.serverInfo,
+                this.mediaDeviceChooser,
+                this.username+"_"+i,
+                hammerStats);
         }
     }
 
@@ -173,7 +178,7 @@ public class Hammer {
          * 
          * This function run the activation of different bundle that are needed
          * These bundle are the one found in the <tt>BUNDLE</tt> array
-         */  	
+         */
         synchronized (frameworkSyncRoot)
         {
             if (Hammer.framework != null)
@@ -185,8 +190,8 @@ public class Hammer {
         BundleContext bundleContext = null;
 
         configuration.put(
-                Constants.FRAMEWORK_BEGINNING_STARTLEVEL,
-                Integer.toString(BUNDLES.length));
+            Constants.FRAMEWORK_BEGINNING_STARTLEVEL,
+            Integer.toString(BUNDLES.length));
 
         Framework framework = frameworkFactory.newFramework(configuration);
 
@@ -197,19 +202,19 @@ public class Hammer {
             bundleContext = framework.getBundleContext();
 
             for (int startLevelMinus1 = 0;
-                    startLevelMinus1 < BUNDLES.length;
-                    startLevelMinus1++)
+                startLevelMinus1 < BUNDLES.length;
+                startLevelMinus1++)
             {
                 int startLevel = startLevelMinus1 + 1;
 
                 for (String location : BUNDLES[startLevelMinus1])
                 {
-                	Bundle bundle = bundleContext.installBundle(location);
+                    Bundle bundle = bundleContext.installBundle(location);
 
                     if (bundle != null)
                     {
                         BundleStartLevel bundleStartLevel
-                        	= bundle.adapt(BundleStartLevel.class);
+                        = bundle.adapt(BundleStartLevel.class);
 
                         if (bundleStartLevel != null)
                             bundleStartLevel.setStartLevel(startLevel);
@@ -218,11 +223,11 @@ public class Hammer {
             }
 
             framework.start();
-            
+
             /*
              * Call to getMediaService to initialize the MediaService
              * implementation so that the configuration for the
-             * fmj registry are correctly set 
+             * fmj registry are correctly set
              * before I write my capture devices in it.
              */
             LibJitsi.getMediaService();
@@ -237,24 +242,24 @@ public class Hammer {
         {
             Hammer.framework = framework;
         }
-        
-        
+
+
         ProviderManager manager = ProviderManager.getInstance();
         manager.addExtensionProvider(
-                MediaProvider.ELEMENT_NAME,
-                MediaProvider.NAMESPACE,
-                new MediaProvider());
+            MediaProvider.ELEMENT_NAME,
+            MediaProvider.NAMESPACE,
+            new MediaProvider());
         manager.addExtensionProvider(
-                SsrcProvider.ELEMENT_NAME,
-                SsrcProvider.NAMESPACE,
-                new SsrcProvider());
-        
+            SsrcProvider.ELEMENT_NAME,
+            SsrcProvider.NAMESPACE,
+            new SsrcProvider());
+
         manager.addIQProvider(
-                JingleIQ.ELEMENT_NAME,
-                JingleIQ.NAMESPACE,
-                new JingleIQProvider());
+            JingleIQ.ELEMENT_NAME,
+            JingleIQ.NAMESPACE,
+            new JingleIQProvider());
     }
-    
+
     /**
      * Start the connection of all the virtual user that this <tt>Hammer</tt>
      * handles to the XMPP server(and then a MUC).
@@ -265,7 +270,7 @@ public class Hammer {
     public void start(int wait)
     {
         if(wait <= 0) wait = 1;
-        
+
         try
         {
             for(JingleSession session : sessions)
@@ -282,12 +287,16 @@ public class Hammer {
         {
             e.printStackTrace();
         }
+
+        hammerStatsThread = new Thread(hammerStats);
+        hammerStatsThread.start();
     }
 
 
     /**
      * Stop the streams of all the fake users created, and disconnect them
      * from the MUC and the XMPP server.
+     * Also stop the <tt>HammerStats</tt> thread.
      */
     public void stop()
     {
@@ -295,6 +304,11 @@ public class Hammer {
         {
             session.stop();
         }
+        /*
+         * Stop the thread of the HammerStats, without using the Thread
+         * instance hammerStatsThread, to allow it to cleanly stop.
+         */
+        hammerStats.stop();
     }
 }
 
