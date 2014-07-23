@@ -21,6 +21,7 @@ import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import org.jitsi.service.libjitsi.LibJitsi;
 import org.jitsi.hammer.extension.*;
 import org.jitsi.hammer.neomedia.*;
+import org.jitsi.hammer.stats.HammerStats;
 import org.jitsi.hammer.utils.MediaDeviceChooser;
 
 import java.util.*;
@@ -159,8 +160,7 @@ public class Hammer {
             fakeUsers[i] = new FakeUser(
                 this.serverInfo,
                 this.mediaDeviceChooser,
-                this.username+"_"+i,
-                hammerStats);
+                this.username+"_"+i);
         }
     }
 
@@ -276,6 +276,7 @@ public class Hammer {
             for(FakeUser user : fakeUsers)
             {
                 user.start();
+                hammerStats.addFakeUsersStats(user.getFakeUserStats());
                 Thread.sleep(wait);
             }
         }

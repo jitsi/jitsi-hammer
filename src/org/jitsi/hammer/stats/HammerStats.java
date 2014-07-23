@@ -5,19 +5,20 @@
  * See terms of license at gnu.org.
  */
 
-package org.jitsi.hammer;
+package org.jitsi.hammer.stats;
 
 
 import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
-import org.jitsi.service.neomedia.*;
+import org.jitsi.hammer.Main;
 
 /**
  * @author Thomas Kuntz
  * 
  * This class is used to keep track of stats of all the streams of all the
- * fake users (<tt>JingleSession</tt>), generate new new stats, writes stats
+ * fake users (<tt>FakeUser</tt>), generate new new stats, writes stats
  * to files, print them etc...
  *
  */
@@ -41,18 +42,22 @@ public class HammerStats implements Runnable
     private final String statsDirectoryPath;
 
     /**
-     * An <tt>List</tt> that contains the <tt>MediaStreamStats</tt> of all the
-     * <tt>AudioMediaStream<tt> this class keeps track of.
+     * The file that will contain the overall stats
      */
-    private final ArrayList<MediaStreamStats> audioStreamsStats =
-        new ArrayList<MediaStreamStats>();
+    private final File overallStatsFile;
 
     /**
-     * An <tt>List</tt> that contains the <tt>MediaStreamStats</tt> of all the
-     * <tt>VideoMediaStream<tt> this class keeps track of.
+     * The file that will contain all the stats recorded by run()
      */
-    private final ArrayList<MediaStreamStats> videoStreamsStats =
-        new ArrayList<MediaStreamStats>();
+    private final File allStatsFile;
+
+    /**
+     * An <tt>List</tt> of <tt>FakeUserStats</tt> that contains the
+     * <tt>MediaStreamStats</tt>s of the <tt>FakeUser</tt>.
+     * It is used to keep track of the streams' stats.
+     */
+    private final ArrayList<FakeUserStats> fakeUserStatsList =
+        new ArrayList<FakeUserStats>();
 
     /**
      * The time (in seconds) the HammerStats wait between two updates.
@@ -68,6 +73,7 @@ public class HammerStats implements Runnable
         this( System.getProperty(Main.PNAME_SC_HOME_DIR_LOCATION)
             + File.separator
             + System.getProperty(Main.PNAME_SC_HOME_DIR_NAME)
+            + File.separator
             + HammerStats.STATS_DIR_NAME);
     }
 
@@ -79,22 +85,31 @@ public class HammerStats implements Runnable
      */
     public HammerStats(String statsDirectoryPath)
     {
-        this.statsDirectoryPath = statsDirectoryPath;
+        this.statsDirectoryPath =
+            statsDirectoryPath
+            + File.separator
+            + new SimpleDateFormat("yyyy-MM-dd'_'HH.mm.ss").format(new Date());
         new File(this.statsDirectoryPath).mkdirs();
+
+        this.overallStatsFile = new File(
+            this.statsDirectoryPath
+            + File.separator
+            + "overallStats.json");
+        this.allStatsFile = new File(
+            this.statsDirectoryPath
+            + File.separator
+            + "allStats.json");
     }
 
 
-    public synchronized void addStreams(
-        AudioMediaStream audioMediaStream,
-        VideoMediaStream videoMediaStream)
+    public synchronized void addFakeUsersStats(
+        FakeUserStats fakeUserStats)
     {
-        if((audioMediaStream == null) || (videoMediaStream == null))
+        if(fakeUserStats == null)
         {
-            throw new NullPointerException("MediaStream can't be null");
+            throw new NullPointerException("FakeUserStats can't be null");
         }
-
-        audioStreamsStats.add(audioMediaStream.getMediaStreamStats());
-        videoStreamsStats.add(videoMediaStream.getMediaStreamStats());
+        fakeUserStatsList.add(fakeUserStats);
     }
 
     /**
@@ -105,39 +120,54 @@ public class HammerStats implements Runnable
      */
     public void run()
     {
-        Iterator<MediaStreamStats> audioStatsIterator = null;
-        Iterator<MediaStreamStats> videoStatsIterator = null;
-        MediaStreamStats audioStats = null;
-        MediaStreamStats videoStats = null;
-
+        PrintWriter writer = null;
+        String delim;
+        String delim_ = "";
         synchronized(this)
         {
             threadStop = false;
         }
 
 
+        try
+        {
+            writer = new PrintWriter(allStatsFile, "UTF-8");
+            writer.println("[");
+        }
+        catch (FileNotFoundException e)
+        {
+            e.printStackTrace();
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            e.printStackTrace();
+        }
+
         while(threadStop == false)
         {
+            writer.println(delim_);
+            delim_ = ",";
             synchronized(this)
             {
-                //We get the iterator for both ListArray
-                audioStatsIterator = audioStreamsStats.iterator();
-                videoStatsIterator = videoStreamsStats.iterator();
-
-                //While there is a MediaStreamStats not updated and collected
-                while(audioStatsIterator.hasNext() && videoStatsIterator.hasNext())
+                writer.println("{");
+                writer.println("  \"timestamp\":" + System.currentTimeMillis()+",");
+                writer.println("  \"users\":");
+                writer.println("  [");
+                delim = "";
+                for(FakeUserStats stats : fakeUserStatsList)
                 {
-                    audioStats = audioStatsIterator.next();
-                    videoStats = videoStatsIterator.next();
-
                     //We update the stats before using/reading them.
-                    audioStats.updateStats();
-                    videoStats.updateStats();
+                    stats.updateStats();
+
+                    writer.println(delim + stats.getStatsJSON(2));
+                    delim = ",";
 
                     //TODO read/collect the stats we want to keep track.
                     //Write them to the stats file
                     //Maybe compute some things, like average or whatenot
                 }
+                writer.println("  ]");
+                writer.append("}");
             }
 
             try
@@ -150,6 +180,9 @@ public class HammerStats implements Runnable
                 threadStop = true;
             }
         }
+
+        writer.println("]");
+        writer.close();
     }
 
     /**
@@ -162,12 +195,44 @@ public class HammerStats implements Runnable
     }
 
     /**
-     * Print the overall stats of the <tt>MediaStream</tt> this
-     * <tt>MediaStreamStats</tt> keep track.
+     * Write the overall stats of the <tt>MediaStream</tt> this
+     * <tt>MediaStreamStats</tt> keep track in its file.
+     */
+    public void writeOverallStats()
+    {
+        try
+        {
+            PrintWriter writer = new PrintWriter(overallStatsFile, "UTF-8");
+            writer.println(getOverallStats());
+            writer.close();
+        }
+        catch (FileNotFoundException e)
+        {
+            e.printStackTrace();
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * print the overall stats of the <tt>MediaStream</tt> this
+     * <tt>MediaStreamStats</tt> keep track to stdout.
      */
     public void printOverallStats()
     {
-        //TODO print
+        System.out.println(getOverallStats());
+    }
+
+    /**
+     * Create and return the String that contains the overall stats.
+     * @return the String that contains the overall stats.
+     */
+    protected String getOverallStats()
+    {
+        //TODO
+        return "";
     }
 
     /**

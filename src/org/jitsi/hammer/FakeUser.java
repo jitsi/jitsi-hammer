@@ -16,6 +16,7 @@ import org.jivesoftware.smack.filter.*;
 import org.ice4j.ice.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.format.*;
+import org.jitsi.hammer.stats.*;
 import org.jitsi.hammer.utils.*;
 import org.jitsi.hammer.extension.*;
 
@@ -152,7 +153,11 @@ public class FakeUser implements PacketListener {
      */
     private Packet presencePacketWithSSRC;
 
-
+    /**
+     * The <tt>FakeUserStats</tt> that represents the stats of the streams of
+     * this <tt>FakeUser</tt>
+     */
+    FakeUserStats fakeUserStats = new FakeUserStats();
 
 
 
@@ -170,10 +175,9 @@ public class FakeUser implements PacketListener {
      */
     public FakeUser(
         HostInfo hostInfo,
-        MediaDeviceChooser mdc,
-        HammerStats hammerStats)
+        MediaDeviceChooser mdc)
     {
-        this(hostInfo, mdc, null, hammerStats);
+        this(hostInfo, mdc, null);
     }
 
     /**
@@ -194,10 +198,9 @@ public class FakeUser implements PacketListener {
     public FakeUser(
         HostInfo hostInfo,
         MediaDeviceChooser mdc,
-        String username,
-        HammerStats hammerStats)
+        String username)
     {
-        this(hostInfo, mdc, username, hammerStats, false);
+        this(hostInfo, mdc, username, false);
     }
 
     /**
@@ -219,7 +222,6 @@ public class FakeUser implements PacketListener {
         HostInfo hostInfo,
         MediaDeviceChooser mdc,
         String username,
-        HammerStats hammerStats,
         boolean smackDebug)
     {
         this.serverInfo = hostInfo;
@@ -247,9 +249,11 @@ public class FakeUser implements PacketListener {
          * so the HammerStats can register their MediaStreamStats now.
          */
         mediaStreamMap = HammerUtils.createMediaStreams();
-        hammerStats.addStreams(
-            (AudioMediaStream) mediaStreamMap.get(MediaType.AUDIO.toString()),
-            (VideoMediaStream) mediaStreamMap.get(MediaType.VIDEO.toString()));
+        fakeUserStats.setMediaStreamStats(
+            mediaStreamMap.get(MediaType.AUDIO.toString()));
+        fakeUserStats.setMediaStreamStats(
+            mediaStreamMap.get(MediaType.VIDEO.toString()));
+        fakeUserStats.setUsername(this.username);
     }
 
     /**
@@ -698,5 +702,16 @@ public class FakeUser implements PacketListener {
             if (rtpExt.getURI().toASCIIString().equals(extensionURN))
                 return rtpExt;
         return null;
+    }
+
+    /**
+     * Returns a <tt>FakeUserStats</tt> object used to get statistics about this
+     * <tt>FakeUser</tt>.
+     * @return the <tt>FakeUserStats</tt> object used to get statistics about
+     * this <tt>FakeUser</tt>.
+     */
+    public FakeUserStats getFakeUserStats()
+    {
+        return this.fakeUserStats;
     }
 }
