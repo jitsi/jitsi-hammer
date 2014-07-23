@@ -54,7 +54,7 @@ public class Hammer {
 
     /**
      * The <tt>MediaDeviceChooser</tt> that will be used by all the
-     * <tt>JingleSession</tt> to choose their <tt>MediaDevice</tt>
+     * <tt>FakeUser</tt> to choose their <tt>MediaDevice</tt>
      */
     private final MediaDeviceChooser mediaDeviceChooser;
 
@@ -116,15 +116,15 @@ public class Hammer {
     };
 
     /**
-     * The array containing all the <tt>JingleSession</tt> that this Hammer
+     * The array containing all the <tt>FakeUser</tt> that this Hammer
      * handle, representing all the virtual user that will connect to the XMPP
      * server and start MediaStream with its jitsi-videobridge
      */
-    private JingleSession sessions[] = null;
+    private FakeUser fakeUsers[] = null;
 
     /**
      * The <tt>HammerStats/tt> that will be used by this <tt>Hammer</tt>
-     * to keep track of the streams' stats of all the <tt>JingleSession</tt>
+     * to keep track of the streams' stats of all the <tt>FakeUser</tt>
      * etc..
      */
     private final HammerStats hammerStats = new HammerStats();
@@ -152,11 +152,11 @@ public class Hammer {
         this.username = username;
         this.serverInfo = host;
         this.mediaDeviceChooser = mdc;
-        sessions = new JingleSession[numberOfUser];
+        fakeUsers = new FakeUser[numberOfUser];
 
-        for(int i = 0; i<sessions.length; i++)
+        for(int i = 0; i<fakeUsers.length; i++)
         {
-            sessions[i] = new JingleSession(
+            fakeUsers[i] = new FakeUser(
                 this.serverInfo,
                 this.mediaDeviceChooser,
                 this.username+"_"+i,
@@ -273,9 +273,9 @@ public class Hammer {
 
         try
         {
-            for(JingleSession session : sessions)
+            for(FakeUser user : fakeUsers)
             {
-                session.start();
+                user.start();
                 Thread.sleep(wait);
             }
         }
@@ -300,9 +300,9 @@ public class Hammer {
      */
     public void stop()
     {
-        for(JingleSession session : sessions)
+        for(FakeUser user : fakeUsers)
         {
-            session.stop();
+            user.stop();
         }
         /*
          * Stop the thread of the HammerStats, without using the Thread

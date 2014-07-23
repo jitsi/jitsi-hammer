@@ -32,27 +32,27 @@ import java.util.*;
  * 
  * @author Thomas Kuntz
  *
- * <tt>JingleSession</tt> represent a Jingle,ICE and RTP/RTCP session with
+ * <tt>FakeUser</tt> represent a Jingle,ICE and RTP/RTCP session with
  * jitsi-videobridge : it simulate a jitmeet user by setting up an
  * ICE stream and then sending fake audio/video data using RTP
  * to the videobridge.
  *
  */
-public class JingleSession implements PacketListener {
+public class FakeUser implements PacketListener {
     /**
-     * The XMPP server info to which this <tt>JingleSession</tt> will
+     * The XMPP server info to which this <tt>FakeUser</tt> will
      * communicate
      */
     private HostInfo serverInfo;
 
     /**
      * The <tt>MediaDeviceChooser</tt> that will be used to choose the
-     * <tt>MediaDevice</tt>s of this <tt>JingleSession</tt>
+     * <tt>MediaDevice</tt>s of this <tt>FakeUser</tt>
      */
     private MediaDeviceChooser mediaDeviceChooser;
 
     /**
-     * The username/nickname taken by this <tt>JingleSession</tt> in the
+     * The username/nickname taken by this <tt>FakeUser</tt> in the
      * MUC chatroom
      */
     private String username;
@@ -122,17 +122,17 @@ public class JingleSession implements PacketListener {
     private JingleIQ sessionInitiate;
 
     /**
-     * The IQ message send by this <tt>JingleSession</tt> to the XMPP server
+     * The IQ message send by this <tt>FakeUser</tt> to the XMPP server
      * to accept the Jingle session.
      * 
      * It contains a list of <tt>ContentPacketExtension</tt> representing
      * the media and format, with their corresponding transport information,
-     * that this <tt>JingleSession</tt> accept to receive and send.
+     * that this <tt>FakeUser</tt> accept to receive and send.
      */
     private JingleIQ sessionAccept;
 
     /**
-     * A Map of the different <tt>MediaStream</tt> this <tt>JingleSession</tt>
+     * A Map of the different <tt>MediaStream</tt> this <tt>FakeUser</tt>
      * handles.
      */
     private Map<String,MediaStream> mediaStreamMap;
@@ -144,7 +144,7 @@ public class JingleSession implements PacketListener {
 
     /**
      * <tt>Presence</tt> packet containing the SSRC of the streams of this
-     * <tt>JingleSession</tt> (ns = http://estos.de/ns/mjs).
+     * <tt>FakeUser</tt> (ns = http://estos.de/ns/mjs).
      * 
      * The packet is saved in these variable because it can be send multiple
      * times if needed (to copy Jitsi Meet behavior), but now it's only send
@@ -157,18 +157,18 @@ public class JingleSession implements PacketListener {
 
 
     /**
-     * Instantiates a <tt>JingleSession</tt> with a default username that
+     * Instantiates a <tt>FakeUser</tt> with a default username that
      * will connect to the XMPP server contained in <tt>hostInfo</tt>.
      * 
      * @param hostInfo the XMPP server informations needed for the connection.
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
-     * <tt>JingleSession</tt> to choose the <tt>MediaDevice</tt> for each of its
+     * <tt>FakeUser</tt> to choose the <tt>MediaDevice</tt> for each of its
      * <tt>MediaStream</tt>s.
      * @param hammerStats The <tt>HammerStat</tt> to which this
-     * <tt>JingleSession</tt> will register its <tt>MediaStream</tt>s for their
+     * <tt>FakeUser</tt> will register its <tt>MediaStream</tt>s for their
      * stats.
      */
-    public JingleSession(
+    public FakeUser(
         HostInfo hostInfo,
         MediaDeviceChooser mdc,
         HammerStats hammerStats)
@@ -177,21 +177,21 @@ public class JingleSession implements PacketListener {
     }
 
     /**
-     * Instantiates a <tt>JingleSession</tt> with a specified <tt>username</tt>
+     * Instantiates a <tt>FakeUser</tt> with a specified <tt>username</tt>
      * that will connect to the XMPP server contained in <tt>hostInfo</tt>.
      * 
      * @param hostInfo the XMPP server informations needed for the connection.
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
-     * <tt>JingleSession</tt> to choose the <tt>MediaDevice</tt> for each of its
+     * <tt>FakeUser</tt> to choose the <tt>MediaDevice</tt> for each of its
      * <tt>MediaStream</tt>s.
      * @param hammerStats The <tt>HammerStat</tt> to which this
-     * <tt>JingleSession</tt> will register its <tt>MediaStream</tt>s for their
+     * <tt>FakeUser</tt> will register its <tt>MediaStream</tt>s for their
      * stats.
-     * @param username the username used by this <tt>JingleSession</tt> in the
+     * @param username the username used by this <tt>FakeUser</tt> in the
      * connection.
      * 
      */
-    public JingleSession(
+    public FakeUser(
         HostInfo hostInfo,
         MediaDeviceChooser mdc,
         String username,
@@ -201,21 +201,21 @@ public class JingleSession implements PacketListener {
     }
 
     /**
-     * Instantiates a <tt>JingleSession</tt> with a specified <tt>username</tt>
+     * Instantiates a <tt>FakeUser</tt> with a specified <tt>username</tt>
      * that will connect to the XMPP server contained in <tt>hostInfo</tt>.
      * 
      * @param hostInfo the XMPP server informations needed for the connection.
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
-     * <tt>JingleSession</tt> to choose the <tt>MediaDevice</tt> for each of its
+     * <tt>FakeUser</tt> to choose the <tt>MediaDevice</tt> for each of its
      * <tt>MediaStream</tt>s.
-     * @param username the username used by this <tt>JingleSession</tt> in the
+     * @param username the username used by this <tt>FakeUser</tt> in the
      * connection.
      * @param hammerStats The <tt>HammerStat</tt> to which this
-     * <tt>JingleSession</tt> will register its <tt>MediaStream</tt>s for their
+     * <tt>FakeUser</tt> will register its <tt>MediaStream</tt>s for their
      * stats.
      * @param smackDebug the boolean activating or not the debug screen of smack
      */
-    public JingleSession(
+    public FakeUser(
         HostInfo hostInfo,
         MediaDeviceChooser mdc,
         String username,
@@ -552,7 +552,7 @@ public class JingleSession implements PacketListener {
 
     /**
      * Callback function used when a JingleIQ is received by the XMPP connector.
-     * @param packet the packet received by the <tt>JingleSession</tt>
+     * @param packet the packet received by the <tt>FakeUser</tt>
      */
     public void processPacket(Packet packet)
     {
@@ -602,14 +602,14 @@ public class JingleSession implements PacketListener {
      * Copy from CallPeerMediaHandler class of Jitsi
      * 
      * Returns a (possibly empty) <tt>List</tt> of <tt>RTPExtension</tt>s
-     * supported by the device that this <tt>JingleSession</tt> uses to
+     * supported by the device that this <tt>FakeUser</tt> uses to
      * handle media of the specified <tt>type</tt>.
      *
      * @param type the <tt>MediaType</tt> of the device whose
      * <tt>RTPExtension</tt>s we are interested in.
      *
      * @return a (possibly empty) <tt>List</tt> of <tt>RTPExtension</tt>s
-     * supported by the device that this <tt>JingleSession</tt>
+     * supported by the device that this <tt>FakeUser</tt>
      * uses to handle media of the specified <tt>type</tt>.
      */
     protected List<RTPExtension> getExtensionsForType(MediaType type)
