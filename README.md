@@ -23,6 +23,7 @@ The **MANDATORY_OPTIONS** are :
 The **OPTIONAL_OPTIONS** are :
 
 ```
+-help : display the usage and help of the program
 -room <name of the MUC room (default : TestHammer)>
 -port <port number of the XMPP server (default : 5222)>
 -users <number of fake users to create (default : 1)>
@@ -30,6 +31,9 @@ The **OPTIONAL_OPTIONS** are :
 -ivf <path to an ivf file for the video streams>
 -videortpdump <path to a rtpdump file containing VP8 RTP packets for the video streams>
 -audiortpdump <path to a rtpdump file containing Opus RTP packets for the video streams>
+-overallstats : enable the logging of the overall stats at the end of the run.
+-allstats : enable the logging of all the stats collected during the run
+-statspolling <time (in seconds) between two polling of stats (default : 5sec)>
 ```
 
 You must know that when ```-length N``` is given, if N is 0 or negative, the run will never stop.

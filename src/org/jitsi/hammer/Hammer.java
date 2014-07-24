@@ -1,6 +1,6 @@
 /*
  * Jitsi-Hammer, A traffic generator for Jitsi Videobridge.
- * 
+ *
  * Distributable under LGPL license.
  * See terms of license at gnu.org.
  */
@@ -27,13 +27,13 @@ import org.jitsi.hammer.utils.MediaDeviceChooser;
 import java.util.*;
 
 /**
- * 
+ *
  * @author Thomas Kuntz
  *
  * The <tt>Hammer</tt> class is the core class of the jitsi-hammer project.
  * This class will try to create N virtual users to a XMPP server then to
  * a MUC chatroom created by JitMeet (https://jitsi.org/Projects/JitMeet).
- * 
+ *
  * Each virtual user after succeeding in the connection to the JitMeet MUC
  * receive an invitation to a audio/video conference. After receiving the
  * invitation, each virtual user will positively reply to the invitation and
@@ -140,7 +140,7 @@ public class Hammer {
      * Instantiate a <tt>Hammer</tt> object with <tt>numberOfUser</tt> virtual
      * users that will try to connect to the XMPP server and its videobridge
      * contained in <tt>host</tt>.
-     * 
+     *
      * @param host The information about the XMPP server to which all
      * virtual users will try to connect.
      * @param mdc
@@ -175,7 +175,7 @@ public class Hammer {
         /**
          * This code is a slightly modified copy of the one found in
          * startOSGi of the class ComponentImpl of jitsi-videobridge.
-         * 
+         *
          * This function run the activation of different bundle that are needed
          * These bundle are the one found in the <tt>BUNDLE</tt> array
          */
@@ -263,11 +263,18 @@ public class Hammer {
     /**
      * Start the connection of all the virtual user that this <tt>Hammer</tt>
      * handles to the XMPP server(and then a MUC).
-     * 
+     *
      * @param wait the number of milliseconds the Hammer will wait during the
      * start of two consecutive fake users.
+     * @param allStats enable or not the logging of the all the stats collected
+     * by the <tt>HammerStats</tt> during the run.
+     * @param statsPollingTime the number of seconds between two polling of stats
+     * by the <tt>HammerStats</tt> run method.
      */
-    public void start(int wait)
+    public void start(
+        int wait,
+        boolean allStats,
+        int statsPollingTime)
     {
         if(wait <= 0) wait = 1;
 
@@ -289,6 +296,8 @@ public class Hammer {
             e.printStackTrace();
         }
 
+        hammerStats.setStatsLogging(allStats);
+        hammerStats.setTimeBetweenUpdate(statsPollingTime);
         hammerStatsThread = new Thread(hammerStats);
         hammerStatsThread.start();
     }
@@ -310,6 +319,16 @@ public class Hammer {
          * instance hammerStatsThread, to allow it to cleanly stop.
          */
         hammerStats.stop();
+    }
+
+
+    /**
+     * Get the <tt>HammerStats</tt> used by this <tt>Hammer</tt>.
+     * @return the <tt>HammerStats</tt> used by this <tt>Hammer</tt>.
+     */
+    public HammerStats getHammerStats()
+    {
+        return hammerStats;
     }
 }
 

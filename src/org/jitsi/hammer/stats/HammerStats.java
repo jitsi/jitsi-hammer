@@ -1,6 +1,6 @@
 /*
  * Jitsi-Hammer, A traffic generator for Jitsi Videobridge.
- * 
+ *
  * Distributable under LGPL license.
  * See terms of license at gnu.org.
  */
@@ -16,7 +16,7 @@ import org.jitsi.hammer.Main;
 
 /**
  * @author Thomas Kuntz
- * 
+ *
  * This class is used to keep track of stats of all the streams of all the
  * fake users (<tt>FakeUser</tt>), generate new new stats, writes stats
  * to files, print them etc...
@@ -62,7 +62,13 @@ public class HammerStats implements Runnable
     /**
      * The time (in seconds) the HammerStats wait between two updates.
      */
-    private int timeBetweenUpdate = 2;
+    private int timeBetweenUpdate = 5;
+
+    /**
+     * The boolean used to know if the logging of all the stats in the
+     * run method is enable.
+     */
+    private boolean allStatsLogging = false;
 
     /**
      * Initialize an instance of a <tt>HammerStats</tt> with the default
@@ -115,7 +121,7 @@ public class HammerStats implements Runnable
     /**
      * Keep track, collect and update the stats of all the
      * <tt>MediaStreamStats</tt> this <tt>HammerStats</tt> handles.
-     * 
+     *
      * Also write the results in the stats files.
      */
     public void run()
@@ -145,29 +151,33 @@ public class HammerStats implements Runnable
 
         while(threadStop == false)
         {
-            writer.println(delim_);
-            delim_ = ",";
-            synchronized(this)
+            if(allStatsLogging)
             {
-                writer.println("{");
-                writer.println("  \"timestamp\":" + System.currentTimeMillis()+",");
-                writer.println("  \"users\":");
-                writer.println("  [");
-                delim = "";
-                for(FakeUserStats stats : fakeUserStatsList)
+                writer.println(delim_);
+                delim_ = ",";
+                synchronized(this)
                 {
-                    //We update the stats before using/reading them.
-                    stats.updateStats();
+                    writer.println("{");
+                    writer.println("  \"timestamp\":" + System.currentTimeMillis()+",");
+                    writer.println("  \"users\":");
+                    writer.println("  [");
+                    delim = "";
+                    for(FakeUserStats stats : fakeUserStatsList)
+                    {
+                        //We update the stats before using/reading them.
+                        stats.updateStats();
 
-                    writer.println(delim + stats.getStatsJSON(2));
-                    delim = ",";
+                        writer.println(delim + stats.getStatsJSON(2));
+                        delim = ",";
 
-                    //TODO read/collect the stats we want to keep track.
-                    //Write them to the stats file
-                    //Maybe compute some things, like average or whatenot
+                        //TODO read/collect the stats we want to keep track.
+                        //Write them to the stats file
+                        //Maybe compute some things, like average or whatenot
+                    }
+                    writer.println("  ]");
+                    writer.append("}");
                 }
-                writer.println("  ]");
-                writer.append("}");
+                writer.flush();
             }
 
             try
@@ -253,5 +263,15 @@ public class HammerStats implements Runnable
     public int getTimeBetweenUpdate()
     {
         return this.timeBetweenUpdate;
+    }
+
+    /**
+     * Enable or disable the logging of all the stats collected by this
+     * <tt>HammerStats</tt>.
+     * @param allStats the boolean that enable of disable the logging.
+     */
+    public void setStatsLogging(boolean allStats)
+    {
+        this.allStatsLogging = allStats;
     }
 }
