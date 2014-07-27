@@ -1,6 +1,6 @@
 /*
  * Jitsi-Hammer, A traffic generator for Jitsi Videobridge.
- * 
+ *
  * Distributable under LGPL license.
  * See terms of license at gnu.org.
  */
@@ -30,7 +30,7 @@ import java.util.*;
 
 
 /**
- * 
+ *
  * @author Thomas Kuntz
  *
  * <tt>FakeUser</tt> represent a Jingle,ICE and RTP/RTCP session with
@@ -99,7 +99,7 @@ public class FakeUser implements PacketListener {
     /**
      * A Map mapping a media type (audio, video, data), with a <tt>MediaFormat</tt>
      * representing the selected format for the stream handling this media type.
-     * 
+     *
      * The MediaFormat in this Map has been chosen in <tt>possibleFormatMap</tt>
      */
     Map<String,MediaFormat> selectedFormat =
@@ -115,7 +115,7 @@ public class FakeUser implements PacketListener {
 
     /**
      * The IQ message received by the XMPP server to initiate the Jingle session.
-     * 
+     *
      * It contains a list of <tt>ContentPacketExtension</tt> representing
      * the media and their formats the videobridge is offering to send/receive
      * and their corresponding transport information (IP, port, etc...).
@@ -125,7 +125,7 @@ public class FakeUser implements PacketListener {
     /**
      * The IQ message send by this <tt>FakeUser</tt> to the XMPP server
      * to accept the Jingle session.
-     * 
+     *
      * It contains a list of <tt>ContentPacketExtension</tt> representing
      * the media and format, with their corresponding transport information,
      * that this <tt>FakeUser</tt> accept to receive and send.
@@ -146,7 +146,7 @@ public class FakeUser implements PacketListener {
     /**
      * <tt>Presence</tt> packet containing the SSRC of the streams of this
      * <tt>FakeUser</tt> (ns = http://estos.de/ns/mjs).
-     * 
+     *
      * The packet is saved in these variable because it can be send multiple
      * times if needed (to copy Jitsi Meet behavior), but now it's only send
      * once (during the jingle accept).
@@ -164,7 +164,7 @@ public class FakeUser implements PacketListener {
     /**
      * Instantiates a <tt>FakeUser</tt> with a default username that
      * will connect to the XMPP server contained in <tt>hostInfo</tt>.
-     * 
+     *
      * @param hostInfo the XMPP server informations needed for the connection.
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
      * <tt>FakeUser</tt> to choose the <tt>MediaDevice</tt> for each of its
@@ -183,7 +183,7 @@ public class FakeUser implements PacketListener {
     /**
      * Instantiates a <tt>FakeUser</tt> with a specified <tt>username</tt>
      * that will connect to the XMPP server contained in <tt>hostInfo</tt>.
-     * 
+     *
      * @param hostInfo the XMPP server informations needed for the connection.
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
      * <tt>FakeUser</tt> to choose the <tt>MediaDevice</tt> for each of its
@@ -193,7 +193,7 @@ public class FakeUser implements PacketListener {
      * stats.
      * @param username the username used by this <tt>FakeUser</tt> in the
      * connection.
-     * 
+     *
      */
     public FakeUser(
         HostInfo hostInfo,
@@ -206,7 +206,7 @@ public class FakeUser implements PacketListener {
     /**
      * Instantiates a <tt>FakeUser</tt> with a specified <tt>username</tt>
      * that will connect to the XMPP server contained in <tt>hostInfo</tt>.
-     * 
+     *
      * @param hostInfo the XMPP server informations needed for the connection.
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
      * <tt>FakeUser</tt> to choose the <tt>MediaDevice</tt> for each of its
@@ -317,9 +317,9 @@ public class FakeUser implements PacketListener {
      */
     public void stop()
     {
+        agent.free();
         for(MediaStream stream : mediaStreamMap.values())
         {
-            stream.stop();
             stream.close();
         }
 
@@ -464,7 +464,7 @@ public class FakeUser implements PacketListener {
         /*
          * Send the SSRC of the different media in a "media" tag
          * It's not necessary but its a copy of Jitsi Meet behavior
-         * 
+         *
          * Also, without sending this packet, there are error logged
          *  in the javascript console of the Jitsi Meet initiator :
          * "No video type for ssrc: 13365845"
@@ -604,7 +604,7 @@ public class FakeUser implements PacketListener {
 
     /**
      * Copy from CallPeerMediaHandler class of Jitsi
-     * 
+     *
      * Returns a (possibly empty) <tt>List</tt> of <tt>RTPExtension</tt>s
      * supported by the device that this <tt>FakeUser</tt> uses to
      * handle media of the specified <tt>type</tt>.
@@ -624,7 +624,7 @@ public class FakeUser implements PacketListener {
 
     /**
      * Copy from CallPeerMediaHandler class of Jitsi
-     * 
+     *
      * Compares a list of <tt>RTPExtension</tt>s offered by a remote party
      * to the list of locally supported <tt>RTPExtension</tt>s as returned
      * by one of our local <tt>MediaDevice</tt>s and returns a third
@@ -682,7 +682,7 @@ public class FakeUser implements PacketListener {
 
     /**
      * Copy from CallPeerMediaHandler class of Jitsi
-     * 
+     *
      * Returns the first <tt>RTPExtension</tt> in <tt>extList</tt> that uses
      * the specified <tt>extensionURN</tt> or <tt>null</tt> if <tt>extList</tt>
      * did not contain such an extension.
