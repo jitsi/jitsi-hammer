@@ -18,9 +18,7 @@ import org.jivesoftware.smack.provider.*;
 import net.java.sip.communicator.impl.osgi.framework.launch.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 
-import org.jitsi.service.libjitsi.LibJitsi;
 import org.jitsi.hammer.extension.*;
-import org.jitsi.hammer.neomedia.*;
 import org.jitsi.hammer.stats.HammerStats;
 import org.jitsi.hammer.utils.MediaDeviceChooser;
 
@@ -223,15 +221,6 @@ public class Hammer {
             }
 
             framework.start();
-
-            /*
-             * Call to getMediaService to initialize the MediaService
-             * implementation so that the configuration for the
-             * fmj registry are correctly set
-             * before I write my capture devices in it.
-             */
-            LibJitsi.getMediaService();
-            FMJPluginInConfiguration.registerCustomPackages();
         }
         catch (BundleException be)
         {
