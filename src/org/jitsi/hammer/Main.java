@@ -10,9 +10,9 @@ package org.jitsi.hammer;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.File;
-
 import net.java.sip.communicator.launcher.ChangeJVMFrame;
 //import net.java.sip.communicator.util.ScStdOut;
+
 
 
 import org.jitsi.hammer.utils.*;
@@ -276,7 +276,7 @@ public class Main
         Hammer hammer = new Hammer(
             hostInfo,
             mdc,
-            "JitMeet-Hammer",
+            "Jitsi-Hammer",
             infoCLI.getNumberOfFakeUsers());
 
 
@@ -297,10 +297,17 @@ public class Main
             while(true) Thread.sleep(3600000);
         }
 
+        //DTLS log a big IOException when closed, so I just disable the log
+        //for it while I stop it, and re-enable it after.
+        java.util.logging.Logger l = java.util.logging.Logger.getLogger(
+            "org.jitsi.impl.neomedia.transform.dtls.DatagramTransportImpl");
+        java.util.logging.Level level = l.getLevel();
+        l.setLevel(java.util.logging.Level.OFF);
         hammer.stop();
         if(infoCLI.getOverallStats())
         {
             hammer.getHammerStats().writeOverallStats();
         }
+        l.setLevel(level);
     }
 }
