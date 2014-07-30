@@ -9,7 +9,7 @@ import org.kohsuke.args4j.*;
 
 /**
  * @author Thomas Kuntz
- * 
+ *
  * This class is used with args4j to easily deal with jitsi-hammer arguments
  * and options
  *
@@ -108,7 +108,7 @@ public class CmdLineArguments
     private boolean allStats = false;
 
     /**
-     * 
+     *
      */
     @Option(name="-statspolling", usage="The time (in seconds) between two"
         + " polling of stats")
@@ -216,7 +216,7 @@ public class CmdLineArguments
      */
     public boolean getAllStats()
     {
-        return overallStats;
+        return allStats;
     }
 
     /**
