@@ -103,9 +103,17 @@ public class CmdLineArguments
     /**
      * If this boolean is true, the logging of overall stats is activated
      */
-    @Option(name="-allstats",usage="Enable the logging of all the stats"
-        + "collected during the run")
+    @Option(name="-allstats",usage="Enable the logging of of all the"
+        + "streams' stats collected during the run")
     private boolean allStats = false;
+
+    /**
+     * If this boolean is true, the logging of overall stats is activated
+     */
+    @Option(name="-summarystats",usage="Enable the logging summary"
+        + "stats (like average, standard dev, max, min...)"
+        + "based on all the streams' stats")
+    private boolean summaryStats = false;
 
     /**
      *
@@ -217,6 +225,15 @@ public class CmdLineArguments
     public boolean getAllStats()
     {
         return allStats;
+    }
+
+    /**
+     * Get the boolean of the summaryStats option.
+     * @return the boolean of the summaryStats option
+     */
+    public boolean getSummaryStats()
+    {
+        return summaryStats;
     }
 
     /**

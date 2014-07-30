@@ -257,12 +257,16 @@ public class Hammer {
      * start of two consecutive fake users.
      * @param allStats enable or not the logging of the all the stats collected
      * by the <tt>HammerStats</tt> during the run.
+     * @param dummaryStats enable or not the logging of the dummary stats
+     * computed from all the streams' stats collected by the
+     * <tt>HammerStats</tt> during the run.
      * @param statsPollingTime the number of seconds between two polling of stats
      * by the <tt>HammerStats</tt> run method.
      */
     public void start(
         int wait,
         boolean allStats,
+        boolean dummaryStats,
         int statsPollingTime)
     {
         if(wait <= 0) wait = 1;
@@ -285,7 +289,8 @@ public class Hammer {
             e.printStackTrace();
         }
 
-        hammerStats.setStatsLogging(allStats);
+        hammerStats.setAllStatsLogging(allStats);
+        hammerStats.setSummaryStatsLogging(dummaryStats);
         hammerStats.setTimeBetweenUpdate(statsPollingTime);
         hammerStatsThread = new Thread(hammerStats);
         hammerStatsThread.start();

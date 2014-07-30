@@ -9,10 +9,13 @@ package org.jitsi.hammer.stats;
 
 
 import java.io.*;
-import java.text.SimpleDateFormat;
+import java.text.*;
 import java.util.*;
 
-import org.jitsi.hammer.Main;
+import org.apache.commons.math3.stat.descriptive.*;
+import org.jitsi.hammer.*;
+import org.jitsi.service.neomedia.MediaStreamStats;
+import org.jitsi.service.neomedia.MediaType;
 
 /**
  * @author Thomas Kuntz
@@ -71,6 +74,25 @@ public class HammerStats implements Runnable
     private boolean allStatsLogging = false;
 
     /**
+     * The boolean used to know if the logging of the summary stats
+     * (like average, standard deviation, min, max...) computed from
+     * all the streams' stats is enable of not.
+     */
+    private boolean summaryStatsLogging = false;
+
+    /**
+     * The HammerSummaryStats used to compute summary stats from the
+     * audio streams' stats.
+     */
+    HammerSummaryStats audioSummaryStats = new HammerSummaryStats();
+
+    /**
+     * The HammerSummaryStats used to compute summary stats from the
+     * video streams' stats.
+     */
+    HammerSummaryStats videoSummaryStats = new HammerSummaryStats();
+
+    /**
      * Initialize an instance of a <tt>HammerStats</tt> with the default
      * stats directory path.
      */
@@ -127,6 +149,7 @@ public class HammerStats implements Runnable
     public void run()
     {
         PrintWriter writer = null;
+        StringBuilder allBldr = new StringBuilder();
         String delim;
         String delim_ = "";
         synchronized(this)
@@ -138,7 +161,7 @@ public class HammerStats implements Runnable
         try
         {
             writer = new PrintWriter(allStatsFile, "UTF-8");
-            writer.println("[");
+            writer.print("[\n");
         }
         catch (FileNotFoundException e)
         {
@@ -151,30 +174,100 @@ public class HammerStats implements Runnable
 
         while(threadStop == false)
         {
-            if(allStatsLogging)
+            synchronized(this)
             {
-                writer.println(delim_);
-                delim_ = ",";
-                synchronized(this)
+                if(allStatsLogging || summaryStatsLogging)
                 {
-                    writer.println("{");
-                    writer.println("  \"timestamp\":" + System.currentTimeMillis()+",");
-                    writer.println("  \"users\":");
-                    writer.println("  [");
+                    //Clear the StringBuilder
+                    allBldr.setLength(0);
+
+                    writer.print(delim_ + '\n');
+                    delim_ = ",";
+                    writer.print("{\n");
+                    writer.print("  \"timestamp\":" + System.currentTimeMillis()+",\n");
+
+                    if(allStatsLogging)
+                    {
+
+                    }
+                    if(summaryStatsLogging)
+                    {
+                        audioSummaryStats.clear();
+                        videoSummaryStats.clear();
+                    }
+
                     delim = "";
                     for(FakeUserStats stats : fakeUserStatsList)
                     {
                         //We update the stats before using/reading them.
                         stats.updateStats();
 
-                        writer.println(delim + stats.getStatsJSON(2));
-                        delim = ",";
+                        if(allStatsLogging)
+                        {
+                            allBldr.append(delim + stats.getStatsJSON(2) + '\n');
+                            delim = ",";
+                        }
 
-                        //TODO read/collect the stats we want to keep track.
-                        //Write them to the stats file
-                        //Maybe compute some things, like average or whatenot
+                        if(summaryStatsLogging)
+                        {
+                            audioSummaryStats.add(
+                                stats.getMediaStreamStats(MediaType.AUDIO));
+                            videoSummaryStats.add(
+                                stats.getMediaStreamStats(MediaType.VIDEO));
+                        }
                     }
-                    writer.println("  ]");
+
+                    if(allStatsLogging)
+                    {
+                        writer.print("  \"users\":\n");
+                        writer.print("  [\n");
+                        writer.print(allBldr.toString());
+                        writer.print("  ]");
+                        if(summaryStatsLogging) writer.print(',');
+                        writer.print('\n');
+                    }
+                    if(summaryStatsLogging)
+                    {
+                        writer.print("  \"summary\":\n");
+                        writer.print("  {\n");
+
+
+                        writer.print("    \"max\":\n");
+                        writer.print("    {\n");
+                        writer.print("        \"audio\":");
+                        writer.print(audioSummaryStats.getMaxJSON() + ",\n");
+                        writer.print("        \"video\":");
+                        writer.print(videoSummaryStats.getMaxJSON() + '\n');
+                        writer.print("    },\n");
+
+                        writer.print("    \"mean\":\n");
+                        writer.print("    {\n");
+                        writer.print("       \"audio\":");
+                        writer.print(audioSummaryStats.getMeanJSON() + ",\n");
+                        writer.print("        \"video\":");
+                        writer.print(videoSummaryStats.getMeanJSON() + '\n');
+                        writer.print("    },\n");
+
+                        writer.print("    \"min\":\n");
+                        writer.print("    {\n");
+                        writer.print("        \"audio\":");
+                        writer.print(audioSummaryStats.getMinJSON() + ",\n");
+                        writer.print("        \"video\":");
+                        writer.print(videoSummaryStats.getMinJSON() + '\n');
+                        writer.print("    },\n");
+
+                        writer.print("    \"standard_deviation\":\n");
+                        writer.print("    {\n");
+                        writer.print("        \"audio\":");
+                        writer.print(audioSummaryStats.getStandardDeviationJSON() + ",\n");
+                        writer.print("        \"video\":");
+                        writer.print(videoSummaryStats.getStandardDeviationJSON() + '\n');
+                        writer.print("    }\n");
+
+
+                        writer.print("  }\n");
+                    }
+
                     writer.append("}");
                 }
                 writer.flush();
@@ -191,7 +284,7 @@ public class HammerStats implements Runnable
             }
         }
 
-        writer.println("]");
+        writer.print("]\n");
         writer.close();
     }
 
@@ -213,7 +306,7 @@ public class HammerStats implements Runnable
         try
         {
             PrintWriter writer = new PrintWriter(overallStatsFile, "UTF-8");
-            writer.println(getOverallStats());
+            writer.print(getOverallStats() + '\n');
             writer.close();
         }
         catch (FileNotFoundException e)
@@ -270,8 +363,226 @@ public class HammerStats implements Runnable
      * <tt>HammerStats</tt>.
      * @param allStats the boolean that enable of disable the logging.
      */
-    public void setStatsLogging(boolean allStats)
+    public void setAllStatsLogging(boolean allStats)
     {
         this.allStatsLogging = allStats;
+    }
+
+    /**
+     * Enable or disable the logging of all the stats collected by this
+     * <tt>HammerStats</tt>.
+     * @param allStats the boolean that enable of disable the logging.
+     */
+    public void setSummaryStatsLogging(boolean summaryStats)
+    {
+        this.summaryStatsLogging = summaryStats;
+    }
+
+
+    private class HammerSummaryStats
+    {
+        SummaryStatistics downloadRateKiloBitPerSec = new SummaryStatistics();
+        SummaryStatistics uploadRateKiloBitPerSec = new SummaryStatistics();
+        SummaryStatistics downloadPercentLoss = new SummaryStatistics();
+        SummaryStatistics uploadPercentLoss = new SummaryStatistics();
+        SummaryStatistics nbFec = new SummaryStatistics();
+        SummaryStatistics percentDiscarded = new SummaryStatistics();
+        SummaryStatistics nbDiscarded = new SummaryStatistics();
+        SummaryStatistics nbDiscardedFull = new SummaryStatistics();
+        SummaryStatistics nbDiscardedLate = new SummaryStatistics();
+        SummaryStatistics nbDiscardedReset = new SummaryStatistics();
+        SummaryStatistics nbDiscardedShrink = new SummaryStatistics();
+        SummaryStatistics jitterBufferDelayMs = new SummaryStatistics();
+        SummaryStatistics packetQueueCountPackets = new SummaryStatistics();
+        SummaryStatistics packetQueueSize = new SummaryStatistics();
+        SummaryStatistics rttMs = new SummaryStatistics();
+        SummaryStatistics downloadJitterMs = new SummaryStatistics();
+        SummaryStatistics uploadJitterMs = new SummaryStatistics();
+
+        public void add(MediaStreamStats stats)
+        {
+            downloadRateKiloBitPerSec.addValue(stats.getDownloadRateKiloBitPerSec());
+            uploadRateKiloBitPerSec.addValue(stats.getUploadRateKiloBitPerSec());
+            downloadPercentLoss.addValue(stats.getDownloadPercentLoss());
+            uploadPercentLoss.addValue(stats.getUploadPercentLoss());
+            nbFec.addValue(stats.getNbFec());
+            percentDiscarded.addValue(stats.getPercentDiscarded());
+            nbDiscarded.addValue(stats.getNbDiscarded());
+            nbDiscardedFull.addValue(stats.getNbDiscardedFull());
+            nbDiscardedLate.addValue(stats.getNbDiscardedLate());
+            nbDiscardedReset.addValue(stats.getNbDiscardedReset());
+            nbDiscardedShrink.addValue(stats.getNbDiscardedShrink());
+            jitterBufferDelayMs.addValue(stats.getJitterBufferDelayMs());
+            packetQueueCountPackets.addValue(stats.getPacketQueueCountPackets());
+            packetQueueSize.addValue(stats.getPacketQueueSize());
+            rttMs.addValue(stats.getRttMs());
+            downloadJitterMs.addValue(stats.getDownloadJitterMs());
+            uploadJitterMs.addValue(stats.getUploadJitterMs());
+        }
+
+        public void clear()
+        {
+            downloadRateKiloBitPerSec.clear();
+            uploadRateKiloBitPerSec.clear();
+            downloadPercentLoss.clear();
+            uploadPercentLoss.clear();
+            nbFec.clear();
+            percentDiscarded.clear();
+            nbDiscarded.clear();
+            nbDiscardedFull.clear();
+            nbDiscardedLate.clear();
+            nbDiscardedReset.clear();
+            nbDiscardedShrink.clear();
+            jitterBufferDelayMs.clear();
+            packetQueueCountPackets.clear();
+            packetQueueSize.clear();
+            rttMs.clear();
+            downloadJitterMs.clear();
+            uploadJitterMs.clear();
+        }
+
+        public String getMaxJSON()
+        {
+            String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
+                -1, //ssrc not needed here
+                downloadRateKiloBitPerSec.getMax(),
+                uploadRateKiloBitPerSec.getMax(),
+                downloadPercentLoss.getMax(),
+                uploadPercentLoss.getMax(),
+                nbFec.getMax(),
+                percentDiscarded.getMax(),
+                nbDiscarded.getMax(),
+                nbDiscardedFull.getMax(),
+                nbDiscardedLate.getMax(),
+                nbDiscardedReset.getMax(),
+                nbDiscardedShrink.getMax(),
+                jitterBufferDelayMs.getMax(),
+                packetQueueCountPackets.getMax(),
+                packetQueueSize.getMax(),
+                rttMs.getMax(),
+                downloadJitterMs.getMax(),
+                uploadJitterMs.getMax());
+            return str;
+        }
+
+        public String getMeanJSON()
+        {
+            String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
+                -1, //ssrc not needed here
+                downloadRateKiloBitPerSec.getMean(),
+                uploadRateKiloBitPerSec.getMean(),
+                downloadPercentLoss.getMean(),
+                uploadPercentLoss.getMean(),
+                nbFec.getMean(),
+                percentDiscarded.getMean(),
+                nbDiscarded.getMean(),
+                nbDiscardedFull.getMean(),
+                nbDiscardedLate.getMean(),
+                nbDiscardedReset.getMean(),
+                nbDiscardedShrink.getMean(),
+                jitterBufferDelayMs.getMean(),
+                packetQueueCountPackets.getMean(),
+                packetQueueSize.getMean(),
+                rttMs.getMean(),
+                downloadJitterMs.getMean(),
+                uploadJitterMs.getMean());
+            return str;
+        }
+
+        public String getMinJSON()
+        {
+            String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
+                -1, //ssrc not needed here
+                downloadRateKiloBitPerSec.getMin(),
+                uploadRateKiloBitPerSec.getMin(),
+                downloadPercentLoss.getMin(),
+                uploadPercentLoss.getMin(),
+                nbFec.getMin(),
+                percentDiscarded.getMin(),
+                nbDiscarded.getMin(),
+                nbDiscardedFull.getMin(),
+                nbDiscardedLate.getMin(),
+                nbDiscardedReset.getMin(),
+                nbDiscardedShrink.getMin(),
+                jitterBufferDelayMs.getMin(),
+                packetQueueCountPackets.getMin(),
+                packetQueueSize.getMin(),
+                rttMs.getMin(),
+                downloadJitterMs.getMin(),
+                uploadJitterMs.getMin());
+            return str;
+        }
+
+        public String getStandardDeviationJSON()
+        {
+            String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
+                -1, //ssrc not needed here
+                downloadRateKiloBitPerSec.getStandardDeviation(),
+                uploadRateKiloBitPerSec.getStandardDeviation(),
+                downloadPercentLoss.getStandardDeviation(),
+                uploadPercentLoss.getStandardDeviation(),
+                nbFec.getStandardDeviation(),
+                percentDiscarded.getStandardDeviation(),
+                nbDiscarded.getStandardDeviation(),
+                nbDiscardedFull.getStandardDeviation(),
+                nbDiscardedLate.getStandardDeviation(),
+                nbDiscardedReset.getStandardDeviation(),
+                nbDiscardedShrink.getStandardDeviation(),
+                jitterBufferDelayMs.getStandardDeviation(),
+                packetQueueCountPackets.getStandardDeviation(),
+                packetQueueSize.getStandardDeviation(),
+                rttMs.getStandardDeviation(),
+                downloadJitterMs.getStandardDeviation(),
+                uploadJitterMs.getStandardDeviation());
+            return str;
+        }
+
+        public String getSumJSON()
+        {
+            String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
+                -1, //ssrc not needed here
+                downloadRateKiloBitPerSec.getSum(),
+                uploadRateKiloBitPerSec.getSum(),
+                downloadPercentLoss.getSum(),
+                uploadPercentLoss.getSum(),
+                nbFec.getSum(),
+                percentDiscarded.getSum(),
+                nbDiscarded.getSum(),
+                nbDiscardedFull.getSum(),
+                nbDiscardedLate.getSum(),
+                nbDiscardedReset.getSum(),
+                nbDiscardedShrink.getSum(),
+                jitterBufferDelayMs.getSum(),
+                packetQueueCountPackets.getSum(),
+                packetQueueSize.getSum(),
+                rttMs.getSum(),
+                downloadJitterMs.getSum(),
+                uploadJitterMs.getSum());
+            return str;
+        }
+
+        public String getVarianceJSON()
+        {
+            String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
+                -1, //ssrc not needed here
+                downloadRateKiloBitPerSec.getVariance(),
+                uploadRateKiloBitPerSec.getVariance(),
+                downloadPercentLoss.getVariance(),
+                uploadPercentLoss.getVariance(),
+                nbFec.getVariance(),
+                percentDiscarded.getVariance(),
+                nbDiscarded.getVariance(),
+                nbDiscardedFull.getVariance(),
+                nbDiscardedLate.getVariance(),
+                nbDiscardedReset.getVariance(),
+                nbDiscardedShrink.getVariance(),
+                jitterBufferDelayMs.getVariance(),
+                packetQueueCountPackets.getVariance(),
+                packetQueueSize.getVariance(),
+                rttMs.getVariance(),
+                downloadJitterMs.getVariance(),
+                uploadJitterMs.getVariance());
+            return str;
+        }
     }
 }

@@ -286,6 +286,7 @@ public class Main
         hammer.start(
             2000,
             infoCLI.getAllStats(),
+            infoCLI.getSummaryStats(),
             infoCLI.getStatsPolling());
 
         if(infoCLI.getRunLength() > 0)
