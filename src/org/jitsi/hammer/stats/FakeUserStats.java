@@ -1,6 +1,6 @@
 /*
  * Jitsi-Hammer, A traffic generator for Jitsi Videobridge.
- * 
+ *
  * Distributable under LGPL license.
  * See terms of license at gnu.org.
  */
@@ -15,6 +15,50 @@ import org.jitsi.service.neomedia.*;
  */
 public class FakeUserStats
 {
+    public static final String jsonTemplate =
+              "  {\n"
+            + "      \"audio\" : {"
+            + " \"ssrc\":%s"
+            + " , \"DownloadRateKiloBitPerSec\":%s"
+            + " , \"UploadKbps\":%s"
+            + " , \"UploadRateKiloBitPerSec\":%s"
+            + " , \"UploadPercentLoss\":%s"
+            + " , \"NbFec\":%s"
+            + " , \"PercentDiscarded\":%s"
+            + " , \"NbDiscarded\":%s"
+            + " , \"NbDiscardedFull\":%s"
+            + " , \"NbDiscardedLate\":%s"
+            + " , \"NbDiscardedReset\":%s"
+            + " , \"NbDiscardedShrink\":%s"
+            + " , \"JitterBufferDelayMs\":%s"
+            + " , \"PacketQueueCountPackets\":%s"
+            + " , \"PacketQueueSize\":%s"
+            + " , \"RttMs\":%s"
+            + " , \"DownloadJitterMs\":%s"
+            + " , \"UploadJitterMs\":%s"
+            + " },\n"
+            + "      \"video\" : {"
+            + " \"ssrc\":%s"
+            + " , \"DownloadRateKiloBitPerSec\":%s"
+            + " , \"UploadKbps\":%s"
+            + " , \"UploadRateKiloBitPerSec\":%s"
+            + " , \"UploadPercentLoss\":%s"
+            + " , \"NbFec\":%s"
+            + " , \"PercentDiscarded\":%s"
+            + " , \"NbDiscarded\":%s"
+            + " , \"NbDiscardedFull\":%s"
+            + " , \"NbDiscardedLate\":%s"
+            + " , \"NbDiscardedReset\":%s"
+            + " , \"NbDiscardedShrink\":%s"
+            + " , \"JitterBufferDelayMs\":%s"
+            + " , \"PacketQueueCountPackets\":%s"
+            + " , \"PacketQueueSize\":%s"
+            + " , \"RttMs\":%s"
+            + " , \"DownloadJitterMs\":%s"
+            + " , \"UploadJitterMs\":%s"
+            + " }\n"
+            + "  }";
+
     private String username = "Hammer";
     private long audioSSRC = -1;
     private MediaStreamStats audioStats;
@@ -80,52 +124,48 @@ public class FakeUserStats
         builder.append(ident + "{\n");
         builder.append(ident + "  \"username\" : \""+ this.username +"\" , \n");
         builder.append(ident + "  \"streams\" :\n");
-        builder.append(ident + "  {\n");
 
+        String str = String.format(jsonTemplate,
+            audioSSRC ,
+            audioStats.getDownloadRateKiloBitPerSec() ,
+            audioStats.getUploadRateKiloBitPerSec() ,
+            audioStats.getDownloadPercentLoss() ,
+            audioStats.getUploadPercentLoss() ,
+            audioStats.getNbFec() ,
+            audioStats.getPercentDiscarded() ,
+            audioStats.getNbDiscarded() ,
+            audioStats.getNbDiscardedFull() ,
+            audioStats.getNbDiscardedLate() ,
+            audioStats.getNbDiscardedReset() ,
+            audioStats.getNbDiscardedShrink() ,
+            audioStats.getJitterBufferDelayMs() ,
+            audioStats.getPacketQueueCountPackets() ,
+            audioStats.getPacketQueueSize() ,
+            audioStats.getRttMs() ,
+            audioStats.getDownloadJitterMs() ,
+            audioStats.getUploadJitterMs(),
 
-        builder.append(ident + "      \"audio\" : {");
-        builder.append(" \"ssrc\":"+audioSSRC);
-        builder.append(" , \"DownloadRateKiloBitPerSec\":"+audioStats.getDownloadRateKiloBitPerSec());
-        builder.append(" , \"UploadKbps\":"+audioStats.getUploadRateKiloBitPerSec());
-        builder.append(" , \"UploadRateKiloBitPerSec\":"+audioStats.getDownloadPercentLoss());
-        builder.append(" , \"UploadPercentLoss\":"+audioStats.getUploadPercentLoss());
-        builder.append(" , \"NbFec\":"+audioStats.getNbFec());
-        builder.append(" , \"PercentDiscarded\":"+audioStats.getPercentDiscarded());
-        builder.append(" , \"NbDiscarded\":"+audioStats.getNbDiscarded());
-        builder.append(" , \"NbDiscardedFull\":"+audioStats.getNbDiscardedFull());
-        builder.append(" , \"NbDiscardedLate\":"+audioStats.getNbDiscardedLate());
-        builder.append(" , \"NbDiscardedReset\":"+audioStats.getNbDiscardedReset());
-        builder.append(" , \"NbDiscardedShrink\":"+audioStats.getNbDiscardedShrink());
-        builder.append(" , \"JitterBufferDelayMs\":"+audioStats.getJitterBufferDelayMs());
-        builder.append(" , \"PacketQueueCountPackets\":"+audioStats.getPacketQueueCountPackets());
-        builder.append(" , \"PacketQueueSize\":"+audioStats.getPacketQueueSize());
-        builder.append(" , \"RttMs\":"+audioStats.getRttMs());
-        builder.append(" , \"DownloadJitterMs\":"+audioStats.getDownloadJitterMs());
-        builder.append(" , \"UploadJitterMs\":"+audioStats.getUploadJitterMs());
-        builder.append(" },\n");
+            videoSSRC ,
+            videoStats.getDownloadRateKiloBitPerSec() ,
+            videoStats.getUploadRateKiloBitPerSec() ,
+            videoStats.getDownloadPercentLoss() ,
+            videoStats.getUploadPercentLoss() ,
+            videoStats.getNbFec() ,
+            videoStats.getPercentDiscarded() ,
+            videoStats.getNbDiscarded() ,
+            videoStats.getNbDiscardedFull() ,
+            videoStats.getNbDiscardedLate() ,
+            videoStats.getNbDiscardedReset() ,
+            videoStats.getNbDiscardedShrink() ,
+            videoStats.getJitterBufferDelayMs() ,
+            videoStats.getPacketQueueCountPackets() ,
+            videoStats.getPacketQueueSize() ,
+            videoStats.getRttMs() ,
+            videoStats.getDownloadJitterMs() ,
+            videoStats.getUploadJitterMs());
+        str = ident + str.replaceAll("\n", "\n"+ident);
+        builder.append(str + '\n');
 
-        builder.append(ident + "      \"video\" : {");
-        builder.append(" \"ssrc\":"+videoSSRC);
-        builder.append(" , \"DownloadRateKiloBitPerSec\":"+videoStats.getDownloadRateKiloBitPerSec());
-        builder.append(" , \"UploadKbps\":"+videoStats.getUploadRateKiloBitPerSec());
-        builder.append(" , \"UploadRateKiloBitPerSec\":"+videoStats.getDownloadPercentLoss());
-        builder.append(" , \"UploadPercentLoss\":"+videoStats.getUploadPercentLoss());
-        builder.append(" , \"NbFec\":"+videoStats.getNbFec());
-        builder.append(" , \"PercentDiscarded\":"+videoStats.getPercentDiscarded());
-        builder.append(" , \"NbDiscarded\":"+videoStats.getNbDiscarded());
-        builder.append(" , \"NbDiscardedFull\":"+videoStats.getNbDiscardedFull());
-        builder.append(" , \"NbDiscardedLate\":"+videoStats.getNbDiscardedLate());
-        builder.append(" , \"NbDiscardedReset\":"+videoStats.getNbDiscardedReset());
-        builder.append(" , \"NbDiscardedShrink\":"+videoStats.getNbDiscardedShrink());
-        builder.append(" , \"JitterBufferDelayMs\":"+videoStats.getJitterBufferDelayMs());
-        builder.append(" , \"PacketQueueCountPackets\":"+videoStats.getPacketQueueCountPackets());
-        builder.append(" , \"PacketQueueSize\":"+videoStats.getPacketQueueSize());
-        builder.append(" , \"RttMs\":"+videoStats.getRttMs());
-        builder.append(" , \"DownloadJitterMs\":"+videoStats.getDownloadJitterMs());
-        builder.append(" , \"UploadJitterMs\":"+videoStats.getUploadJitterMs());
-        builder.append(" }\n");
-
-        builder.append(ident + "  }\n");
         builder.append(ident + "}");
 
         return builder.toString();
