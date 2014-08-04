@@ -116,8 +116,7 @@ public class HammerStats implements Runnable
         this.statsDirectoryPath =
             statsDirectoryPath
             + File.separator
-            + new SimpleDateFormat("yyyy-MM-dd'_'HH.mm.ss").format(new Date());
-        new File(this.statsDirectoryPath).mkdirs();
+            + new SimpleDateFormat("yyyy-MM-dd'  'HH.mm.ss").format(new Date());
 
         this.overallStatsFile = new File(
             this.statsDirectoryPath
@@ -157,27 +156,29 @@ public class HammerStats implements Runnable
             threadStop = false;
         }
 
-
-        try
-        {
-            writer = new PrintWriter(allStatsFile, "UTF-8");
-            writer.print("[\n");
-        }
-        catch (FileNotFoundException e)
-        {
-            e.printStackTrace();
-        }
-        catch (UnsupportedEncodingException e)
-        {
-            e.printStackTrace();
-        }
-
         while(threadStop == false)
         {
             synchronized(this)
             {
                 if(allStatsLogging || summaryStatsLogging)
                 {
+                    if(writer == null)
+                    {
+                        try
+                        {
+                            writer = new PrintWriter(allStatsFile, "UTF-8");
+                            writer.print("[\n");
+                        }
+                        catch (FileNotFoundException e)
+                        {
+                            e.printStackTrace();
+                        }
+                        catch (UnsupportedEncodingException e)
+                        {
+                            e.printStackTrace();
+                        }
+                    }
+
                     //Clear the StringBuilder
                     allBldr.setLength(0);
 
@@ -269,8 +270,8 @@ public class HammerStats implements Runnable
                     }
 
                     writer.append("}");
+                    writer.flush();
                 }
-                writer.flush();
             }
 
             try
@@ -284,8 +285,11 @@ public class HammerStats implements Runnable
             }
         }
 
-        writer.print("]\n");
-        writer.close();
+        if(writer != null)
+        {
+            writer.print("]\n");
+            writer.close();
+        }
     }
 
     /**
@@ -303,6 +307,13 @@ public class HammerStats implements Runnable
      */
     public void writeOverallStats()
     {
+        //Make sur that the directory was created
+        File saveDir = new File(this.statsDirectoryPath);
+        if(saveDir.exists() == false)
+        {
+            saveDir.mkdirs();
+        }
+
         try
         {
             PrintWriter writer = new PrintWriter(overallStatsFile, "UTF-8");
@@ -366,6 +377,14 @@ public class HammerStats implements Runnable
     public void setAllStatsLogging(boolean allStats)
     {
         this.allStatsLogging = allStats;
+        if(allStats)
+        {
+            File saveDir = new File(this.statsDirectoryPath);
+            if(saveDir.exists() == false)
+            {
+                saveDir.mkdirs();
+            }
+        }
     }
 
     /**
@@ -376,6 +395,14 @@ public class HammerStats implements Runnable
     public void setSummaryStatsLogging(boolean summaryStats)
     {
         this.summaryStatsLogging = summaryStats;
+        if(summaryStats)
+        {
+            File saveDir = new File(this.statsDirectoryPath);
+            if(saveDir.exists() == false)
+            {
+                saveDir.mkdirs();
+            }
+        }
     }
 
 
