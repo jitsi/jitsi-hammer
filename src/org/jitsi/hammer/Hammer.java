@@ -40,10 +40,10 @@ import java.util.*;
  */
 public class Hammer {
     /**
-     * The base of the username use by all the virtual users this Hammer
+     * The base of the nickname use by all the virtual users this Hammer
      * will create.
      */
-    private final String username;
+    private final String nickname;
 
     /**
      * The information about the XMPP server to which all virtual users will
@@ -142,13 +142,13 @@ public class Hammer {
      * @param host The information about the XMPP server to which all
      * virtual users will try to connect.
      * @param mdc
-     * @param username The base of the username used by all the virtual users.
+     * @param nickname The base of the nickname used by all the virtual users.
      * @param numberOfUser The number of virtual users this <tt>Hammer</tt>
      * will create and handle.
      */
-    public Hammer(HostInfo host, MediaDeviceChooser mdc, String username, int numberOfUser)
+    public Hammer(HostInfo host, MediaDeviceChooser mdc, String nickname, int numberOfUser)
     {
-        this.username = username;
+        this.nickname = nickname;
         this.serverInfo = host;
         this.mediaDeviceChooser = mdc;
         fakeUsers = new FakeUser[numberOfUser];
@@ -158,7 +158,7 @@ public class Hammer {
             fakeUsers[i] = new FakeUser(
                 this.serverInfo,
                 this.mediaDeviceChooser,
-                this.username+"_"+i);
+                this.nickname+"_"+i);
         }
     }
 
@@ -276,6 +276,66 @@ public class Hammer {
             for(FakeUser user : fakeUsers)
             {
                 user.start();
+                hammerStats.addFakeUsersStats(user.getFakeUserStats());
+                Thread.sleep(wait);
+            }
+        }
+        catch (XMPPException e)
+        {
+            e.printStackTrace();
+        }
+        catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+
+        hammerStats.setAllStatsLogging(allStats);
+        hammerStats.setSummaryStatsLogging(dummaryStats);
+        hammerStats.setTimeBetweenUpdate(statsPollingTime);
+        hammerStatsThread = new Thread(hammerStats);
+        hammerStatsThread.start();
+    }
+
+
+    /**
+     * Start the connection of all the virtual user that this <tt>Hammer</tt>
+     * handles to the XMPP server(and then a MUC), using the <tt>Credential</tt>
+     * given as arguments for the login.
+     *
+     * @param wait the number of milliseconds the Hammer will wait during the
+     * start of two consecutive fake users.
+     * @param credentials a list of <tt>Credentials</tt> used for the login
+     * of the fake users.
+     * @param allStats enable or not the logging of the all the stats collected
+     * by the <tt>HammerStats</tt> during the run.
+     * @param dummaryStats enable or not the logging of the dummary stats
+     * computed from all the streams' stats collected by the
+     * <tt>HammerStats</tt> during the run.
+     * @param statsPollingTime the number of seconds between two polling of stats
+     * by the <tt>HammerStats</tt> run method.
+     */
+    public void start(
+        int wait,
+        List<Credential> credentials,
+        boolean allStats,
+        boolean dummaryStats,
+        int statsPollingTime)
+    {
+        if(wait <= 0) wait = 1;
+
+        try
+        {
+            Iterator<FakeUser> userIt = Arrays.asList(fakeUsers).iterator();
+            Iterator<Credential> credIt = credentials.iterator();
+            FakeUser user = null;
+            Credential credential = null;
+
+            while(credIt.hasNext() && userIt.hasNext())
+            {
+                user = userIt.next();
+                credential = credIt.next();
+
+                user.start(credential.getUsername(),credential.getPassword());
                 hammerStats.addFakeUsersStats(user.getFakeUserStats());
                 Thread.sleep(wait);
             }

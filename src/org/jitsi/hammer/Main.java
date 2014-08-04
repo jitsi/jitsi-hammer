@@ -10,8 +10,11 @@ package org.jitsi.hammer;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.File;
+import java.util.List;
+
 import net.java.sip.communicator.launcher.ChangeJVMFrame;
 //import net.java.sip.communicator.util.ScStdOut;
+
 
 
 
@@ -273,6 +276,11 @@ public class Main
         HostInfo hostInfo = infoCLI.getHostInfoFromArguments();
         MediaDeviceChooser mdc = infoCLI.getMediaDeviceChooser();
 
+        int numberOfFakeUsers = infoCLI.getNumberOfFakeUsers();
+        List<Credential> credentials = infoCLI.getCredentialsList();
+        if(credentials.size() > 0) numberOfFakeUsers = credentials.size();
+
+
         Hammer hammer = new Hammer(
             hostInfo,
             mdc,
@@ -283,11 +291,23 @@ public class Main
         //After the initialization we start the Hammer (all its users will
         //connect to the XMPP server and try to setup media stream with it bridge
 
-        hammer.start(
-            2000,
-            infoCLI.getAllStats(),
-            infoCLI.getSummaryStats(),
-            infoCLI.getStatsPolling());
+        if(credentials.size() > 0)
+        {
+            hammer.start(
+                2000,
+                credentials,
+                infoCLI.getAllStats(),
+                infoCLI.getSummaryStats(),
+                infoCLI.getStatsPolling());
+        }
+        else
+        {
+            hammer.start(
+                2000,
+                infoCLI.getAllStats(),
+                infoCLI.getSummaryStats(),
+                infoCLI.getStatsPolling());
+        }
 
         if(infoCLI.getRunLength() > 0)
         {

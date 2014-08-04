@@ -53,10 +53,10 @@ public class FakeUser implements PacketListener {
     private MediaDeviceChooser mediaDeviceChooser;
 
     /**
-     * The username/nickname taken by this <tt>FakeUser</tt> in the
+     * The nickname/nickname taken by this <tt>FakeUser</tt> in the
      * MUC chatroom
      */
-    private String username;
+    private String nickname;
 
 
     /**
@@ -162,7 +162,7 @@ public class FakeUser implements PacketListener {
 
 
     /**
-     * Instantiates a <tt>FakeUser</tt> with a default username that
+     * Instantiates a <tt>FakeUser</tt> with a default nickname that
      * will connect to the XMPP server contained in <tt>hostInfo</tt>.
      *
      * @param hostInfo the XMPP server informations needed for the connection.
@@ -181,7 +181,7 @@ public class FakeUser implements PacketListener {
     }
 
     /**
-     * Instantiates a <tt>FakeUser</tt> with a specified <tt>username</tt>
+     * Instantiates a <tt>FakeUser</tt> with a specified <tt>nickname</tt>
      * that will connect to the XMPP server contained in <tt>hostInfo</tt>.
      *
      * @param hostInfo the XMPP server informations needed for the connection.
@@ -191,27 +191,27 @@ public class FakeUser implements PacketListener {
      * @param hammerStats The <tt>HammerStat</tt> to which this
      * <tt>FakeUser</tt> will register its <tt>MediaStream</tt>s for their
      * stats.
-     * @param username the username used by this <tt>FakeUser</tt> in the
+     * @param nickname the nickname used by this <tt>FakeUser</tt> in the
      * connection.
      *
      */
     public FakeUser(
         HostInfo hostInfo,
         MediaDeviceChooser mdc,
-        String username)
+        String nickname)
     {
-        this(hostInfo, mdc, username, false);
+        this(hostInfo, mdc, nickname, false);
     }
 
     /**
-     * Instantiates a <tt>FakeUser</tt> with a specified <tt>username</tt>
+     * Instantiates a <tt>FakeUser</tt> with a specified <tt>nickname</tt>
      * that will connect to the XMPP server contained in <tt>hostInfo</tt>.
      *
      * @param hostInfo the XMPP server informations needed for the connection.
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
      * <tt>FakeUser</tt> to choose the <tt>MediaDevice</tt> for each of its
      * <tt>MediaStream</tt>s.
-     * @param username the username used by this <tt>FakeUser</tt> in the
+     * @param nickname the nickname used by this <tt>FakeUser</tt> in the
      * connection.
      * @param hammerStats The <tt>HammerStat</tt> to which this
      * <tt>FakeUser</tt> will register its <tt>MediaStream</tt>s for their
@@ -221,12 +221,12 @@ public class FakeUser implements PacketListener {
     public FakeUser(
         HostInfo hostInfo,
         MediaDeviceChooser mdc,
-        String username,
+        String nickname,
         boolean smackDebug)
     {
         this.serverInfo = hostInfo;
         this.mediaDeviceChooser = mdc;
-        this.username = (username == null) ? "Anonymous" : username;
+        this.nickname = (nickname == null) ? "Anonymous" : nickname;
 
 
         config = new ConnectionConfiguration(
@@ -253,11 +253,11 @@ public class FakeUser implements PacketListener {
             mediaStreamMap.get(MediaType.AUDIO.toString()));
         fakeUserStats.setMediaStreamStats(
             mediaStreamMap.get(MediaType.VIDEO.toString()));
-        fakeUserStats.setUsername(this.username);
+        fakeUserStats.setUsername(this.nickname);
     }
 
     /**
-     * Connect to the XMPP server then to the MUC chatroom.
+     * Connect to the XMPP server, login anonymously then join the MUC chatroom.
      * @throws XMPPException if the connection to the XMPP server goes wrong
      */
     public void start() throws XMPPException
@@ -265,24 +265,45 @@ public class FakeUser implements PacketListener {
         connection.connect();
         connection.loginAnonymously();
 
+        connectMUC();
+    }
 
+    /**
+     * Connect to the XMPP server, login with the username and password given
+     * then join the MUC chatroom.
+     * @throws XMPPException if the connection to the XMPP server goes wrong
+     */
+    public void start(String username,String password) throws XMPPException
+    {
+        connection.connect();
+        connection.login(username,password);
+
+        connectMUC();
+    }
+
+    /**
+     * Join the MUC, send a presence packet to display the current nickname
+     * @throws XMPPException if the connection to the MUC goes wrong
+     */
+    private void connectMUC() throws XMPPException
+    {
         String roomURL = serverInfo.getRoomName()+"@"+serverInfo.getMUCDomain();
         muc = new MultiUserChat(connection, roomURL);
         while(true)
         {
             try
             {
-                muc.join(username);
+                muc.join(nickname);
             }
             catch (XMPPException e)
             {
                 /*
                  * IF the nickname is already taken in the MUC (code 409)
-                 * then we append '_' to the username, and retry
+                 * then we append '_' to the nickname, and retry
                  */
                 if(e.getXMPPError().getCode() == 409)
                 {
-                    username=username+'_';
+                    nickname=nickname+'_';
                     continue;
                 }
                 else throw e;
@@ -291,24 +312,14 @@ public class FakeUser implements PacketListener {
         }
         muc.sendMessage("Hello World!");
 
-
         /*
          * Send a Presence packet containing a Nick extension so that the
          * nickname is correctly displayed in jitmeet
          */
         Packet presencePacket = new Presence(Presence.Type.available);
-        presencePacket.setTo(roomURL + "/" + username);
-        presencePacket.addExtension(new Nick(username));
+        presencePacket.setTo(roomURL + "/" + nickname);
+        presencePacket.addExtension(new Nick(nickname));
         connection.sendPacket(presencePacket);
-
-
-
-        /*
-         * Add a simple message listener that will just display in the terminal
-         * received message (and respond back with a "C'est pas faux");
-         */
-        //muc.addMessageListener(
-        //       new MyPacketListener(muc,roomURL +"/" + muc.getNickname()) );
     }
 
     /**
@@ -477,9 +488,9 @@ public class FakeUser implements PacketListener {
             +"@"
             +serverInfo.getMUCDomain()
             + "/"
-            + username;
+            + nickname;
         presencePacketWithSSRC.setTo(recipient);
-        presencePacketWithSSRC.addExtension(new Nick(username));
+        presencePacketWithSSRC.addExtension(new Nick(this.nickname));
         MediaPacketExtension mediaPacket = new MediaPacketExtension();
         for(String key : mediaStreamMap.keySet())
         {

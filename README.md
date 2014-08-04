@@ -2,7 +2,9 @@
 
 A traffic generator for Jitsi Videobridge.
 
-Jitsi-Hammer is a program that connects to a Jitsi-Meet conference, creates fake users, and generate RTP traffic for these fake users.
+Jitsi-Hammer is a program that connects to a Jitsi-Meet conference, creates fake users, and generate RTP traffic for these fake users.  
+**It means that you need to run the program after using Jitsi-Meet : Jitsi-Hammer need an initiator that will manage the video conference and Jingle protocol,
+because without one, Jitsi-Hammer will wait for Jingle session-initiate that will never come**
 
 ##How to use
 First you need to compile the project. You can do that using **ant** :  
@@ -33,8 +35,13 @@ The **OPTIONAL_OPTIONS** are :
 -audiortpdump <path to a rtpdump file containing Opus RTP packets for the video streams>
 -overallstats : enable the logging of the overall stats at the end of the run.
 -allstats : enable the logging of all the stats collected during the run
+-summarystats : enable the logging of the summary stats(min,max,mean,standard deviation) from the stats collected during the run
 -statspolling <time (in seconds) between two polling of stats (default : 5sec)>
+-credentials <filepath to a file containing users credentials>
 ```
+
+When the option ```-credentials``` is used, instead of login anonymously to the XMPP server, Jitsi-Hammer will login with the credentials contained in the file.
+The file must be encoded in UTF-8, and should be a list of "username:password" (the password and username are separeted by a ":") separeted by newlines.
 
 You must know that when ```-length N``` is given, if N is 0 or negative, the run will never stop.
 

@@ -4,6 +4,12 @@
 
 package org.jitsi.hammer;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jitsi.hammer.utils.*;
 import org.kohsuke.args4j.*;
 
@@ -116,11 +122,18 @@ public class CmdLineArguments
     private boolean summaryStats = false;
 
     /**
-     *
+     * Time (in seconds) between two polling of stats
      */
     @Option(name="-statspolling", usage="The time (in seconds) between two"
         + " polling of stats")
     private int statsPolling = 5;
+
+    /**
+     * The path of the file containing users credentials
+     */
+    @Option(name="-credentials", usage="The filepath of the file"
+        + " containing users credentials")
+    String credentialsFilepath = null;
 
     /**
      * Create a HostInfo from the CLI options
@@ -245,5 +258,39 @@ public class CmdLineArguments
     public int getStatsPolling()
     {
         return statsPolling;
+    }
+
+    /**
+     * Get the <tt>List</tt> of <tt>Credentials</tt> read from the file
+     * given with the "-credentials" options
+     * @return
+     */
+    public List<Credential> getCredentialsList()
+    {
+        List<Credential> list = new ArrayList<Credential>();
+
+        try
+        {
+            String line = null;
+            String[] credentials;
+            FileInputStream stream = new FileInputStream(this.credentialsFilepath);
+            BufferedReader in = new BufferedReader(
+                new InputStreamReader(stream, "UTF-8"));
+
+            line = in.readLine();
+            while(line != null)
+            {
+                credentials = line.split(":", 2);
+                list.add(new Credential(credentials[0],credentials[1]));
+                line = in.readLine();
+            }
+            in.close();
+        }
+        catch (Exception e)
+        {
+            list.clear();
+        }
+
+        return list;
     }
 }
