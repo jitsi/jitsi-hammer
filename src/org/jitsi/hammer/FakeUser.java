@@ -9,6 +9,7 @@ package org.jitsi.hammer;
 
 
 import org.jivesoftware.smack.*;
+import org.jivesoftware.smackx.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.muc.*;
 import org.jivesoftware.smackx.packet.*;
 import org.jivesoftware.smack.packet.*;
@@ -228,7 +229,6 @@ public class FakeUser implements PacketListener {
         this.mediaDeviceChooser = mdc;
         this.nickname = (nickname == null) ? "Anonymous" : nickname;
 
-
         config = new ConnectionConfiguration(
             serverInfo.getXMPPHostname(),
             serverInfo.getPort(),
@@ -254,6 +254,18 @@ public class FakeUser implements PacketListener {
         fakeUserStats.setMediaStreamStats(
             mediaStreamMap.get(MediaType.VIDEO.toString()));
         fakeUserStats.setUsername(this.nickname);
+
+
+        ServiceDiscoveryManager discoManager =
+            ServiceDiscoveryManager.getInstanceFor(connection);
+        discoManager.addFeature(JingleIQ.NAMESPACE);
+        discoManager.addFeature(RtpDescriptionPacketExtension.NAMESPACE);
+        discoManager.addFeature(RawUdpTransportPacketExtension.NAMESPACE);
+        discoManager.addFeature(IceUdpTransportPacketExtension.NAMESPACE);
+        discoManager.addFeature(DtlsFingerprintPacketExtension.NAMESPACE);
+        discoManager.addFeature(RTPHdrExtPacketExtension.NAMESPACE);
+        discoManager.addFeature("urn:xmpp:jingle:apps:rtp:audio");
+        discoManager.addFeature("urn:xmpp:jingle:apps:rtp:video");
     }
 
     /**
@@ -294,6 +306,17 @@ public class FakeUser implements PacketListener {
             try
             {
                 muc.join(nickname);
+
+                muc.sendMessage("Hello World!");
+
+                /*
+                 * Send a Presence packet containing a Nick extension so that the
+                 * nickname is correctly displayed in jitmeet
+                 */
+                Packet presencePacket = new Presence(Presence.Type.available);
+                presencePacket.setTo(roomURL + "/" + nickname);
+                presencePacket.addExtension(new Nick(nickname));
+                connection.sendPacket(presencePacket);
             }
             catch (XMPPException e)
             {
@@ -301,25 +324,18 @@ public class FakeUser implements PacketListener {
                  * IF the nickname is already taken in the MUC (code 409)
                  * then we append '_' to the nickname, and retry
                  */
-                if(e.getXMPPError().getCode() == 409)
+                if((e.getXMPPError() != null) && (e.getXMPPError().getCode() == 409))
                 {
                     nickname=nickname+'_';
                     continue;
                 }
-                else throw e;
+                else
+                {
+                    e.printStackTrace();
+                }
             }
             break;
         }
-        muc.sendMessage("Hello World!");
-
-        /*
-         * Send a Presence packet containing a Nick extension so that the
-         * nickname is correctly displayed in jitmeet
-         */
-        Packet presencePacket = new Presence(Presence.Type.available);
-        presencePacket.setTo(roomURL + "/" + nickname);
-        presencePacket.addExtension(new Nick(nickname));
-        connection.sendPacket(presencePacket);
     }
 
     /**
