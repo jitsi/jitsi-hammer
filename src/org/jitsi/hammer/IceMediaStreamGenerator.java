@@ -1,6 +1,6 @@
 /*
  * Jitsi-Hammer, A traffic generator for Jitsi Videobridge.
- * 
+ *
  * Distributable under LGPL license.
  * See terms of license at gnu.org.
  */
@@ -11,19 +11,17 @@ import org.ice4j.ice.*;
 import org.ice4j.*;
 import org.ice4j.ice.harvest.*;
 
-
 import java.util.*;
-
 import java.io.*;
 
 
 /**
- * 
+ *
  * @author Thomas Kuntz
- * 
+ *
  * This class is used to generate <tt>IceMediaStream</tt> without overlapping
  * the port numbers used for each.
- * 
+ *
  * This class proposes a static instance of itself (with default value for min
  * and max port number) to directly use it without having to instantiate one.
  */
@@ -52,13 +50,13 @@ public class IceMediaStreamGenerator
      */
     private int CURRENT_COMPONENT_PORT = MIN_COMPONENT_PORT;
 
-    
+
     /**
      * Initializes a new <tt>IceMediaStream</tt> instance with
      * default value for the minimum and maximum port value.
      */
     public IceMediaStreamGenerator() {}
-    
+
     /**
      * Initializes a new <tt>IceMediaStream</tt> instance with
      * the given minimum and maximum port number value.
@@ -91,8 +89,8 @@ public class IceMediaStreamGenerator
      *
      * Each <tt>IceMediaStrem</tt> will have 2 <tt>Component</tt>, one for RTP
      * and one for RTCP, and using UDP as transport protocol.
-     * 
-     * @param mediaNameSet A set of media name used to create 
+     * @param agent the agent in which will be created the <tt>IceMediaStream</tt>
+     * @param mediaNameSet A set of media name used to create
      * <tt>IceMediaStream</tt>.
      * @param stunAddresses An array of STUN server that could be used be the
      * <tt>Agent</tt>.
@@ -104,13 +102,13 @@ public class IceMediaStreamGenerator
      * @throws IOException if anything goes wrong when the <tt>Component<tt>
      * are created.
      */
-    public Agent generateIceMediaStream (
+    public void generateIceMediaStream (
+            Agent agent,
             Set<String> mediaNameSet,
             TransportAddress stunAddresses[],
             TransportAddress turnAddresses[])
         throws IOException
     {
-        Agent agent = new Agent();
         agent.setControlling(false);
 
         IceMediaStream stream = null;
@@ -124,7 +122,7 @@ public class IceMediaStreamGenerator
             }
         }
 
-        
+
         if( turnAddresses != null )
         {
             for( TransportAddress turnAddress : turnAddresses )
@@ -133,7 +131,7 @@ public class IceMediaStreamGenerator
                         new TurnCandidateHarvester(turnAddress) );
             }
         }
-        
+
 
         synchronized(this)
         {
@@ -143,9 +141,9 @@ public class IceMediaStreamGenerator
                 //(normally the data content should have been remove from the Set
                 //But better safe than sorry
                 if(name.equalsIgnoreCase("data")) continue;
-                
+
                 stream = agent.createMediaStream(name);
-                
+
                 if( (CURRENT_COMPONENT_PORT + 1) >= MAX_COMPONENT_PORT )
                     CURRENT_COMPONENT_PORT = MIN_COMPONENT_PORT;
 
@@ -155,19 +153,17 @@ public class IceMediaStreamGenerator
                         CURRENT_COMPONENT_PORT,
                         CURRENT_COMPONENT_PORT,
                         CURRENT_COMPONENT_PORT + 50);
-                
+
                 agent.createComponent(
                         stream,
                         Transport.UDP,
                         CURRENT_COMPONENT_PORT+1,
                         CURRENT_COMPONENT_PORT+1,
                         CURRENT_COMPONENT_PORT + 50);
-    
+
                 CURRENT_COMPONENT_PORT+=50;
             }
         }
-
-        return agent;
     }
 
 }

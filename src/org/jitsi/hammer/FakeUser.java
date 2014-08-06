@@ -142,7 +142,7 @@ public class FakeUser implements PacketListener {
     /**
      * The <tt>Agent</tt> handling the ICE protocol of the stream
      */
-    private Agent agent;
+    private Agent agent = new Agent();
 
     /**
      * <tt>Presence</tt> packet containing the SSRC of the streams of this
@@ -266,6 +266,7 @@ public class FakeUser implements PacketListener {
         discoManager.addFeature(RTPHdrExtPacketExtension.NAMESPACE);
         discoManager.addFeature("urn:xmpp:jingle:apps:rtp:audio");
         discoManager.addFeature("urn:xmpp:jingle:apps:rtp:video");
+
     }
 
     /**
@@ -288,7 +289,13 @@ public class FakeUser implements PacketListener {
     public void start(String username,String password) throws XMPPException
     {
         connection.connect();
-        connection.login(username,password);
+        connection.login(username,password,"Jitsi-Hammer");
+
+      //set the highest priority possible
+        Presence presence = new Presence(Presence.Type.available);
+        presence.setPriority(128);
+        presence.setStatus("Fake User");
+        connection.sendPacket(presence);
 
         connectMUC();
     }
@@ -344,22 +351,27 @@ public class FakeUser implements PacketListener {
      */
     public void stop()
     {
-        agent.free();
+        if(agent != null) agent.free();
         for(MediaStream stream : mediaStreamMap.values())
         {
             stream.close();
         }
+        if(connection !=null)
+        {
+            if(sessionAccept != null)
+            {
+                connection.sendPacket(
+                    JinglePacketFactory.createSessionTerminate(
+                        sessionAccept.getFrom(),
+                        sessionAccept.getTo(),
+                        sessionAccept.getSID(),
+                        Reason.GONE,
+                        "Bye Bye"));
+            }
 
-        connection.sendPacket(
-            JinglePacketFactory.createSessionTerminate(
-                sessionAccept.getFrom(),
-                sessionAccept.getTo(),
-                sessionAccept.getSID(),
-                Reason.GONE,
-                "Bye Bye"));
-
-        muc.leave();
-        connection.disconnect();
+            muc.leave();
+            connection.disconnect();
+        }
     }
 
 
@@ -444,11 +456,11 @@ public class FakeUser implements PacketListener {
         contentMap.remove("data");
 
 
-
         iceMediaStreamGenerator = IceMediaStreamGenerator.getInstance();
         try
         {
-            agent = iceMediaStreamGenerator.generateIceMediaStream(
+            iceMediaStreamGenerator.generateIceMediaStream(
+                agent,
                 contentMap.keySet(),
                 null,
                 null);
@@ -508,7 +520,7 @@ public class FakeUser implements PacketListener {
         presencePacketWithSSRC.setTo(recipient);
         presencePacketWithSSRC.addExtension(new Nick(this.nickname));
         MediaPacketExtension mediaPacket = new MediaPacketExtension();
-        for(String key : mediaStreamMap.keySet())
+        for(String key : contentMap.keySet())
         {
             String str = String.valueOf(mediaStreamMap.get(key).getLocalSourceID());
             mediaPacket.addSource(
@@ -565,16 +577,18 @@ public class FakeUser implements PacketListener {
 
 
         //Start the encryption of the MediaStreams
-        for(MediaStream stream : mediaStreamMap.values())
+        for(String key : contentMap.keySet())
         {
+            MediaStream stream = mediaStreamMap.get(key);
             SrtpControl control = stream.getSrtpControl();
             MediaType type = stream.getFormat().getMediaType();
             control.start(type);
         }
 
         //Start the MediaStream
-        for(MediaStream stream : mediaStreamMap.values())
+        for(String key : contentMap.keySet())
         {
+            MediaStream stream = mediaStreamMap.get(key);
             stream.start();
         }
     }

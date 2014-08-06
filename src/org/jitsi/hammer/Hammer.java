@@ -255,9 +255,11 @@ public class Hammer {
      *
      * @param wait the number of milliseconds the Hammer will wait during the
      * start of two consecutive fake users.
+     * @param overallStats enable or not the logging of the overall stats
+     * computed at the end of the run.
      * @param allStats enable or not the logging of the all the stats collected
      * by the <tt>HammerStats</tt> during the run.
-     * @param dummaryStats enable or not the logging of the dummary stats
+     * @param summaryStats enable or not the logging of the dummary stats
      * computed from all the streams' stats collected by the
      * <tt>HammerStats</tt> during the run.
      * @param statsPollingTime the number of seconds between two polling of stats
@@ -265,8 +267,9 @@ public class Hammer {
      */
     public void start(
         int wait,
+        boolean overallStats,
         boolean allStats,
-        boolean dummaryStats,
+        boolean summaryStats,
         int statsPollingTime)
     {
         if(wait <= 0) wait = 1;
@@ -289,8 +292,9 @@ public class Hammer {
             e.printStackTrace();
         }
 
+        hammerStats.setOverallStatsLogging(overallStats);
         hammerStats.setAllStatsLogging(allStats);
-        hammerStats.setSummaryStatsLogging(dummaryStats);
+        hammerStats.setSummaryStatsLogging(summaryStats);
         hammerStats.setTimeBetweenUpdate(statsPollingTime);
         hammerStatsThread = new Thread(hammerStats);
         hammerStatsThread.start();
@@ -306,19 +310,23 @@ public class Hammer {
      * start of two consecutive fake users.
      * @param credentials a list of <tt>Credentials</tt> used for the login
      * of the fake users.
+     * @param overallStats enable or not the logging of the overall stats
+     * computed at the end of the run.
      * @param allStats enable or not the logging of the all the stats collected
      * by the <tt>HammerStats</tt> during the run.
-     * @param dummaryStats enable or not the logging of the dummary stats
+     * @param summaryStats enable or not the logging of the dummary stats
      * computed from all the streams' stats collected by the
      * <tt>HammerStats</tt> during the run.
+     * @param b
      * @param statsPollingTime the number of seconds between two polling of stats
      * by the <tt>HammerStats</tt> run method.
      */
     public void start(
         int wait,
         List<Credential> credentials,
+        boolean overallStats,
         boolean allStats,
-        boolean dummaryStats,
+        boolean summaryStats,
         int statsPollingTime)
     {
         if(wait <= 0) wait = 1;
@@ -349,8 +357,9 @@ public class Hammer {
             e.printStackTrace();
         }
 
+        hammerStats.setOverallStatsLogging(overallStats);
         hammerStats.setAllStatsLogging(allStats);
-        hammerStats.setSummaryStatsLogging(dummaryStats);
+        hammerStats.setSummaryStatsLogging(summaryStats);
         hammerStats.setTimeBetweenUpdate(statsPollingTime);
         hammerStatsThread = new Thread(hammerStats);
         hammerStatsThread.start();

@@ -281,21 +281,40 @@ public class Main
         if(credentials.size() > 0) numberOfFakeUsers = credentials.size();
 
 
-        Hammer hammer = new Hammer(
+        final Hammer hammer = new Hammer(
             hostInfo,
             mdc,
             "Jitsi-Hammer",
-            infoCLI.getNumberOfFakeUsers());
+            numberOfFakeUsers);
+
+
+        //Cleanly stop the hammer when the program shutdown
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()
+        {
+            public void run()
+            {
+                System.out.println("Stopping Jitsi-Hammer");
+                //DTLS log a big IOException when closed, so I just disable the log
+                //for it while I stop it, and re-enable it after.
+                java.util.logging.Logger l = java.util.logging.Logger.getLogger(
+                    "org.jitsi.impl.neomedia.transform.dtls.DatagramTransportImpl");
+                java.util.logging.Level level = l.getLevel();
+                l.setLevel(java.util.logging.Level.OFF);
+                hammer.stop();
+                l.setLevel(level);
+                System.out.println("Exiting the program");
+            }
+        }));
 
 
         //After the initialization we start the Hammer (all its users will
         //connect to the XMPP server and try to setup media stream with it bridge
-
         if(credentials.size() > 0)
         {
             hammer.start(
                 2000,
                 credentials,
+                infoCLI.getOverallStats(),
                 infoCLI.getAllStats(),
                 infoCLI.getSummaryStats(),
                 infoCLI.getStatsPolling());
@@ -304,6 +323,7 @@ public class Main
         {
             hammer.start(
                 2000,
+                infoCLI.getOverallStats(),
                 infoCLI.getAllStats(),
                 infoCLI.getSummaryStats(),
                 infoCLI.getStatsPolling());
@@ -318,17 +338,6 @@ public class Main
             while(true) Thread.sleep(3600000);
         }
 
-        //DTLS log a big IOException when closed, so I just disable the log
-        //for it while I stop it, and re-enable it after.
-        java.util.logging.Logger l = java.util.logging.Logger.getLogger(
-            "org.jitsi.impl.neomedia.transform.dtls.DatagramTransportImpl");
-        java.util.logging.Level level = l.getLevel();
-        l.setLevel(java.util.logging.Level.OFF);
-        hammer.stop();
-        if(infoCLI.getOverallStats())
-        {
-            hammer.getHammerStats().writeOverallStats();
-        }
-        l.setLevel(level);
+        System.exit(0);
     }
 }

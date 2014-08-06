@@ -1,6 +1,6 @@
 /*
  * Jitsi-Hammer, A traffic generator for Jitsi Videobridge.
- * 
+ *
  * Distributable under LGPL license.
  * See terms of license at gnu.org.
  */
@@ -35,14 +35,14 @@ public class HammerUtils
 {
     /**
      * Select the favorite <tt>MediaFormat</tt> of a list of <tt>MediaFormat</tt>
-     * 
+     *
      * @param mediaType The type of the <tt>MediaFormat</tt>
      * in <tt>mediaFormatList</tt>
-     * 
+     *
      * @param mediaFormatList a list of <tt>MediaFormat</tt>
      * (their <tt>MediaType</tt> should be the same as <tt>mediaType</tt>
-     * 
-     * 
+     *
+     *
      * @return the favorite <tt>MediaFormat</tt>
      * of a list of <tt>MediaFormat</tt>
      */
@@ -57,7 +57,7 @@ public class HammerUtils
          * returnedFormat take the value of the first element in the list,
          * so that if the favorite MediaFormat isn't found on the list,
          * then this function return the first MediaFormat of the list.
-         * 
+         *
          * For now, this function prefer opus for the audio format, and
          * vp8 for the video format
          */
@@ -98,7 +98,7 @@ public class HammerUtils
      * Add the remote transport candidates of each
      * <tt>ContentPacketExtension</tt> in <tt>contentList</tt> to their
      * associated <tt>IceMediaStream</tt> inside <tt>agent</tt>.
-     * 
+     *
      * @param agent the <tt>Agent</tt> containing the IceMediaStream to which
      * will be added the remote transport candidates.
      * @param contentList the list of <tt>ContentPacketExtension</tt> containing
@@ -180,7 +180,7 @@ public class HammerUtils
      * Add the local transport candidates contained in <tt>agent</tt> to
      * their associated (by the stream/content name)
      * <tt>ContentPacketExtension</tt>.
-     * 
+     *
      * @param agent the <tt>Agent</tt> from which we will get the local
      * transport candidates.
      * @param contentList the list of <tt>ContentPacketExtension</tt> to which
@@ -249,7 +249,7 @@ public class HammerUtils
      * indexed by the String equivalent of their <tt>MediaType</tt> , with
      * just the <tt>MediaType</tt> set and with a <tt>DtlsControl</tt> for
      * <tt>SrtpControl</tt>. Anything else need to be set later
-     * 
+     *
      * @return a Map of newly created <tt>MediaStream</tt>, indexed by
      * the String equivalent of their <tt>MediaType</tt>*
      */
@@ -284,16 +284,16 @@ public class HammerUtils
     /**
      * Configure the <tt>MediaStream</tt> contained in <tt>mediaStreamMap</tt>
      * with the informations the others arguments gives.
-     * 
+     *
      * It will set the streams with the <tt>MediaFormat</tt> associated to its
      * name/MediaType, and with the selected <tt>MediaDevice</tt> returned by
      * <tt>mediaDeviceChooser</tt> for the <tt>MediaType</tt> of the
      * <tt>MediaFormat</tt> of the stream.
-     * 
+     *
      * It will also create the streams with a <tt>DtlsControl</tt> that need
      * to be configured later.
      * The stream will be set to SENDONLY.
-     * 
+     *
      * @param mediaFormatMap a <tt>Map</tt> of <tt>MediaFormat</tt> indexed by
      * the name/<tt>MediaType</tt> of the MediaStreams set with this
      * <tt>MediaFormat</tt>.
@@ -382,7 +382,7 @@ public class HammerUtils
      * <tt>Agent</tt> (so after ICE was TERMINATED) to their associated
      * <tt>MediaStream</tt> contained in a <tt>Map</tt> and indexed by the
      * name of their associated IceMediaStream.
-     * 
+     *
      * @param agent the <tt>Agent</tt> containing the <tt>IceMediaStream</tt>
      * from which we will get the <tt>DatagramSocket</tt>
      * @param mediaStreamMap the <tt>Map</tt> of <tt>MediaStream</tt> to which
@@ -402,7 +402,7 @@ public class HammerUtils
         StreamConnector connector = null;
         MediaStream stream = null;
 
-        for(String mediaName : mediaStreamMap.keySet())
+        for(String mediaName : agent.getStreamNames())
         {
             iceMediaStream = agent.getStream(mediaName);
             stream = mediaStreamMap.get(mediaName);
@@ -435,7 +435,7 @@ public class HammerUtils
      * <tt>MediaStream</tt>.
      * Add the local fingerprint & hash function from the <tt>DtlsControl</tt> of
      * the <tt>MediaStream</tt> to the <tt>localContentList</tt>.
-     * 
+     *
      * @param mediaStreamMap a Map containing the <tt>MediaStream</tt> to
      * which will be added the remote fingerprints, from which we will get
      * the local fingerprints.
@@ -564,7 +564,7 @@ public class HammerUtils
      * Set the ssrc attribute of each <tt>MediaStream</tt> to their corresponding
      * <tt>RtpDescriptionPacketExtension</tt>, and also add a 'source' element
      * to it, describing the msid,mslabel,label and cname of the stream.
-     * 
+     *
      * @param contentMap the Map of <tt>ContentPacketExtension</tt> to which
      * will be set the ssrc and addec the "source" element.
      * @param mediaStreamMap the Map of <tt>MediaStream</tt> from which will be
@@ -579,7 +579,7 @@ public class HammerUtils
         MediaStream mediaStream = null;
 
 
-        for(String mediaName : mediaStreamMap.keySet())
+        for(String mediaName : contentMap.keySet())
         {
             long ssrc;
 
@@ -647,7 +647,7 @@ public class HammerUtils
      * Create a relatively empty <tt>ContentPacketExtension</tt> for 'data'
      * (<tt>MediaType.DATA</tt>) rtp content type, because
      * <tt>JingleUtils.createDescription</tt> doesn't handle this type for now.
-     * 
+     *
      * @param creator indicates whether the person who originally created this
      * content was the initiator or the responder of the jingle session.
      * @param senders indicates the direction of the media in this stream.
