@@ -293,11 +293,11 @@ public class Main
         {
             public void run()
             {
-                System.out.println("Stopping Jitsi-Hammer");
+                System.out.println("Stopping Jitsi-Hammer...");
 
                 hammer.stop();
 
-                System.out.println("Exiting the program");
+                System.out.println("Exiting the program...");
             }
         }));
 
@@ -332,5 +332,9 @@ public class Main
         {
             while(true) Thread.sleep(3600000);
         }
+
+        //Necessary to finishi Main() with an exit, to trigger the shutdown
+        //hook that will stop the hammer
+        System.exit(0);
     }
 }
