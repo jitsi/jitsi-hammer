@@ -373,15 +373,31 @@ public class Hammer {
      */
     public void stop()
     {
+        //DTLS log a big IOException when closed, so I just disable the log
+        //for it while I stop it, and re-enable it after.
+        java.util.logging.Logger l = java.util.logging.Logger.getLogger(
+            "org.jitsi.impl.neomedia.transform.dtls.DatagramTransportImpl");
+        java.util.logging.Level level = l.getLevel();
+        l.setLevel(java.util.logging.Level.OFF);
         for(FakeUser user : fakeUsers)
         {
             user.stop();
         }
+        l.setLevel(level);
+
         /*
          * Stop the thread of the HammerStats, without using the Thread
          * instance hammerStatsThread, to allow it to cleanly stop.
          */
         hammerStats.stop();
+        try
+        {
+            hammerStatsThread.join();
+        }
+        catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
     }
 
 

@@ -294,14 +294,9 @@ public class Main
             public void run()
             {
                 System.out.println("Stopping Jitsi-Hammer");
-                //DTLS log a big IOException when closed, so I just disable the log
-                //for it while I stop it, and re-enable it after.
-                java.util.logging.Logger l = java.util.logging.Logger.getLogger(
-                    "org.jitsi.impl.neomedia.transform.dtls.DatagramTransportImpl");
-                java.util.logging.Level level = l.getLevel();
-                l.setLevel(java.util.logging.Level.OFF);
+
                 hammer.stop();
-                l.setLevel(level);
+
                 System.out.println("Exiting the program");
             }
         }));
@@ -337,7 +332,5 @@ public class Main
         {
             while(true) Thread.sleep(3600000);
         }
-
-        System.exit(0);
     }
 }
