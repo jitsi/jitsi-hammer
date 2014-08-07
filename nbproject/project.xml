@@ -84,7 +84,7 @@ auxiliary.show.customizer.message=<message>
             <compilation-unit>
                 <package-root>src</package-root>
                 <package-root>ressources</package-root>
-                <classpath mode="compile">lib/OrangeExtensions.jar:lib/args4j-2.0.21.jar:lib/bccontrib-1.0-SNAPSHOT.jar:lib/bcpkix-jdk15on-150.jar:lib/bcprov-jdk15on-150.jar:lib/commons-math3-3.3.jar:lib/felix.jar:lib/fmj.jar:lib/ice4j.jar:lib/jain-sdp.jar:lib/jitsi-android-osgi.jar:lib/jna.jar:lib/json-simple-1.1.1.jar:lib/jspeex.jar:lib/libjitsi.jar:lib/protocol-media.jar:lib/sdes4j-1.1.1.jar:lib/smack-3.4.1-0cec571.jar:lib/smackx-3.4.1-0cec571.jar:lib/smackx-debug-3.4.1-0cec571.jar:lib/util.jar:lib/zrtp4j-light.jar</classpath>
+                <classpath mode="compile">lib/OrangeExtensions.jar:lib/args4j-2.0.21.jar:lib/bccontrib-1.0-SNAPSHOT.jar:lib/bcpkix-jdk15on-151.jar:lib/bcprov-jdk15on-151.jar:lib/commons-math3-3.3.jar:lib/felix.jar:lib/fmj.jar:lib/ice4j.jar:lib/jain-sdp.jar:lib/jitsi-android-osgi.jar:lib/jna.jar:lib/json-simple-1.1.1.jar:lib/jspeex.jar:lib/libjitsi.jar:lib/protocol-media.jar:lib/sdes4j-1.1.1.jar:lib/smack-3.4.1-0cec571.jar:lib/smackx-3.4.1-0cec571.jar:lib/smackx-debug-3.4.1-0cec571.jar:lib/util.jar:lib/zrtp4j-light.jar</classpath>
                 <built-to>jitsi-hammer.jar</built-to>
                 <javadoc-built-to>doc/api</javadoc-built-to>
                 <source-level>1.5</source-level>
