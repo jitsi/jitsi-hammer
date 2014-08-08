@@ -333,7 +333,7 @@ public class Main
             while(true) Thread.sleep(3600000);
         }
 
-        //Necessary to finishi Main() with an exit, to trigger the shutdown
+        //It's necessary to finish Main() with an exit, to trigger the shutdown
         //hook that will stop the hammer
         System.exit(0);
     }
