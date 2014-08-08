@@ -10,7 +10,6 @@ package org.jitsi.hammer;
 import org.ice4j.ice.*;
 import org.ice4j.*;
 import org.ice4j.ice.harvest.*;
-
 import java.util.*;
 import java.io.*;
 

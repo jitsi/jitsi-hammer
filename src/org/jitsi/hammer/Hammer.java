@@ -21,6 +21,7 @@ import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import org.jitsi.hammer.extension.*;
 import org.jitsi.hammer.stats.HammerStats;
 import org.jitsi.hammer.utils.MediaDeviceChooser;
+import org.jitsi.util.Logger;
 
 import java.util.*;
 
@@ -38,7 +39,15 @@ import java.util.*;
  * start sending audio and video data to the jitsi-videobridge handling the
  * conference.
  */
-public class Hammer {
+public class Hammer
+{
+    /**
+     * The <tt>Logger</tt> used by the <tt>Hammer</tt> class and its
+     * instances for logging output.
+     */
+    private static final Logger logger
+        = Logger.getLogger(Hammer.class);
+
     /**
      * The base of the nickname use by all the virtual users this Hammer
      * will create.
@@ -133,6 +142,11 @@ public class Hammer {
      */
     private Thread hammerStatsThread;
 
+    /**
+     * boolean used to know if the <tt>Hammer</tt> is started or not.
+     */
+    private boolean started = false;
+
 
     /**
      * Instantiate a <tt>Hammer</tt> object with <tt>numberOfUser</tt> virtual
@@ -160,6 +174,8 @@ public class Hammer {
                 this.mediaDeviceChooser,
                 this.nickname+"_"+i);
         }
+        logger.info(String.format("Hammer created : %d fake users were created"
+            + " with a base nickname %s", numberOfUser, nickname));
     }
 
 
@@ -183,6 +199,7 @@ public class Hammer {
                 return;
         }
 
+        logger.info("Start OSGi framework with the bundles : " + BUNDLES);
         FrameworkFactory frameworkFactory = new FrameworkFactoryImpl();
         Map<String, String> configuration = new HashMap<String, String>();
         BundleContext bundleContext = null;
@@ -232,17 +249,22 @@ public class Hammer {
             Hammer.framework = framework;
         }
 
-
+        logger.info("Add extension provider for :");
         ProviderManager manager = ProviderManager.getInstance();
+        logger.info("Element name : " + MediaProvider.ELEMENT_NAME
+            + ", Namespace : " + MediaProvider.NAMESPACE);
         manager.addExtensionProvider(
             MediaProvider.ELEMENT_NAME,
             MediaProvider.NAMESPACE,
             new MediaProvider());
+        logger.info("Element name : " + SsrcProvider.ELEMENT_NAME
+            + ", Namespace : " + SsrcProvider.NAMESPACE);
         manager.addExtensionProvider(
             SsrcProvider.ELEMENT_NAME,
             SsrcProvider.NAMESPACE,
             new SsrcProvider());
-
+        logger.info("Element name : " + JingleIQ.ELEMENT_NAME
+            + ", Namespace : " + JingleIQ.NAMESPACE);
         manager.addIQProvider(
             JingleIQ.ELEMENT_NAME,
             JingleIQ.NAMESPACE,
@@ -252,6 +274,7 @@ public class Hammer {
     /**
      * Start the connection of all the virtual user that this <tt>Hammer</tt>
      * handles to the XMPP server(and then a MUC).
+     * The login will be anonymous.
      *
      * @param wait the number of milliseconds the Hammer will wait during the
      * start of two consecutive fake users.
@@ -273,7 +296,14 @@ public class Hammer {
         int statsPollingTime)
     {
         if(wait <= 0) wait = 1;
+        if(started)
+        {
+            logger.warn("Hammer already started");
+            return;
+        }
 
+        logger.info("Starting the Hammer : starting all "
+            + "FakeUsers with anonymous login");
         try
         {
             for(FakeUser user : fakeUsers)
@@ -286,18 +316,16 @@ public class Hammer {
         catch (XMPPException e)
         {
             e.printStackTrace();
+            System.exit(1);
         }
         catch (InterruptedException e)
         {
             e.printStackTrace();
         }
+        this.started = true;
+        logger.info("The Hammer has correctly been started");
 
-        hammerStats.setOverallStatsLogging(overallStats);
-        hammerStats.setAllStatsLogging(allStats);
-        hammerStats.setSummaryStatsLogging(summaryStats);
-        hammerStats.setTimeBetweenUpdate(statsPollingTime);
-        hammerStatsThread = new Thread(hammerStats);
-        hammerStatsThread.start();
+        startStats(overallStats, allStats, summaryStats, statsPollingTime);
     }
 
 
@@ -330,7 +358,14 @@ public class Hammer {
         int statsPollingTime)
     {
         if(wait <= 0) wait = 1;
+        if(started)
+        {
+            logger.warn("Hammer already started");
+            return;
+        }
 
+        logger.info("Starting the Hammer : starting all FakeUsers "
+            + "with username/password login");
         try
         {
             Iterator<FakeUser> userIt = Arrays.asList(fakeUsers).iterator();
@@ -351,12 +386,42 @@ public class Hammer {
         catch (XMPPException e)
         {
             e.printStackTrace();
+            System.exit(1);
         }
         catch (InterruptedException e)
         {
             e.printStackTrace();
         }
+        this.started = true;
+        logger.info("The Hammer has correctly been started");
 
+        startStats(overallStats, allStats, summaryStats, statsPollingTime);
+    }
+
+    /**
+     * Start the <tt>HammerStats</tt> used by this <tt>Hammer</tt> to keep track
+     * of the streams stats.
+     *
+     * @param overallStats enable or not the logging of the overall stats
+     * computed at the end of the run.
+     * @param allStats enable or not the logging of the all the stats collected
+     * by the <tt>HammerStats</tt> during the run.
+     * @param summaryStats enable or not the logging of the dummary stats
+     * computed from all the streams' stats collected by the
+     * <tt>HammerStats</tt> during the run.
+     * @param statsPollingTime the number of seconds between two polling of stats
+     * by the <tt>HammerStats</tt> run method.
+     */
+    private void startStats(
+        boolean overallStats,
+        boolean allStats,
+        boolean summaryStats,
+        int statsPollingTime)
+    {
+        logger.info(String.format("Starting the HammerStats with "
+            + "(overall stats : %s), "
+            + "(summary stats : %s), (all stats : %s) and a polling of %dsec",
+            overallStats, summaryStats, allStats, statsPollingTime));
         hammerStats.setOverallStatsLogging(overallStats);
         hammerStats.setAllStatsLogging(allStats);
         hammerStats.setSummaryStatsLogging(summaryStats);
@@ -373,6 +438,13 @@ public class Hammer {
      */
     public void stop()
     {
+        if(this.started == false)
+        {
+            logger.warn("Hammer already stopped !");
+            return;
+        }
+
+        logger.info("Stoppig the Hammer : stopping all FakeUser");
         for(FakeUser user : fakeUsers)
         {
             user.stop();
@@ -382,6 +454,7 @@ public class Hammer {
          * Stop the thread of the HammerStats, without using the Thread
          * instance hammerStatsThread, to allow it to cleanly stop.
          */
+        logger.info("Stopping the HammerStats and waiting for its thread to return");
         hammerStats.stop();
         try
         {
@@ -391,16 +464,9 @@ public class Hammer {
         {
             e.printStackTrace();
         }
-    }
 
-
-    /**
-     * Get the <tt>HammerStats</tt> used by this <tt>Hammer</tt>.
-     * @return the <tt>HammerStats</tt> used by this <tt>Hammer</tt>.
-     */
-    public HammerStats getHammerStats()
-    {
-        return hammerStats;
+        this.started = false;
+        logger.info("The Hammer has been correctly stopped");
     }
 }
 

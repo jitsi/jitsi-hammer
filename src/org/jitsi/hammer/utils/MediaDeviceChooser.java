@@ -1,6 +1,6 @@
 /*
  * Jitsi-Hammer, A traffic generator for Jitsi Videobridge.
- * 
+ *
  * Distributable under LGPL license.
  * See terms of license at gnu.org.
  */
@@ -17,12 +17,13 @@ import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.codec.*;
 import org.jitsi.service.neomedia.device.*;
 import org.jitsi.service.neomedia.format.MediaFormatFactory;
+import org.jitsi.util.Logger;
 import org.jitsi.videobridge.*;
 
 
 /**
  * This class is used to get the chosen MediaDevice for a given MediaType.
- * 
+ *
  * The choice is based on the option/argument given to the program (parsed
  * and stored in a <tt>CmdLineArguments</tt>).
  *
@@ -31,15 +32,22 @@ import org.jitsi.videobridge.*;
 public class MediaDeviceChooser
 {
     /**
+     * The <tt>Logger</tt> used by the <tt>MediaDeviceChooser</tt> class and its
+     * instances for logging output.
+     */
+    private static final Logger logger
+        = Logger.getLogger(MediaDeviceChooser.class);
+
+    /**
      * The chosen video MediaDevice of this <tt>MediaDeviceChooser</tt>
      */
     MediaDevice videoMediaDevice;
-    
+
     /**
      * The chosen audio MediaDevice of this <tt>MediaDeviceChooser</tt>
      */
     MediaDevice audioMediaDevice;
-    
+
     /**
      * Initialize an empty <tt>MediaDeviceChooser<tt>. No video or audio
      * MediaDevice will be chosen (they'll need to be set later).
@@ -48,11 +56,11 @@ public class MediaDeviceChooser
     {
         this(null);
     }
-    
+
     /**
      * Initialize a <tt>MediaDeviceChooser</tt> based on a <tt>CmdLineArguments</tt>
      * (so based on the arguments/options the user gave to the program).
-     * 
+     *
      * @param cmdArg the <tt>CmdLineArguments</tt> containing the arguments/options
      * of the program, on which the audio and video MediaDevice will be chosen.
      */
@@ -60,26 +68,33 @@ public class MediaDeviceChooser
     {
         if(cmdArg != null)
         {
+            String str = "Creating a MediaDeviceChooser from console arguments :\n";
+
             MediaService service = LibJitsi.getMediaService();
             MediaFormatFactory factory = service.getFormatFactory();
-            
+
             /*
              * If an rtpdump file is given, it has priority over
              * AudioSilence
              */
             if(cmdArg.getAudioRtpdumpFile() != null)
             {
+                str = str + "-with rtpdump file " + cmdArg.getAudioRtpdumpFile()
+                    + " for the audio stream.\n";
+                logger.info("");
                 audioMediaDevice = RtpdumpMediaDevice.createRtpdumpMediaDevice(
                         cmdArg.getAudioRtpdumpFile(),
                         Constants.OPUS_RTP,
                         factory.createMediaFormat("Opus", 48000, 2));
+
             }
             else
             {
+                str = str + "-with AudioSilenceMediaDevice for the audio stream.\n";
                 audioMediaDevice = new AudioSilenceMediaDevice();
             }
-            
-            
+
+
             /*
              * For the video MediaDevice, an rtpdump CaptureDevice has priority
              * over an ivf CaptureDevice that has priority over
@@ -87,6 +102,8 @@ public class MediaDeviceChooser
              */
             if(cmdArg.getVideoRtpdumpFile() != null)
             {
+                str = str + "-with rtpdump file " + cmdArg.getAudioRtpdumpFile()
+                    + " for the video stream\n";
                 videoMediaDevice = RtpdumpMediaDevice.createRtpdumpMediaDevice(
                         cmdArg.getVideoRtpdumpFile(),
                         Constants.VP8_RTP,
@@ -94,15 +111,20 @@ public class MediaDeviceChooser
             }
             else if(cmdArg.getIVFFile() != null)
             {
+                str = str + "-with ivf file " + cmdArg.getIVFFile()
+                    + " for the video stream\n";
                 videoMediaDevice = new IVFMediaDevice(cmdArg.getIVFFile());
             }
             else
             {
+                str = str + "-with a fading from black to white to black..."
+                    + " for the video stream\n";
                 videoMediaDevice = new VideoGreyFadingMediaDevice();
             }
+            logger.info(str);
         }
     }
-    
+
     /**
      * Get the chosen <tt>MediaDevice</tt> from a <tt>MediaType</tt>
      * @return the chosen <tt>MediaDevice</tt>
@@ -121,7 +143,7 @@ public class MediaDeviceChooser
             default:
                 break;
         }
-        
+
         return returnedDevice;
     }
 
@@ -134,6 +156,8 @@ public class MediaDeviceChooser
     {
         if(dev != null)
         {
+            logger.info("Set " + dev + " as the MediaDevice for "
+                    + dev.getMediaType() + " stream");
             switch(dev.getMediaType())
             {
                 case VIDEO:

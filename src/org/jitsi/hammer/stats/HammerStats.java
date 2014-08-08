@@ -16,6 +16,7 @@ import org.apache.commons.math3.stat.descriptive.*;
 import org.jitsi.hammer.*;
 import org.jitsi.service.neomedia.MediaStreamStats;
 import org.jitsi.service.neomedia.MediaType;
+import org.jitsi.util.Logger;
 
 /**
  * @author Thomas Kuntz
@@ -27,6 +28,13 @@ import org.jitsi.service.neomedia.MediaType;
  */
 public class HammerStats implements Runnable
 {
+    /**
+     * The <tt>Logger</tt> used by the <tt>HammerStats</tt> class and its
+     * instances for logging output.
+     */
+    private static final Logger logger
+        = Logger.getLogger(HammerStats.class);
+
     /**
      * A boolean used to stop the run method of this <tt>HammerStats</tt>.
      */
@@ -133,6 +141,8 @@ public class HammerStats implements Runnable
             this.statsDirectoryPath
             + File.separator
             + "AllAndSummaryStats.json");
+
+        logger.info("Stats directory : " + this.statsDirectoryPath);
     }
 
 
@@ -163,8 +173,10 @@ public class HammerStats implements Runnable
             threadStop = false;
         }
 
+        logger.info("Running the main loop");
         while(threadStop == false)
         {
+            logger.info("New loop turn");
             synchronized(this)
             {
                 if(overallStatsLogging || allStatsLogging || summaryStatsLogging)
@@ -180,11 +192,15 @@ public class HammerStats implements Runnable
                             }
                             catch (FileNotFoundException e)
                             {
-                                e.printStackTrace();
+                                logger.fatal(e.getStackTrace());
+                                logger.fatal("HammerStats stopping due to FileNotFound");
+                                stop();
                             }
                             catch (UnsupportedEncodingException e)
                             {
-                                e.printStackTrace();
+                                logger.fatal(e.getStackTrace());
+                                logger.fatal("HammerStats stopping due to "
+                                    + "UnsupportedEncoding");
                             }
                         }
 
@@ -198,11 +214,15 @@ public class HammerStats implements Runnable
                     }
 
                     delim = "";
+                    logger.info("Updating the MediaStreamStats");
                     for(FakeUserStats stats : fakeUserStatsList)
                     {
                         //We update the stats before using/reading them.
                         stats.updateStats();
+                    }
 
+                    for(FakeUserStats stats : fakeUserStatsList)
+                    {
                         if(allStatsLogging)
                         {
                             allBldr.append(delim + stats.getStatsJSON(2) + '\n');
@@ -211,6 +231,9 @@ public class HammerStats implements Runnable
 
                         if(summaryStatsLogging || overallStatsLogging)
                         {
+                            logger.info("Adding stats values from the"
+                                + " MediaStreamStats to their"
+                                + " HammerSummaryStats objects");
                             audioSummaryStats.add(
                                 stats.getMediaStreamStats(MediaType.AUDIO));
                             videoSummaryStats.add(
@@ -220,6 +243,7 @@ public class HammerStats implements Runnable
 
                     if(allStatsLogging)
                     {
+                        logger.info("Writing all stats to file");
                         writer.print("  \"users\":\n");
                         writer.print("  [\n");
                         writer.print(allBldr.toString());
@@ -229,6 +253,7 @@ public class HammerStats implements Runnable
                     }
                     if(summaryStatsLogging)
                     {
+                        logger.info("Writing summary stats to file");
                         writer.print("  \"summary\":\n");
                         writer.print("  {\n");
 
@@ -277,6 +302,8 @@ public class HammerStats implements Runnable
 
                 if(summaryStatsLogging || overallStatsLogging)
                 {
+                    logger.info("Clearing the HammerSummaryStats by creating new"
+                        + " SummaryStats objects for each watched stats");
                     audioSummaryStats.clear();
                     videoSummaryStats.clear();
                 }
@@ -288,10 +315,11 @@ public class HammerStats implements Runnable
             }
             catch (InterruptedException e)
             {
-                e.printStackTrace();
-                threadStop = true;
+                logger.fatal("Error during sleep in main loop : " + e);
+                stop();
             }
         }
+        logger.info("Exiting the main loop");
 
         if(writer != null)
         {
@@ -308,6 +336,7 @@ public class HammerStats implements Runnable
      */
     public synchronized void stop()
     {
+        logger.error("Stopping the main loop");
         threadStop = true;
     }
 
@@ -319,27 +348,29 @@ public class HammerStats implements Runnable
     {
         try
         {
+            logger.info("Writting overall stats to file");
             PrintWriter writer = new PrintWriter(overallStatsFile, "UTF-8");
             writer.print(getOverallStats() + '\n');
             writer.close();
         }
         catch (FileNotFoundException e)
         {
-            e.printStackTrace();
+            logger.error(e.getStackTrace());
         }
         catch (UnsupportedEncodingException e)
         {
-            e.printStackTrace();
+            logger.error(e.getStackTrace());
         }
     }
 
     /**
      * print the overall stats of the <tt>MediaStream</tt> this
-     * <tt>MediaStreamStats</tt> keep track to stdout.
+     * <tt>MediaStreamStats</tt> keep track to the PrintStream given as argument.
+     * @param ps the <tt>PrintStream</tt> used to print the stats
      */
-    public void printOverallStats()
+    public void printOverallStats(PrintStream ps)
     {
-        System.out.println(getOverallStats());
+        ps.println(getOverallStats());
     }
 
     /**
@@ -430,6 +461,7 @@ public class HammerStats implements Runnable
             File saveDir = new File(this.statsDirectoryPath);
             if(saveDir.exists() == false)
             {
+                logger.info("Creating " + this.statsDirectoryPath + " directory");
                 saveDir.mkdirs();
             }
         }
@@ -466,6 +498,7 @@ public class HammerStats implements Runnable
             File saveDir = new File(this.statsDirectoryPath);
             if(saveDir.exists() == false)
             {
+                logger.info("Creating " + this.statsDirectoryPath + " directory");
                 saveDir.mkdirs();
             }
         }

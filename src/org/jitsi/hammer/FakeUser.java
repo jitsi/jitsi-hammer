@@ -17,6 +17,7 @@ import org.jivesoftware.smack.filter.*;
 import org.ice4j.ice.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.format.*;
+import org.jitsi.util.Logger;
 import org.jitsi.hammer.stats.*;
 import org.jitsi.hammer.utils.*;
 import org.jitsi.hammer.extension.*;
@@ -40,7 +41,15 @@ import java.util.*;
  * to the videobridge.
  *
  */
-public class FakeUser implements PacketListener {
+public class FakeUser implements PacketListener
+{
+    /**
+     * The <tt>Logger</tt> used by the <tt>FakeUser</tt> class and its
+     * instances for logging output.
+     */
+    private static final Logger logger
+        = Logger.getLogger(FakeUser.class);
+
     /**
      * The XMPP server info to which this <tt>FakeUser</tt> will
      * communicate
@@ -275,6 +284,7 @@ public class FakeUser implements PacketListener {
      */
     public void start() throws XMPPException
     {
+        logger.info(this.nickname + " : Login anonymously to the XMPP server.");
         connection.connect();
         connection.loginAnonymously();
 
@@ -288,6 +298,8 @@ public class FakeUser implements PacketListener {
      */
     public void start(String username,String password) throws XMPPException
     {
+        logger.info(this.nickname + " : Login with username "
+            + username +" to the XMPP server.");
         connection.connect();
         connection.login(username,password,"Jitsi-Hammer");
 
@@ -304,9 +316,10 @@ public class FakeUser implements PacketListener {
      * Join the MUC, send a presence packet to display the current nickname
      * @throws XMPPException if the connection to the MUC goes wrong
      */
-    private void connectMUC() throws XMPPException
+    private void connectMUC()
     {
         String roomURL = serverInfo.getRoomName()+"@"+serverInfo.getMUCDomain();
+        logger.info(this.nickname + "Trying to connect to MUC " + roomURL);
         muc = new MultiUserChat(connection, roomURL);
         while(true)
         {
@@ -333,12 +346,15 @@ public class FakeUser implements PacketListener {
                  */
                 if((e.getXMPPError() != null) && (e.getXMPPError().getCode() == 409))
                 {
+                    logger.warn(this.nickname + " nickname already used, "
+                        + "changing to " + nickname + '_');
                     nickname=nickname+'_';
                     continue;
                 }
                 else
                 {
-                    e.printStackTrace();
+                    logger.error(e.getStackTrace());
+                    muc = null;
                 }
             }
             break;
@@ -351,6 +367,8 @@ public class FakeUser implements PacketListener {
      */
     public void stop()
     {
+        logger.info(this.nickname + " : stopping the streams, leaving the MUC"
+            + " and disconnecting from the XMPP server");
         if(agent != null) agent.free();
         for(MediaStream stream : mediaStreamMap.values())
         {
@@ -369,7 +387,7 @@ public class FakeUser implements PacketListener {
                         "Bye Bye"));
             }
 
-            muc.leave();
+            if(muc != null) muc.leave();
             connection.disconnect();
         }
     }
@@ -467,7 +485,7 @@ public class FakeUser implements PacketListener {
         }
         catch (IOException e)
         {
-            System.err.println(e);
+            logger.fatal(e.getStackTrace());
         }
 
         //Add the remote candidate to my agent, and add my local candidate of
@@ -553,20 +571,20 @@ public class FakeUser implements PacketListener {
 
         //Send the session-accept IQ
         connection.sendPacket(sessionAccept);
-        System.out.println("Jingle accept-session message sent");
+        logger.info(this.nickname + " : Jingle accept-session message sent");
 
         //Run ICE protocol on my streams.
         agent.startConnectivityEstablishment();
         while(IceProcessingState.TERMINATED != agent.getState())
         {
-            System.out.println("Connectivity Establishment in process");
+            logger.info(this.nickname + " : Connectivity Establishment in process");
             try
             {
                 Thread.sleep(1500);
             }
-            catch (Exception e)
+            catch (InterruptedException e)
             {
-                e.printStackTrace();
+                logger.error(e.getStackTrace());
             }
         }
 
@@ -606,7 +624,7 @@ public class FakeUser implements PacketListener {
         switch(jiq.getAction())
         {
         case SESSION_INITIATE:
-            System.out.println("Jingle session-initiate received");
+            logger.info(this.nickname + " : Jingle session-initiate received");
             if(sessionInitiate == null)
             {
                 sessionInitiate = jiq;
@@ -614,17 +632,19 @@ public class FakeUser implements PacketListener {
             }
             else
             {
-                System.out.println("but not processed (already got one)");
+                //TODO FIXME It need to be changed if Jitsi-Hammer want to be used with Jitsi
+                logger.info("but not processed (already got one)");
             }
             break;
         case ADDSOURCE:
-            System.out.println("Jingle addsource received");
+            logger.info(this.nickname + " : Jingle addsource received");
             break;
         case REMOVESOURCE:
-            System.out.println("Jingle addsource received");
+            logger.info(this.nickname + " : Jingle addsource received");
             break;
         default:
-            System.out.println("Unknown Jingle IQ");
+            logger.info(this.nickname + " : Unknown Jingle IQ received : "
+                + jiq.toString());
             break;
         }
     }
@@ -639,7 +659,6 @@ public class FakeUser implements PacketListener {
     {
         IQ ackPacket = IQ.createResultIQ(packetToAck);
         connection.sendPacket(ackPacket);
-        System.out.println("Ack sent for JingleIQ");
     }
 
 

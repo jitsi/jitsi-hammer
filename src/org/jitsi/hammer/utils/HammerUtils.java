@@ -18,6 +18,7 @@ import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.device.*;
 import org.jitsi.service.neomedia.format.*;
+import org.jitsi.util.Logger;
 import org.ice4j.*;
 import org.ice4j.ice.*;
 
@@ -33,6 +34,13 @@ import java.util.*;
  */
 public class HammerUtils
 {
+    /**
+     * The <tt>Logger</tt> used by the <tt>HammerUtils</tt> class and its
+     * instances for logging output.
+     */
+    private static final Logger logger
+        = Logger.getLogger(HammerUtils.class);
+
     /**
      * Select the favorite <tt>MediaFormat</tt> of a list of <tt>MediaFormat</tt>
      *
@@ -402,6 +410,7 @@ public class HammerUtils
         StreamConnector connector = null;
         MediaStream stream = null;
 
+        String str = "Transport candidates selected for RTP:\n";
         for(String mediaName : agent.getStreamNames())
         {
             iceMediaStream = agent.getStream(mediaName);
@@ -411,7 +420,7 @@ public class HammerUtils
             rtpPair = iceMediaStream.getComponent(Component.RTP).getSelectedPair();
             rtcpPair = iceMediaStream.getComponent(Component.RTCP).getSelectedPair();
 
-            System.out.println(rtpPair);
+            str = str + "-" + mediaName + " stream :\n" + rtpPair;
 
             rtpSocket = rtpPair.getLocalCandidate().getDatagramSocket();
             rtcpSocket = rtcpPair.getLocalCandidate().getDatagramSocket();
@@ -425,6 +434,7 @@ public class HammerUtils
                     rtpPair.getRemoteCandidate().getTransportAddress(),
                     rtcpPair.getRemoteCandidate().getTransportAddress()) );
         }
+        logger.info(str);
     }
 
 
