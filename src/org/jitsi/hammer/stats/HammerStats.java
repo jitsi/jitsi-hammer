@@ -176,7 +176,6 @@ public class HammerStats implements Runnable
         logger.info("Running the main loop");
         while(threadStop == false)
         {
-            logger.info("New loop turn");
             synchronized(this)
             {
                 if(overallStatsLogging || allStatsLogging || summaryStatsLogging)
@@ -192,15 +191,13 @@ public class HammerStats implements Runnable
                             }
                             catch (FileNotFoundException e)
                             {
-                                logger.fatal(e.getStackTrace());
-                                logger.fatal("HammerStats stopping due to FileNotFound");
+                                logger.fatal("HammerStats stopping due to FileNotFound",e);
                                 stop();
                             }
                             catch (UnsupportedEncodingException e)
                             {
-                                logger.fatal(e.getStackTrace());
                                 logger.fatal("HammerStats stopping due to "
-                                    + "UnsupportedEncoding");
+                                    + "UnsupportedEncoding", e);
                             }
                         }
 
@@ -336,7 +333,7 @@ public class HammerStats implements Runnable
      */
     public synchronized void stop()
     {
-        logger.error("Stopping the main loop");
+        logger.info("Stopping the main loop");
         threadStop = true;
     }
 
@@ -355,11 +352,11 @@ public class HammerStats implements Runnable
         }
         catch (FileNotFoundException e)
         {
-            logger.error(e.getStackTrace());
+            logger.fatal("Overall stats file opening error",e);
         }
         catch (UnsupportedEncodingException e)
         {
-            logger.error(e.getStackTrace());
+            logger.fatal("Overall stats file opening error",e);
         }
     }
 

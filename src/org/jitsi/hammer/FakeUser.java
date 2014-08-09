@@ -319,7 +319,7 @@ public class FakeUser implements PacketListener
     private void connectMUC()
     {
         String roomURL = serverInfo.getRoomName()+"@"+serverInfo.getMUCDomain();
-        logger.info(this.nickname + "Trying to connect to MUC " + roomURL);
+        logger.info(this.nickname + " : Trying to connect to MUC " + roomURL);
         muc = new MultiUserChat(connection, roomURL);
         while(true)
         {
@@ -353,7 +353,7 @@ public class FakeUser implements PacketListener
                 }
                 else
                 {
-                    logger.error(e.getStackTrace());
+                    logger.fatal(this.nickname + " : could not enter MUC",e);
                     muc = null;
                 }
             }
@@ -485,7 +485,8 @@ public class FakeUser implements PacketListener
         }
         catch (IOException e)
         {
-            logger.fatal(e.getStackTrace());
+            logger.fatal(this.nickname + " : Error during the generation"
+                + " of the IceMediaStream",e);
         }
 
         //Add the remote candidate to my agent, and add my local candidate of
@@ -584,7 +585,8 @@ public class FakeUser implements PacketListener
             }
             catch (InterruptedException e)
             {
-                logger.error(e.getStackTrace());
+                logger.fatal(this.nickname + " : error during ICE "
+                    + "connectivity establishement",e);
             }
         }
 
