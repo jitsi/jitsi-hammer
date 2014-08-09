@@ -504,42 +504,41 @@ public class HammerStats implements Runnable
 
     private class HammerSummaryStats
     {
-        AggregateSummaryStatistics aggregateDownloadRateKiloBitPerSec = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateUploadRateKiloBitPerSec = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateDownloadJitterMs = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateDownloadPercentLoss = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateUploadPercentLoss = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateNbFec = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregatePercentDiscarded = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateDownloadRateKiloBitPerSec = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateJitterBufferDelayMs = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateNbDiscarded = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateNbDiscardedFull = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateNbDiscardedLate = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateNbDiscardedReset = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateNbDiscardedShrink = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateJitterBufferDelayMs = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateNbFec = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregatePacketQueueCountPackets = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregatePacketQueueSize = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregatePercentDiscarded = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateRttMs = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateDownloadJitterMs = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateUploadJitterMs = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateUploadPercentLoss = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateUploadRateKiloBitPerSec = new AggregateSummaryStatistics();
 
-
-        SummaryStatistics downloadRateKiloBitPerSec = new SummaryStatistics();
-        SummaryStatistics uploadRateKiloBitPerSec = new SummaryStatistics();
+        SummaryStatistics downloadJitterMs = new SummaryStatistics();
         SummaryStatistics downloadPercentLoss = new SummaryStatistics();
-        SummaryStatistics uploadPercentLoss = new SummaryStatistics();
-        SummaryStatistics nbFec = new SummaryStatistics();
-        SummaryStatistics percentDiscarded = new SummaryStatistics();
+        SummaryStatistics downloadRateKiloBitPerSec = new SummaryStatistics();
+        SummaryStatistics jitterBufferDelayMs = new SummaryStatistics();
         SummaryStatistics nbDiscarded = new SummaryStatistics();
         SummaryStatistics nbDiscardedFull = new SummaryStatistics();
         SummaryStatistics nbDiscardedLate = new SummaryStatistics();
         SummaryStatistics nbDiscardedReset = new SummaryStatistics();
         SummaryStatistics nbDiscardedShrink = new SummaryStatistics();
-        SummaryStatistics jitterBufferDelayMs = new SummaryStatistics();
+        SummaryStatistics nbFec = new SummaryStatistics();
         SummaryStatistics packetQueueCountPackets = new SummaryStatistics();
         SummaryStatistics packetQueueSize = new SummaryStatistics();
+        SummaryStatistics percentDiscarded = new SummaryStatistics();
         SummaryStatistics rttMs = new SummaryStatistics();
-        SummaryStatistics downloadJitterMs = new SummaryStatistics();
         SummaryStatistics uploadJitterMs = new SummaryStatistics();
+        SummaryStatistics uploadPercentLoss = new SummaryStatistics();
+        SummaryStatistics uploadRateKiloBitPerSec = new SummaryStatistics();
 
         public HammerSummaryStats()
         {
@@ -548,39 +547,36 @@ public class HammerStats implements Runnable
 
         public void add(MediaStreamStats stats)
         {
-            downloadRateKiloBitPerSec.addValue(stats.getDownloadRateKiloBitPerSec());
-            uploadRateKiloBitPerSec.addValue(stats.getUploadRateKiloBitPerSec());
+            downloadJitterMs.addValue(stats.getDownloadJitterMs());
             downloadPercentLoss.addValue(stats.getDownloadPercentLoss());
-            uploadPercentLoss.addValue(stats.getUploadPercentLoss());
-            nbFec.addValue(stats.getNbFec());
-            percentDiscarded.addValue(stats.getPercentDiscarded());
+            downloadRateKiloBitPerSec.addValue(stats.getDownloadRateKiloBitPerSec());
+            jitterBufferDelayMs.addValue(stats.getJitterBufferDelayMs());
             nbDiscarded.addValue(stats.getNbDiscarded());
             nbDiscardedFull.addValue(stats.getNbDiscardedFull());
             nbDiscardedLate.addValue(stats.getNbDiscardedLate());
             nbDiscardedReset.addValue(stats.getNbDiscardedReset());
             nbDiscardedShrink.addValue(stats.getNbDiscardedShrink());
-            jitterBufferDelayMs.addValue(stats.getJitterBufferDelayMs());
+            nbFec.addValue(stats.getNbFec());
             packetQueueCountPackets.addValue(stats.getPacketQueueCountPackets());
             packetQueueSize.addValue(stats.getPacketQueueSize());
+            percentDiscarded.addValue(stats.getPercentDiscarded());
             rttMs.addValue(stats.getRttMs());
-            downloadJitterMs.addValue(stats.getDownloadJitterMs());
             uploadJitterMs.addValue(stats.getUploadJitterMs());
+            uploadPercentLoss.addValue(stats.getUploadPercentLoss());
+            uploadRateKiloBitPerSec.addValue(stats.getUploadRateKiloBitPerSec());
+
         }
 
         public void clear()
         {
-            downloadRateKiloBitPerSec =
-                aggregateDownloadRateKiloBitPerSec.createContributingStatistics();
-            uploadRateKiloBitPerSec =
-                aggregateUploadRateKiloBitPerSec.createContributingStatistics();
+            downloadJitterMs =
+                aggregateDownloadJitterMs.createContributingStatistics();
             downloadPercentLoss =
                 aggregateDownloadPercentLoss.createContributingStatistics();
-            uploadPercentLoss =
-                aggregateUploadPercentLoss.createContributingStatistics();
-            nbFec =
-                aggregateNbFec.createContributingStatistics();
-            percentDiscarded =
-                aggregatePercentDiscarded.createContributingStatistics();
+            downloadRateKiloBitPerSec =
+                aggregateDownloadRateKiloBitPerSec.createContributingStatistics();
+            jitterBufferDelayMs =
+                aggregateJitterBufferDelayMs.createContributingStatistics();
             nbDiscarded =
                 aggregateNbDiscarded.createContributingStatistics();
             nbDiscardedFull =
@@ -591,41 +587,44 @@ public class HammerStats implements Runnable
                 aggregateNbDiscardedReset.createContributingStatistics();
             nbDiscardedShrink =
                 aggregateNbDiscardedShrink.createContributingStatistics();
-            jitterBufferDelayMs =
-                aggregateJitterBufferDelayMs.createContributingStatistics();
+            nbFec =aggregateNbFec.createContributingStatistics();
             packetQueueCountPackets =
                 aggregatePacketQueueCountPackets.createContributingStatistics();
             packetQueueSize =
                 aggregatePacketQueueSize.createContributingStatistics();
+            percentDiscarded =
+                aggregatePercentDiscarded.createContributingStatistics();
             rttMs =
                 aggregateRttMs.createContributingStatistics();
-            downloadJitterMs =
-                aggregateDownloadJitterMs.createContributingStatistics();
             uploadJitterMs =
                 aggregateUploadJitterMs.createContributingStatistics();
+            uploadPercentLoss =
+                aggregateUploadPercentLoss.createContributingStatistics();
+            uploadRateKiloBitPerSec =
+                aggregateUploadRateKiloBitPerSec.createContributingStatistics();
         }
 
         public String getMaxJSON()
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
                 -1, //ssrc not needed here
-                downloadRateKiloBitPerSec.getMax(),
-                uploadRateKiloBitPerSec.getMax(),
+                downloadJitterMs.getMax(),
                 downloadPercentLoss.getMax(),
-                uploadPercentLoss.getMax(),
-                nbFec.getMax(),
-                percentDiscarded.getMax(),
+                downloadRateKiloBitPerSec.getMax(),
+                jitterBufferDelayMs.getMax(),
                 nbDiscarded.getMax(),
                 nbDiscardedFull.getMax(),
                 nbDiscardedLate.getMax(),
                 nbDiscardedReset.getMax(),
                 nbDiscardedShrink.getMax(),
-                jitterBufferDelayMs.getMax(),
+                nbFec.getMax(),
                 packetQueueCountPackets.getMax(),
                 packetQueueSize.getMax(),
+                percentDiscarded.getMax(),
                 rttMs.getMax(),
-                downloadJitterMs.getMax(),
-                uploadJitterMs.getMax());
+                uploadJitterMs.getMax(),
+                uploadPercentLoss.getMax(),
+                uploadRateKiloBitPerSec.getMax());
             return str;
         }
 
@@ -633,23 +632,23 @@ public class HammerStats implements Runnable
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
                 -1, //ssrc not needed here
-                downloadRateKiloBitPerSec.getMean(),
-                uploadRateKiloBitPerSec.getMean(),
+                downloadJitterMs.getMean(),
                 downloadPercentLoss.getMean(),
-                uploadPercentLoss.getMean(),
-                nbFec.getMean(),
-                percentDiscarded.getMean(),
+                downloadRateKiloBitPerSec.getMean(),
+                jitterBufferDelayMs.getMean(),
                 nbDiscarded.getMean(),
                 nbDiscardedFull.getMean(),
                 nbDiscardedLate.getMean(),
                 nbDiscardedReset.getMean(),
                 nbDiscardedShrink.getMean(),
-                jitterBufferDelayMs.getMean(),
+                nbFec.getMean(),
                 packetQueueCountPackets.getMean(),
                 packetQueueSize.getMean(),
+                percentDiscarded.getMean(),
                 rttMs.getMean(),
-                downloadJitterMs.getMean(),
-                uploadJitterMs.getMean());
+                uploadJitterMs.getMean(),
+                uploadPercentLoss.getMean(),
+                uploadRateKiloBitPerSec.getMean());
             return str;
         }
 
@@ -657,23 +656,23 @@ public class HammerStats implements Runnable
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
                 -1, //ssrc not needed here
-                downloadRateKiloBitPerSec.getMin(),
-                uploadRateKiloBitPerSec.getMin(),
+                downloadJitterMs.getMin(),
                 downloadPercentLoss.getMin(),
-                uploadPercentLoss.getMin(),
-                nbFec.getMin(),
-                percentDiscarded.getMin(),
+                downloadRateKiloBitPerSec.getMin(),
+                jitterBufferDelayMs.getMin(),
                 nbDiscarded.getMin(),
                 nbDiscardedFull.getMin(),
                 nbDiscardedLate.getMin(),
                 nbDiscardedReset.getMin(),
                 nbDiscardedShrink.getMin(),
-                jitterBufferDelayMs.getMin(),
+                nbFec.getMin(),
                 packetQueueCountPackets.getMin(),
                 packetQueueSize.getMin(),
+                percentDiscarded.getMin(),
                 rttMs.getMin(),
-                downloadJitterMs.getMin(),
-                uploadJitterMs.getMin());
+                uploadJitterMs.getMin(),
+                uploadPercentLoss.getMin(),
+                uploadRateKiloBitPerSec.getMin());
             return str;
         }
 
@@ -681,23 +680,23 @@ public class HammerStats implements Runnable
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
                 -1, //ssrc not needed here
-                downloadRateKiloBitPerSec.getStandardDeviation(),
-                uploadRateKiloBitPerSec.getStandardDeviation(),
+                downloadJitterMs.getStandardDeviation(),
                 downloadPercentLoss.getStandardDeviation(),
-                uploadPercentLoss.getStandardDeviation(),
-                nbFec.getStandardDeviation(),
-                percentDiscarded.getStandardDeviation(),
+                downloadRateKiloBitPerSec.getStandardDeviation(),
+                jitterBufferDelayMs.getStandardDeviation(),
                 nbDiscarded.getStandardDeviation(),
                 nbDiscardedFull.getStandardDeviation(),
                 nbDiscardedLate.getStandardDeviation(),
                 nbDiscardedReset.getStandardDeviation(),
                 nbDiscardedShrink.getStandardDeviation(),
-                jitterBufferDelayMs.getStandardDeviation(),
+                nbFec.getStandardDeviation(),
                 packetQueueCountPackets.getStandardDeviation(),
                 packetQueueSize.getStandardDeviation(),
+                percentDiscarded.getStandardDeviation(),
                 rttMs.getStandardDeviation(),
-                downloadJitterMs.getStandardDeviation(),
-                uploadJitterMs.getStandardDeviation());
+                uploadJitterMs.getStandardDeviation(),
+                uploadPercentLoss.getStandardDeviation(),
+                uploadRateKiloBitPerSec.getStandardDeviation());
             return str;
         }
 
@@ -705,23 +704,23 @@ public class HammerStats implements Runnable
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
                 -1, //ssrc not needed here
-                downloadRateKiloBitPerSec.getSum(),
-                uploadRateKiloBitPerSec.getSum(),
+                downloadJitterMs.getSum(),
                 downloadPercentLoss.getSum(),
-                uploadPercentLoss.getSum(),
-                nbFec.getSum(),
-                percentDiscarded.getSum(),
+                downloadRateKiloBitPerSec.getSum(),
+                jitterBufferDelayMs.getSum(),
                 nbDiscarded.getSum(),
                 nbDiscardedFull.getSum(),
                 nbDiscardedLate.getSum(),
                 nbDiscardedReset.getSum(),
                 nbDiscardedShrink.getSum(),
-                jitterBufferDelayMs.getSum(),
+                nbFec.getSum(),
                 packetQueueCountPackets.getSum(),
                 packetQueueSize.getSum(),
+                percentDiscarded.getSum(),
                 rttMs.getSum(),
-                downloadJitterMs.getSum(),
-                uploadJitterMs.getSum());
+                uploadJitterMs.getSum(),
+                uploadPercentLoss.getSum(),
+                uploadRateKiloBitPerSec.getSum());
             return str;
         }
 
@@ -729,23 +728,23 @@ public class HammerStats implements Runnable
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
                 -1, //ssrc not needed here
-                downloadRateKiloBitPerSec.getVariance(),
-                uploadRateKiloBitPerSec.getVariance(),
+                downloadJitterMs.getVariance(),
                 downloadPercentLoss.getVariance(),
-                uploadPercentLoss.getVariance(),
-                nbFec.getVariance(),
-                percentDiscarded.getVariance(),
+                downloadRateKiloBitPerSec.getVariance(),
+                jitterBufferDelayMs.getVariance(),
                 nbDiscarded.getVariance(),
                 nbDiscardedFull.getVariance(),
                 nbDiscardedLate.getVariance(),
                 nbDiscardedReset.getVariance(),
                 nbDiscardedShrink.getVariance(),
-                jitterBufferDelayMs.getVariance(),
+                nbFec.getVariance(),
                 packetQueueCountPackets.getVariance(),
                 packetQueueSize.getVariance(),
+                percentDiscarded.getVariance(),
                 rttMs.getVariance(),
-                downloadJitterMs.getVariance(),
-                uploadJitterMs.getVariance());
+                uploadJitterMs.getVariance(),
+                uploadPercentLoss.getVariance(),
+                uploadRateKiloBitPerSec.getVariance());
             return str;
         }
 
@@ -753,23 +752,23 @@ public class HammerStats implements Runnable
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
                 -1, //ssrc not needed here
-                aggregateDownloadRateKiloBitPerSec.getMax(),
-                aggregateUploadRateKiloBitPerSec.getMax(),
+                aggregateDownloadJitterMs.getMax(),
                 aggregateDownloadPercentLoss.getMax(),
-                aggregateUploadPercentLoss.getMax(),
-                aggregateNbFec.getMax(),
-                aggregatePercentDiscarded.getMax(),
+                aggregateDownloadRateKiloBitPerSec.getMax(),
+                aggregateJitterBufferDelayMs.getMax(),
                 aggregateNbDiscarded.getMax(),
                 aggregateNbDiscardedFull.getMax(),
                 aggregateNbDiscardedLate.getMax(),
                 aggregateNbDiscardedReset.getMax(),
                 aggregateNbDiscardedShrink.getMax(),
-                aggregateJitterBufferDelayMs.getMax(),
+                aggregateNbFec.getMax(),
                 aggregatePacketQueueCountPackets.getMax(),
                 aggregatePacketQueueSize.getMax(),
+                aggregatePercentDiscarded.getMax(),
                 aggregateRttMs.getMax(),
-                aggregateDownloadJitterMs.getMax(),
-                aggregateUploadJitterMs.getMax());
+                aggregateUploadJitterMs.getMax(),
+                aggregateUploadPercentLoss.getMax(),
+                aggregateUploadRateKiloBitPerSec.getMax());
             return str;
         }
 
@@ -777,23 +776,23 @@ public class HammerStats implements Runnable
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
                 -1, //ssrc not needed here
-                aggregateDownloadRateKiloBitPerSec.getMean(),
-                aggregateUploadRateKiloBitPerSec.getMean(),
+                aggregateDownloadJitterMs.getMean(),
                 aggregateDownloadPercentLoss.getMean(),
-                aggregateUploadPercentLoss.getMean(),
-                aggregateNbFec.getMean(),
-                aggregatePercentDiscarded.getMean(),
+                aggregateDownloadRateKiloBitPerSec.getMean(),
+                aggregateJitterBufferDelayMs.getMean(),
                 aggregateNbDiscarded.getMean(),
                 aggregateNbDiscardedFull.getMean(),
                 aggregateNbDiscardedLate.getMean(),
                 aggregateNbDiscardedReset.getMean(),
                 aggregateNbDiscardedShrink.getMean(),
-                aggregateJitterBufferDelayMs.getMean(),
+                aggregateNbFec.getMean(),
                 aggregatePacketQueueCountPackets.getMean(),
                 aggregatePacketQueueSize.getMean(),
+                aggregatePercentDiscarded.getMean(),
                 aggregateRttMs.getMean(),
-                aggregateDownloadJitterMs.getMean(),
-                aggregateUploadJitterMs.getMean());
+                aggregateUploadJitterMs.getMean(),
+                aggregateUploadPercentLoss.getMean(),
+                aggregateUploadRateKiloBitPerSec.getMean());
             return str;
         }
 
@@ -801,23 +800,23 @@ public class HammerStats implements Runnable
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
                 -1, //ssrc not needed here
-                aggregateDownloadRateKiloBitPerSec.getMin(),
-                aggregateUploadRateKiloBitPerSec.getMin(),
+                aggregateDownloadJitterMs.getMin(),
                 aggregateDownloadPercentLoss.getMin(),
-                aggregateUploadPercentLoss.getMin(),
-                aggregateNbFec.getMin(),
-                aggregatePercentDiscarded.getMin(),
+                aggregateDownloadRateKiloBitPerSec.getMin(),
+                aggregateJitterBufferDelayMs.getMin(),
                 aggregateNbDiscarded.getMin(),
                 aggregateNbDiscardedFull.getMin(),
                 aggregateNbDiscardedLate.getMin(),
                 aggregateNbDiscardedReset.getMin(),
                 aggregateNbDiscardedShrink.getMin(),
-                aggregateJitterBufferDelayMs.getMin(),
+                aggregateNbFec.getMin(),
                 aggregatePacketQueueCountPackets.getMin(),
                 aggregatePacketQueueSize.getMin(),
+                aggregatePercentDiscarded.getMin(),
                 aggregateRttMs.getMin(),
-                aggregateDownloadJitterMs.getMin(),
-                aggregateUploadJitterMs.getMin());
+                aggregateUploadJitterMs.getMin(),
+                aggregateUploadPercentLoss.getMin(),
+                aggregateUploadRateKiloBitPerSec.getMin());
             return str;
         }
 
@@ -825,23 +824,23 @@ public class HammerStats implements Runnable
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
                 -1, //ssrc not needed here
-                aggregateDownloadRateKiloBitPerSec.getStandardDeviation(),
-                aggregateUploadRateKiloBitPerSec.getStandardDeviation(),
+                aggregateDownloadJitterMs.getStandardDeviation(),
                 aggregateDownloadPercentLoss.getStandardDeviation(),
-                aggregateUploadPercentLoss.getStandardDeviation(),
-                aggregateNbFec.getStandardDeviation(),
-                aggregatePercentDiscarded.getStandardDeviation(),
+                aggregateDownloadRateKiloBitPerSec.getStandardDeviation(),
+                aggregateJitterBufferDelayMs.getStandardDeviation(),
                 aggregateNbDiscarded.getStandardDeviation(),
                 aggregateNbDiscardedFull.getStandardDeviation(),
                 aggregateNbDiscardedLate.getStandardDeviation(),
                 aggregateNbDiscardedReset.getStandardDeviation(),
                 aggregateNbDiscardedShrink.getStandardDeviation(),
-                aggregateJitterBufferDelayMs.getStandardDeviation(),
+                aggregateNbFec.getStandardDeviation(),
                 aggregatePacketQueueCountPackets.getStandardDeviation(),
                 aggregatePacketQueueSize.getStandardDeviation(),
+                aggregatePercentDiscarded.getStandardDeviation(),
                 aggregateRttMs.getStandardDeviation(),
-                aggregateDownloadJitterMs.getStandardDeviation(),
-                aggregateUploadJitterMs.getStandardDeviation());
+                aggregateUploadJitterMs.getStandardDeviation(),
+                aggregateUploadPercentLoss.getStandardDeviation(),
+                aggregateUploadRateKiloBitPerSec.getStandardDeviation());
             return str;
         }
 
@@ -849,23 +848,23 @@ public class HammerStats implements Runnable
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
                 -1, //ssrc not needed here
-                aggregateDownloadRateKiloBitPerSec.getSum(),
-                aggregateUploadRateKiloBitPerSec.getSum(),
+                aggregateDownloadJitterMs.getSum(),
                 aggregateDownloadPercentLoss.getSum(),
-                aggregateUploadPercentLoss.getSum(),
-                aggregateNbFec.getSum(),
-                aggregatePercentDiscarded.getSum(),
+                aggregateDownloadRateKiloBitPerSec.getSum(),
+                aggregateJitterBufferDelayMs.getSum(),
                 aggregateNbDiscarded.getSum(),
                 aggregateNbDiscardedFull.getSum(),
                 aggregateNbDiscardedLate.getSum(),
                 aggregateNbDiscardedReset.getSum(),
                 aggregateNbDiscardedShrink.getSum(),
-                aggregateJitterBufferDelayMs.getSum(),
+                aggregateNbFec.getSum(),
                 aggregatePacketQueueCountPackets.getSum(),
                 aggregatePacketQueueSize.getSum(),
+                aggregatePercentDiscarded.getSum(),
                 aggregateRttMs.getSum(),
-                aggregateDownloadJitterMs.getSum(),
-                aggregateUploadJitterMs.getSum());
+                aggregateUploadJitterMs.getSum(),
+                aggregateUploadPercentLoss.getSum(),
+                aggregateUploadRateKiloBitPerSec.getSum());
             return str;
         }
 
@@ -873,23 +872,23 @@ public class HammerStats implements Runnable
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
                 -1, //ssrc not needed here
-                aggregateDownloadRateKiloBitPerSec.getVariance(),
-                aggregateUploadRateKiloBitPerSec.getVariance(),
+                aggregateDownloadJitterMs.getVariance(),
                 aggregateDownloadPercentLoss.getVariance(),
-                aggregateUploadPercentLoss.getVariance(),
-                aggregateNbFec.getVariance(),
-                aggregatePercentDiscarded.getVariance(),
+                aggregateDownloadRateKiloBitPerSec.getVariance(),
+                aggregateJitterBufferDelayMs.getVariance(),
                 aggregateNbDiscarded.getVariance(),
                 aggregateNbDiscardedFull.getVariance(),
                 aggregateNbDiscardedLate.getVariance(),
                 aggregateNbDiscardedReset.getVariance(),
                 aggregateNbDiscardedShrink.getVariance(),
-                aggregateJitterBufferDelayMs.getVariance(),
+                aggregateNbFec.getVariance(),
                 aggregatePacketQueueCountPackets.getVariance(),
                 aggregatePacketQueueSize.getVariance(),
+                aggregatePercentDiscarded.getVariance(),
                 aggregateRttMs.getVariance(),
-                aggregateDownloadJitterMs.getVariance(),
-                aggregateUploadJitterMs.getVariance());
+                aggregateUploadJitterMs.getVariance(),
+                aggregateUploadPercentLoss.getVariance(),
+                aggregateUploadRateKiloBitPerSec.getVariance());
             return str;
         }
     }

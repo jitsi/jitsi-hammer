@@ -18,23 +18,23 @@ public class FakeUserStats
     public static final String jsonMediaStreamStatsTemplate =
         "{"
         + " \"ssrc\":%s"
+        + " , \"DownloadJitterMs\":%s"
+        + " , \"DownloadPercentLoss\":%s"
         + " , \"DownloadRateKiloBitPerSec\":%s"
-        + " , \"UploadKbps\":%s"
-        + " , \"UploadRateKiloBitPerSec\":%s"
-        + " , \"UploadPercentLoss\":%s"
-        + " , \"NbFec\":%s"
-        + " , \"PercentDiscarded\":%s"
+        + " , \"JitterBufferDelayMs\":%s"
         + " , \"NbDiscarded\":%s"
         + " , \"NbDiscardedFull\":%s"
         + " , \"NbDiscardedLate\":%s"
         + " , \"NbDiscardedReset\":%s"
         + " , \"NbDiscardedShrink\":%s"
-        + " , \"JitterBufferDelayMs\":%s"
+        + " , \"NbFec\":%s"
         + " , \"PacketQueueCountPackets\":%s"
         + " , \"PacketQueueSize\":%s"
+        + " , \"PercentDiscarded\":%s"
         + " , \"RttMs\":%s"
-        + " , \"DownloadJitterMs\":%s"
         + " , \"UploadJitterMs\":%s"
+        + " , \"UploadPercentLoss\":%s"
+        + " , \"UploadRateKiloBitPerSec\":%s"
         + " }";
 
     public static final String jsonTemplate =
@@ -115,42 +115,42 @@ public class FakeUserStats
 
         String str = String.format(jsonTemplate,
             audioSSRC ,
-            audioStats.getDownloadRateKiloBitPerSec() ,
-            audioStats.getUploadRateKiloBitPerSec() ,
+            audioStats.getDownloadJitterMs() ,
             audioStats.getDownloadPercentLoss() ,
-            audioStats.getUploadPercentLoss() ,
-            audioStats.getNbFec() ,
-            audioStats.getPercentDiscarded() ,
+            audioStats.getDownloadRateKiloBitPerSec() ,
+            audioStats.getJitterBufferDelayMs() ,
             audioStats.getNbDiscarded() ,
             audioStats.getNbDiscardedFull() ,
             audioStats.getNbDiscardedLate() ,
             audioStats.getNbDiscardedReset() ,
             audioStats.getNbDiscardedShrink() ,
-            audioStats.getJitterBufferDelayMs() ,
+            audioStats.getNbFec() ,
             audioStats.getPacketQueueCountPackets() ,
             audioStats.getPacketQueueSize() ,
+            audioStats.getPercentDiscarded() ,
             audioStats.getRttMs() ,
-            audioStats.getDownloadJitterMs() ,
             audioStats.getUploadJitterMs(),
+            audioStats.getUploadPercentLoss() ,
+            audioStats.getUploadRateKiloBitPerSec() ,
 
             videoSSRC ,
-            videoStats.getDownloadRateKiloBitPerSec() ,
-            videoStats.getUploadRateKiloBitPerSec() ,
+            videoStats.getDownloadJitterMs() ,
             videoStats.getDownloadPercentLoss() ,
-            videoStats.getUploadPercentLoss() ,
-            videoStats.getNbFec() ,
-            videoStats.getPercentDiscarded() ,
+            videoStats.getDownloadRateKiloBitPerSec() ,
+            videoStats.getJitterBufferDelayMs() ,
             videoStats.getNbDiscarded() ,
             videoStats.getNbDiscardedFull() ,
             videoStats.getNbDiscardedLate() ,
             videoStats.getNbDiscardedReset() ,
             videoStats.getNbDiscardedShrink() ,
-            videoStats.getJitterBufferDelayMs() ,
+            videoStats.getNbFec() ,
             videoStats.getPacketQueueCountPackets() ,
             videoStats.getPacketQueueSize() ,
+            videoStats.getPercentDiscarded() ,
             videoStats.getRttMs() ,
-            videoStats.getDownloadJitterMs() ,
-            videoStats.getUploadJitterMs());
+            videoStats.getUploadJitterMs() ,
+            videoStats.getUploadPercentLoss() ,
+            videoStats.getUploadRateKiloBitPerSec());
         str = ident + str.replaceAll("\n", "\n"+ident);
         builder.append(str + '\n');
 
