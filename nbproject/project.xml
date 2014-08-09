@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://www.netbeans.org/ns/project/1">
+    <type>org.netbeans.modules.ant.freeform</type>
+    <configuration>
+        <general-data xmlns="http://www.netbeans.org/ns/freeform-project/1">
+            <name>jitsi-hammer</name>
+        </general-data>
+        <general-data xmlns="http://www.netbeans.org/ns/freeform-project/2">
+            <!-- Do not use Project Properties customizer when editing this file manually. 
+ To prevent the customizer from showing, create nbproject/project.properties file and enter 
+auxiliary.show.customizer=false 
+property there. Adding 
+auxiliary.show.customizer.message=<message>
+ will show your customized message when someone attempts to open the customizer.  -->
+            <name>jitsi-hammer</name>
+            <properties/>
+            <folders>
+                <source-folder>
+                    <label>jitsi-hammer</label>
+                    <location>.</location>
+                    <encoding>UTF-8</encoding>
+                </source-folder>
+                <source-folder>
+                    <label>src</label>
+                    <type>java</type>
+                    <location>src</location>
+                    <encoding>UTF-8</encoding>
+                </source-folder>
+                <source-folder>
+                    <label>ressources</label>
+                    <type>java</type>
+                    <location>ressources</location>
+                    <encoding>UTF-8</encoding>
+                </source-folder>
+            </folders>
+            <ide-actions>
+                <action name="build">
+                    <target>make</target>
+                </action>
+                <action name="clean">
+                    <target>clean</target>
+                </action>
+                <action name="javadoc">
+                    <target>javadoc</target>
+                </action>
+                <action name="run">
+                    <target>run</target>
+                </action>
+                <action name="rebuild">
+                    <target>clean</target>
+                    <target>make</target>
+                </action>
+            </ide-actions>
+            <export>
+                <type>jar</type>
+                <location>jitsi-hammer.jar</location>
+                <build-target>make</build-target>
+            </export>
+            <view>
+                <items>
+                    <source-folder style="packages">
+                        <label>src</label>
+                        <location>src</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>ressources</label>
+                        <location>ressources</location>
+                    </source-folder>
+                    <source-file>
+                        <location>build.xml</location>
+                    </source-file>
+                </items>
+                <context-menu>
+                    <ide-action name="build"/>
+                    <ide-action name="rebuild"/>
+                    <ide-action name="clean"/>
+                    <ide-action name="javadoc"/>
+                    <ide-action name="run"/>
+                </context-menu>
+            </view>
+            <subprojects/>
+        </general-data>
+        <java-data xmlns="http://www.netbeans.org/ns/freeform-project-java/2">
+            <compilation-unit>
+                <package-root>src</package-root>
+                <package-root>ressources</package-root>
+                <classpath mode="compile">lib/OrangeExtensions.jar:lib/args4j-2.0.21.jar:lib/bccontrib-1.0-SNAPSHOT.jar:lib/bcpkix-jdk15on-151.jar:lib/bcprov-jdk15on-151.jar:lib/commons-math3-3.3.jar:lib/felix.jar:lib/fmj.jar:lib/ice4j.jar:lib/jain-sdp.jar:lib/jitsi-android-osgi.jar:lib/jna.jar:lib/json-simple-1.1.1.jar:lib/jspeex.jar:lib/libjitsi.jar:lib/protocol-media.jar:lib/sdes4j-1.1.1.jar:lib/smack-3.4.1-0cec571.jar:lib/smackx-3.4.1-0cec571.jar:lib/smackx-debug-3.4.1-0cec571.jar:lib/util.jar:lib/zrtp4j-light.jar</classpath>
+                <built-to>jitsi-hammer.jar</built-to>
+                <javadoc-built-to>doc/api</javadoc-built-to>
+                <source-level>1.5</source-level>
+            </compilation-unit>
+        </java-data>
+    </configuration>
+</project>
