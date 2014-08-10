@@ -146,6 +146,10 @@ public class HammerStats implements Runnable
     }
 
 
+    /**
+     * Add a <tt>FakeUserStats</tt> to the list this <tt>HammerStats</tt> is watching
+     * @param fakeUserStats the <tt>FakeUserStats</tt> that will added.
+     */
     public synchronized void addFakeUsersStats(
         FakeUserStats fakeUserStats)
     {
@@ -328,13 +332,19 @@ public class HammerStats implements Runnable
     }
 
     /**
-     * Provoke the stop of the method run(). If the method run() is not running,
+     * Provoke the stop of the method run(). The method run() won't be
+     * stopped right away : but the loop will be broken at the next iteration.
+     *
+     * If the method run() is not running,
      * calling this method won't do anything
      */
     public synchronized void stop()
     {
-        logger.info("Stopping the main loop");
-        threadStop = true;
+        if(threadStop == false)
+        {
+            logger.info("Stopping the main loop");
+            threadStop = true;
+        }
     }
 
     /**
@@ -347,7 +357,7 @@ public class HammerStats implements Runnable
         {
             logger.info("Writting overall stats to file");
             PrintWriter writer = new PrintWriter(overallStatsFile, "UTF-8");
-            writer.print(getOverallStats() + '\n');
+            writer.print(getOverallStatsJSON() + '\n');
             writer.close();
         }
         catch (FileNotFoundException e)
@@ -367,14 +377,14 @@ public class HammerStats implements Runnable
      */
     public void printOverallStats(PrintStream ps)
     {
-        ps.println(getOverallStats());
+        ps.println(getOverallStatsJSON());
     }
 
     /**
-     * Create and return the String that contains the overall stats.
+     * Create and return the String that contains the overall stats (in JSON).
      * @return the String that contains the overall stats.
      */
-    protected String getOverallStats()
+    protected String getOverallStatsJSON()
     {
         StringBuilder bldr = new StringBuilder();
         bldr.append("{\n");
@@ -502,8 +512,29 @@ public class HammerStats implements Runnable
     }
 
 
+    /**
+     * A private class used to keep track and compute the summary stats and the
+     * aggregate summary stats from all the <tt>MediaStreamStats</tt>'s possible
+     * stats.
+     *
+     * @author Thomas Kuntz
+     *
+     */
     private class HammerSummaryStats
     {
+        /*
+         * All the AggregateSummaryStatistics will be used to create new
+         * SummaryStatistics (for the option "-summarystats") that will
+         * be use to compute summary stats like max/min/std dev... ,
+         * and also be used to compute overall stats.
+         *
+         * At each iteration of the loop in run(), all stats are added to their
+         * corresponding SummaryStatistics, that will automatically add them
+         * to their related AggregateSummaryStatistics.
+         * After that, the SummaryStatistics are used to get the summary stats
+         * (in JSON), and are replace by newly created SummaryStatistics by
+         * the AggregateSummaryStatistics (for the next iteration).
+         */
         AggregateSummaryStatistics aggregateDownloadJitterMs = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateDownloadPercentLoss = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateDownloadRateKiloBitPerSec = new AggregateSummaryStatistics();
@@ -550,11 +581,19 @@ public class HammerStats implements Runnable
         SummaryStatistics uploadPercentLoss;
         SummaryStatistics uploadRateKiloBitPerSec;
 
+        /**
+         * Create a new HammerSummaryStats
+         */
         public HammerSummaryStats()
         {
             clear();
         }
 
+        /**
+         * Add the stats contained by <tt>stats<tt> to their corresponding
+         * <tt>SummaryStats</tt> objects.
+         * @param stats the stats of a stream that will be added.
+         */
         public void add(MediaStreamStats stats)
         {
             downloadJitterMs.addValue(stats.getDownloadJitterMs());
@@ -582,6 +621,11 @@ public class HammerStats implements Runnable
 
         }
 
+        /**
+         * Create new <tt>SummaryStatistics</tt> from the
+         * <tt>AggregateSummaryStatistics</tt> for all the stream's stats that
+         * are watched.
+         */
         public void clear()
         {
             downloadJitterMs =
@@ -630,6 +674,11 @@ public class HammerStats implements Runnable
                 aggregateUploadRateKiloBitPerSec.createContributingStatistics();
         }
 
+        /**
+         * Get the Max of all the stats that are watched, for all the stats
+         * added with add() since the last call to clear() in JSON.
+         * @return The Max of all the stats since last clear() in JSON.
+         */
         public String getMaxJSON()
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
@@ -659,6 +708,11 @@ public class HammerStats implements Runnable
             return str;
         }
 
+        /**
+         * Get the Mean of all the stats that are watched, for all the stats
+         * added with add() between the latest call to clear() and now (in JSON).
+         * @return The Mean of all the stats since last clear() in JSON.
+         */
         public String getMeanJSON()
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
@@ -688,6 +742,11 @@ public class HammerStats implements Runnable
             return str;
         }
 
+        /**
+         * Get the Min of all the stats that are watched, for all the stats
+         * added with add() since the last call to clear() in JSON.
+         * @return The Min of all the stats since last clear() in JSON.
+         */
         public String getMinJSON()
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
@@ -717,6 +776,12 @@ public class HammerStats implements Runnable
             return str;
         }
 
+        /**
+         * Get the Standard Deviation of all the stats that are watched, for all
+         * the stats added with add() since the last call to clear() in JSON.
+         * @return The Standard Deviation of all the stats since last clear()
+         * in JSON.
+         */
         public String getStandardDeviationJSON()
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
@@ -746,6 +811,11 @@ public class HammerStats implements Runnable
             return str;
         }
 
+        /**
+         * Get the Sum of all the stats that are watched, for all the stats
+         * added with add() since the last call to clear() in JSON.
+         * @return The Sum of all the stats since last clear() in JSON.
+         */
         public String getSumJSON()
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
@@ -775,6 +845,11 @@ public class HammerStats implements Runnable
             return str;
         }
 
+        /**
+         * Get the Variance of all the stats that are watched, for all the stats
+         * added with add() since the last call to clear() (in JSON).
+         * @return The Variance of all the stats since last clear() in JSON.
+         */
         public String getVarianceJSON()
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
@@ -804,6 +879,11 @@ public class HammerStats implements Runnable
             return str;
         }
 
+        /**
+         * Get the Max of all the stats that are watched, for all the stats
+         * added with add() since the creation of this <tt>HammerSummaryStats</tt>
+         * @return The Max of all the stats in JSON.
+         */
         public String getAggregateMaxJSON()
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
@@ -833,6 +913,11 @@ public class HammerStats implements Runnable
             return str;
         }
 
+        /**
+         * Get the Mean of all the stats that are watched, for all the stats
+         * added with add() since the creation of this <tt>HammerSummaryStats</tt>
+         * @return The Mean of all the stats in JSON.
+         */
         public String getAggregateMeanJSON()
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
@@ -862,6 +947,11 @@ public class HammerStats implements Runnable
             return str;
         }
 
+        /**
+         * Get the Min of all the stats that are watched, for all the stats
+         * added with add() since the creation of this <tt>HammerSummaryStats</tt>
+         * @return The Min of all the stats in JSON.
+         */
         public String getAggregateMinJSON()
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
@@ -891,6 +981,12 @@ public class HammerStats implements Runnable
             return str;
         }
 
+        /**
+         * Get the Standard Deviation of all the stats that are watched, for
+         * all the stats added with add() since the creation of this
+         *  <tt>HammerSummaryStats</tt>
+         * @return The Variance of all the stats in JSON.
+         */
         public String getAggregateStandardDeviationJSON()
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
@@ -920,6 +1016,11 @@ public class HammerStats implements Runnable
             return str;
         }
 
+        /**
+         * Get the Sum of all the stats that are watched, for all the stats
+         * added with add() since the creation of this <tt>HammerSummaryStats</tt>
+         * @return The Sum of all the stats in JSON.
+         */
         public String getAggregateSumJSON()
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,
@@ -949,6 +1050,11 @@ public class HammerStats implements Runnable
             return str;
         }
 
+        /**
+         * Get the Variance of all the stats that are watched, for all the stats
+         * added with add() since the creation of this <tt>HammerSummaryStats</tt>
+         * @return The Variance of all the stats JSON.
+         */
         public String getAggregateVarianceJSON()
         {
             String str = String.format(FakeUserStats.jsonMediaStreamStatsTemplate,

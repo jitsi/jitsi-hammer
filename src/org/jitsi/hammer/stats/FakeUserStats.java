@@ -15,6 +15,10 @@ import org.jitsi.service.neomedia.*;
  */
 public class FakeUserStats
 {
+    /**
+     * A JSON template of all the stats a <tt>MediaStreamStats</tt> have.
+     * It needs to be formatted with String.format() .
+     */
     public static final String jsonMediaStreamStatsTemplate =
         "{"
         + " \"ssrc\":%s"
@@ -42,6 +46,11 @@ public class FakeUserStats
         + " , \"UploadRateKiloBitPerSec\":%s"
         + " }";
 
+    /**
+     * A JSON template of all the stats a <tt>FakeUser</tt> have (
+     * stats for an audio stream, and for video stream).
+     * It needs to be formatted with String.format() .
+     */
     public static final String jsonTemplate =
               "  {\n"
             + "      \"audio\" : "
@@ -52,12 +61,41 @@ public class FakeUserStats
             + "\n"
             + "  }";
 
+    /**
+     * The username of the <tt>FakeUser</tt> corresponding to this
+     * <tt>FakeUserStats</tt>.
+     */
     private String username = "Hammer";
+
+    /**
+     * The SSRC of the audio <tt>MediaStream</tt> of the <tt>FakeUser</tt>
+     * corresponding to this <tt>FakeUserStats</tt>.
+     */
     private long audioSSRC = -1;
+
+    /**
+     * The <tt>MediaStreamStats</tt> of the audio <tt>MediaStream</tt> of the
+     * <tt>FakeUser</tt> corresponding to this <tt>FakeUserStats</tt>.
+     */
     private MediaStreamStats audioStats;
+
+    /**
+     * The SSRC of the video <tt>MediaStream</tt> of the <tt>FakeUser</tt>
+     * corresponding to this <tt>FakeUserStats</tt>.
+     */
     private long videoSSRC = -1;
+
+    /**
+     * The <tt>MediaStreamStats</tt> of the video <tt>MediaStream</tt> of the
+     * <tt>FakeUser</tt> corresponding to this <tt>FakeUserStats</tt>.
+     */
     private MediaStreamStats videoStats;
 
+    /**
+     * Set the SSRC and <tt>MediaStreamStats</tt> of mediaStream
+     * depending of the stream type.
+     * @param mediaStream
+     */
     public void setMediaStreamStats(MediaStream mediaStream)
     {
         if(mediaStream == null)
@@ -78,19 +116,34 @@ public class FakeUserStats
         //other MediaType are not tracked.
     }
 
+    /**
+     * Set the username of used by this <tt>FakeUserStats</tt>.
+     * @param username the username that will be set.
+     */
     public void setUsername(String username)
     {
         this.username = username;
     }
 
-
+    /**
+     * Call updateStats() of the 2 <tt>MediaStreamStats</tt> of this
+     * <tt>FakeUserStats</tt> corresponding to the audio and video stream.
+     */
     public void updateStats()
     {
         audioStats.updateStats();
         videoStats.updateStats();
     }
 
-
+    /**
+     * Get the audio or video <tt>MediaStreamStats</tt> this
+     * <tt>FakeUserStats</tt> has depending on value of type
+     * @param type the MediaType used to know if the method must return
+     * the <tt>MediaStreamStats</tt> of the audio or video <tt>MediaStream</tt>
+     * of the corresponding FakeUser.
+     * @return the audio or video <tt>MediaStreamStats</tt> this
+     * <tt>FakeUserStats</tt> has depending on value of type
+     */
     public MediaStreamStats getMediaStreamStats(MediaType type)
     {
         MediaStreamStats stats = null;
@@ -109,7 +162,14 @@ public class FakeUserStats
         return stats;
     }
 
-
+    /**
+     * Get the stats of the audio and video stream from the corresponding
+     * <tt>MediaStreamStats</tt> in JSON.
+     * @param spaceIdent the number of space added to ident each line
+     * of the returned JSON.
+     * @return the stats of the audio and video stream from the corresponding
+     * <tt>MediaStreamStats</tt> in JSON.
+     */
     public String getStatsJSON(int spaceIdent)
     {
         String ident = new String(new char[spaceIdent]).replace("\0" ,  " ");
