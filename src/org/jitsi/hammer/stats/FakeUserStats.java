@@ -22,12 +22,17 @@ public class FakeUserStats
         + " , \"DownloadPercentLoss\":%s"
         + " , \"DownloadRateKiloBitPerSec\":%s"
         + " , \"JitterBufferDelayMs\":%s"
+        + " , \"JitterBufferDelayPackets\":%s"
         + " , \"NbDiscarded\":%s"
         + " , \"NbDiscardedFull\":%s"
         + " , \"NbDiscardedLate\":%s"
         + " , \"NbDiscardedReset\":%s"
         + " , \"NbDiscardedShrink\":%s"
         + " , \"NbFec\":%s"
+        + " , \"NbPackets\":%s"
+        + " , \"NbPacketsLost\":%s"
+        + " , \"NbReceivedBytes\":%s"
+        + " , \"NbSentBytes\":%s"
         + " , \"PacketQueueCountPackets\":%s"
         + " , \"PacketQueueSize\":%s"
         + " , \"PercentDiscarded\":%s"
@@ -119,12 +124,17 @@ public class FakeUserStats
             audioStats.getDownloadPercentLoss() ,
             audioStats.getDownloadRateKiloBitPerSec() ,
             audioStats.getJitterBufferDelayMs() ,
+            audioStats.getJitterBufferDelayPackets() ,
             audioStats.getNbDiscarded() ,
             audioStats.getNbDiscardedFull() ,
             audioStats.getNbDiscardedLate() ,
             audioStats.getNbDiscardedReset() ,
             audioStats.getNbDiscardedShrink() ,
             audioStats.getNbFec() ,
+            audioStats.getNbPackets() ,
+            audioStats.getNbPacketsLost() ,
+            audioStats.getNbReceivedBytes() ,
+            audioStats.getNbSentBytes() ,
             audioStats.getPacketQueueCountPackets() ,
             audioStats.getPacketQueueSize() ,
             audioStats.getPercentDiscarded() ,
@@ -138,17 +148,22 @@ public class FakeUserStats
             videoStats.getDownloadPercentLoss() ,
             videoStats.getDownloadRateKiloBitPerSec() ,
             videoStats.getJitterBufferDelayMs() ,
+            videoStats.getJitterBufferDelayPackets() ,
             videoStats.getNbDiscarded() ,
             videoStats.getNbDiscardedFull() ,
             videoStats.getNbDiscardedLate() ,
             videoStats.getNbDiscardedReset() ,
             videoStats.getNbDiscardedShrink() ,
             videoStats.getNbFec() ,
+            videoStats.getNbPackets() ,
+            videoStats.getNbPacketsLost() ,
+            videoStats.getNbReceivedBytes() ,
+            videoStats.getNbSentBytes() ,
             videoStats.getPacketQueueCountPackets() ,
             videoStats.getPacketQueueSize() ,
             videoStats.getPercentDiscarded() ,
             videoStats.getRttMs() ,
-            videoStats.getUploadJitterMs() ,
+            videoStats.getUploadJitterMs(),
             videoStats.getUploadPercentLoss() ,
             videoStats.getUploadRateKiloBitPerSec());
         str = ident + str.replaceAll("\n", "\n"+ident);

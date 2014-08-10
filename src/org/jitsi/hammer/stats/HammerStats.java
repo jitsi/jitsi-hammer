@@ -508,12 +508,17 @@ public class HammerStats implements Runnable
         AggregateSummaryStatistics aggregateDownloadPercentLoss = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateDownloadRateKiloBitPerSec = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateJitterBufferDelayMs = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateJitterBufferDelayPackets = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateNbDiscarded = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateNbDiscardedFull = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateNbDiscardedLate = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateNbDiscardedReset = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateNbDiscardedShrink = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateNbFec = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateNbPackets = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateNbPacketsLost = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateNbReceivedBytes = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateNbSentBytes = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregatePacketQueueCountPackets = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregatePacketQueueSize = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregatePercentDiscarded = new AggregateSummaryStatistics();
@@ -522,23 +527,28 @@ public class HammerStats implements Runnable
         AggregateSummaryStatistics aggregateUploadPercentLoss = new AggregateSummaryStatistics();
         AggregateSummaryStatistics aggregateUploadRateKiloBitPerSec = new AggregateSummaryStatistics();
 
-        SummaryStatistics downloadJitterMs = new SummaryStatistics();
-        SummaryStatistics downloadPercentLoss = new SummaryStatistics();
-        SummaryStatistics downloadRateKiloBitPerSec = new SummaryStatistics();
-        SummaryStatistics jitterBufferDelayMs = new SummaryStatistics();
-        SummaryStatistics nbDiscarded = new SummaryStatistics();
-        SummaryStatistics nbDiscardedFull = new SummaryStatistics();
-        SummaryStatistics nbDiscardedLate = new SummaryStatistics();
-        SummaryStatistics nbDiscardedReset = new SummaryStatistics();
-        SummaryStatistics nbDiscardedShrink = new SummaryStatistics();
-        SummaryStatistics nbFec = new SummaryStatistics();
-        SummaryStatistics packetQueueCountPackets = new SummaryStatistics();
-        SummaryStatistics packetQueueSize = new SummaryStatistics();
-        SummaryStatistics percentDiscarded = new SummaryStatistics();
-        SummaryStatistics rttMs = new SummaryStatistics();
-        SummaryStatistics uploadJitterMs = new SummaryStatistics();
-        SummaryStatistics uploadPercentLoss = new SummaryStatistics();
-        SummaryStatistics uploadRateKiloBitPerSec = new SummaryStatistics();
+        SummaryStatistics downloadJitterMs;
+        SummaryStatistics downloadPercentLoss;
+        SummaryStatistics downloadRateKiloBitPerSec;
+        SummaryStatistics jitterBufferDelayMs;
+        SummaryStatistics jitterBufferDelayPackets;
+        SummaryStatistics nbDiscarded;
+        SummaryStatistics nbDiscardedFull;
+        SummaryStatistics nbDiscardedLate;
+        SummaryStatistics nbDiscardedReset;
+        SummaryStatistics nbDiscardedShrink;
+        SummaryStatistics nbFec;
+        SummaryStatistics nbPackets;
+        SummaryStatistics nbPacketsLost;
+        SummaryStatistics nbReceivedBytes;
+        SummaryStatistics nbSentBytes;
+        SummaryStatistics packetQueueCountPackets;
+        SummaryStatistics packetQueueSize;
+        SummaryStatistics percentDiscarded;
+        SummaryStatistics rttMs;
+        SummaryStatistics uploadJitterMs;
+        SummaryStatistics uploadPercentLoss;
+        SummaryStatistics uploadRateKiloBitPerSec;
 
         public HammerSummaryStats()
         {
@@ -551,12 +561,17 @@ public class HammerStats implements Runnable
             downloadPercentLoss.addValue(stats.getDownloadPercentLoss());
             downloadRateKiloBitPerSec.addValue(stats.getDownloadRateKiloBitPerSec());
             jitterBufferDelayMs.addValue(stats.getJitterBufferDelayMs());
+            jitterBufferDelayPackets.addValue(stats.getJitterBufferDelayPackets());
             nbDiscarded.addValue(stats.getNbDiscarded());
             nbDiscardedFull.addValue(stats.getNbDiscardedFull());
             nbDiscardedLate.addValue(stats.getNbDiscardedLate());
             nbDiscardedReset.addValue(stats.getNbDiscardedReset());
             nbDiscardedShrink.addValue(stats.getNbDiscardedShrink());
             nbFec.addValue(stats.getNbFec());
+            nbPackets.addValue(stats.getNbPackets());
+            nbPacketsLost.addValue(stats.getNbPacketsLost());
+            nbReceivedBytes.addValue(stats.getNbReceivedBytes());
+            nbSentBytes.addValue(stats.getNbSentBytes());
             packetQueueCountPackets.addValue(stats.getPacketQueueCountPackets());
             packetQueueSize.addValue(stats.getPacketQueueSize());
             percentDiscarded.addValue(stats.getPercentDiscarded());
@@ -577,6 +592,8 @@ public class HammerStats implements Runnable
                 aggregateDownloadRateKiloBitPerSec.createContributingStatistics();
             jitterBufferDelayMs =
                 aggregateJitterBufferDelayMs.createContributingStatistics();
+            jitterBufferDelayPackets =
+                aggregateJitterBufferDelayPackets.createContributingStatistics();
             nbDiscarded =
                 aggregateNbDiscarded.createContributingStatistics();
             nbDiscardedFull =
@@ -587,7 +604,16 @@ public class HammerStats implements Runnable
                 aggregateNbDiscardedReset.createContributingStatistics();
             nbDiscardedShrink =
                 aggregateNbDiscardedShrink.createContributingStatistics();
-            nbFec =aggregateNbFec.createContributingStatistics();
+            nbFec =
+                aggregateNbFec.createContributingStatistics();
+            nbPackets =
+                aggregateNbPackets.createContributingStatistics();
+            nbPacketsLost =
+                aggregateNbPacketsLost.createContributingStatistics();
+            nbReceivedBytes =
+                aggregateNbReceivedBytes.createContributingStatistics();
+            nbSentBytes =
+                aggregateNbSentBytes.createContributingStatistics();
             packetQueueCountPackets =
                 aggregatePacketQueueCountPackets.createContributingStatistics();
             packetQueueSize =
@@ -612,12 +638,17 @@ public class HammerStats implements Runnable
                 downloadPercentLoss.getMax(),
                 downloadRateKiloBitPerSec.getMax(),
                 jitterBufferDelayMs.getMax(),
+                jitterBufferDelayPackets.getMax(),
                 nbDiscarded.getMax(),
                 nbDiscardedFull.getMax(),
                 nbDiscardedLate.getMax(),
                 nbDiscardedReset.getMax(),
                 nbDiscardedShrink.getMax(),
                 nbFec.getMax(),
+                nbPackets.getMax(),
+                nbPacketsLost.getMax(),
+                nbReceivedBytes.getMax(),
+                nbSentBytes.getMax(),
                 packetQueueCountPackets.getMax(),
                 packetQueueSize.getMax(),
                 percentDiscarded.getMax(),
@@ -636,12 +667,17 @@ public class HammerStats implements Runnable
                 downloadPercentLoss.getMean(),
                 downloadRateKiloBitPerSec.getMean(),
                 jitterBufferDelayMs.getMean(),
+                jitterBufferDelayPackets.getMean(),
                 nbDiscarded.getMean(),
                 nbDiscardedFull.getMean(),
                 nbDiscardedLate.getMean(),
                 nbDiscardedReset.getMean(),
                 nbDiscardedShrink.getMean(),
                 nbFec.getMean(),
+                nbPackets.getMean(),
+                nbPacketsLost.getMean(),
+                nbReceivedBytes.getMean(),
+                nbSentBytes.getMean(),
                 packetQueueCountPackets.getMean(),
                 packetQueueSize.getMean(),
                 percentDiscarded.getMean(),
@@ -660,12 +696,17 @@ public class HammerStats implements Runnable
                 downloadPercentLoss.getMin(),
                 downloadRateKiloBitPerSec.getMin(),
                 jitterBufferDelayMs.getMin(),
+                jitterBufferDelayPackets.getMin(),
                 nbDiscarded.getMin(),
                 nbDiscardedFull.getMin(),
                 nbDiscardedLate.getMin(),
                 nbDiscardedReset.getMin(),
                 nbDiscardedShrink.getMin(),
                 nbFec.getMin(),
+                nbPackets.getMin(),
+                nbPacketsLost.getMin(),
+                nbReceivedBytes.getMin(),
+                nbSentBytes.getMin(),
                 packetQueueCountPackets.getMin(),
                 packetQueueSize.getMin(),
                 percentDiscarded.getMin(),
@@ -684,12 +725,17 @@ public class HammerStats implements Runnable
                 downloadPercentLoss.getStandardDeviation(),
                 downloadRateKiloBitPerSec.getStandardDeviation(),
                 jitterBufferDelayMs.getStandardDeviation(),
+                jitterBufferDelayPackets.getStandardDeviation(),
                 nbDiscarded.getStandardDeviation(),
                 nbDiscardedFull.getStandardDeviation(),
                 nbDiscardedLate.getStandardDeviation(),
                 nbDiscardedReset.getStandardDeviation(),
                 nbDiscardedShrink.getStandardDeviation(),
                 nbFec.getStandardDeviation(),
+                nbPackets.getStandardDeviation(),
+                nbPacketsLost.getStandardDeviation(),
+                nbReceivedBytes.getStandardDeviation(),
+                nbSentBytes.getStandardDeviation(),
                 packetQueueCountPackets.getStandardDeviation(),
                 packetQueueSize.getStandardDeviation(),
                 percentDiscarded.getStandardDeviation(),
@@ -708,12 +754,17 @@ public class HammerStats implements Runnable
                 downloadPercentLoss.getSum(),
                 downloadRateKiloBitPerSec.getSum(),
                 jitterBufferDelayMs.getSum(),
+                jitterBufferDelayPackets.getSum(),
                 nbDiscarded.getSum(),
                 nbDiscardedFull.getSum(),
                 nbDiscardedLate.getSum(),
                 nbDiscardedReset.getSum(),
                 nbDiscardedShrink.getSum(),
                 nbFec.getSum(),
+                nbPackets.getSum(),
+                nbPacketsLost.getSum(),
+                nbReceivedBytes.getSum(),
+                nbSentBytes.getSum(),
                 packetQueueCountPackets.getSum(),
                 packetQueueSize.getSum(),
                 percentDiscarded.getSum(),
@@ -732,12 +783,17 @@ public class HammerStats implements Runnable
                 downloadPercentLoss.getVariance(),
                 downloadRateKiloBitPerSec.getVariance(),
                 jitterBufferDelayMs.getVariance(),
+                jitterBufferDelayPackets.getVariance(),
                 nbDiscarded.getVariance(),
                 nbDiscardedFull.getVariance(),
                 nbDiscardedLate.getVariance(),
                 nbDiscardedReset.getVariance(),
                 nbDiscardedShrink.getVariance(),
                 nbFec.getVariance(),
+                nbPackets.getVariance(),
+                nbPacketsLost.getVariance(),
+                nbReceivedBytes.getVariance(),
+                nbSentBytes.getVariance(),
                 packetQueueCountPackets.getVariance(),
                 packetQueueSize.getVariance(),
                 percentDiscarded.getVariance(),
@@ -756,12 +812,17 @@ public class HammerStats implements Runnable
                 aggregateDownloadPercentLoss.getMax(),
                 aggregateDownloadRateKiloBitPerSec.getMax(),
                 aggregateJitterBufferDelayMs.getMax(),
+                aggregateJitterBufferDelayPackets.getMax(),
                 aggregateNbDiscarded.getMax(),
                 aggregateNbDiscardedFull.getMax(),
                 aggregateNbDiscardedLate.getMax(),
                 aggregateNbDiscardedReset.getMax(),
                 aggregateNbDiscardedShrink.getMax(),
                 aggregateNbFec.getMax(),
+                aggregateNbPackets.getMax(),
+                aggregateNbPacketsLost.getMax(),
+                aggregateNbReceivedBytes.getMax(),
+                aggregateNbSentBytes.getMax(),
                 aggregatePacketQueueCountPackets.getMax(),
                 aggregatePacketQueueSize.getMax(),
                 aggregatePercentDiscarded.getMax(),
@@ -780,12 +841,17 @@ public class HammerStats implements Runnable
                 aggregateDownloadPercentLoss.getMean(),
                 aggregateDownloadRateKiloBitPerSec.getMean(),
                 aggregateJitterBufferDelayMs.getMean(),
+                aggregateJitterBufferDelayPackets.getMean(),
                 aggregateNbDiscarded.getMean(),
                 aggregateNbDiscardedFull.getMean(),
                 aggregateNbDiscardedLate.getMean(),
                 aggregateNbDiscardedReset.getMean(),
                 aggregateNbDiscardedShrink.getMean(),
                 aggregateNbFec.getMean(),
+                aggregateNbPackets.getMean(),
+                aggregateNbPacketsLost.getMean(),
+                aggregateNbReceivedBytes.getMean(),
+                aggregateNbSentBytes.getMean(),
                 aggregatePacketQueueCountPackets.getMean(),
                 aggregatePacketQueueSize.getMean(),
                 aggregatePercentDiscarded.getMean(),
@@ -804,12 +870,17 @@ public class HammerStats implements Runnable
                 aggregateDownloadPercentLoss.getMin(),
                 aggregateDownloadRateKiloBitPerSec.getMin(),
                 aggregateJitterBufferDelayMs.getMin(),
+                aggregateJitterBufferDelayPackets.getMin(),
                 aggregateNbDiscarded.getMin(),
                 aggregateNbDiscardedFull.getMin(),
                 aggregateNbDiscardedLate.getMin(),
                 aggregateNbDiscardedReset.getMin(),
                 aggregateNbDiscardedShrink.getMin(),
                 aggregateNbFec.getMin(),
+                aggregateNbPackets.getMin(),
+                aggregateNbPacketsLost.getMin(),
+                aggregateNbReceivedBytes.getMin(),
+                aggregateNbSentBytes.getMin(),
                 aggregatePacketQueueCountPackets.getMin(),
                 aggregatePacketQueueSize.getMin(),
                 aggregatePercentDiscarded.getMin(),
@@ -828,12 +899,17 @@ public class HammerStats implements Runnable
                 aggregateDownloadPercentLoss.getStandardDeviation(),
                 aggregateDownloadRateKiloBitPerSec.getStandardDeviation(),
                 aggregateJitterBufferDelayMs.getStandardDeviation(),
+                aggregateJitterBufferDelayPackets.getStandardDeviation(),
                 aggregateNbDiscarded.getStandardDeviation(),
                 aggregateNbDiscardedFull.getStandardDeviation(),
                 aggregateNbDiscardedLate.getStandardDeviation(),
                 aggregateNbDiscardedReset.getStandardDeviation(),
                 aggregateNbDiscardedShrink.getStandardDeviation(),
                 aggregateNbFec.getStandardDeviation(),
+                aggregateNbPackets.getStandardDeviation(),
+                aggregateNbPacketsLost.getStandardDeviation(),
+                aggregateNbReceivedBytes.getStandardDeviation(),
+                aggregateNbSentBytes.getStandardDeviation(),
                 aggregatePacketQueueCountPackets.getStandardDeviation(),
                 aggregatePacketQueueSize.getStandardDeviation(),
                 aggregatePercentDiscarded.getStandardDeviation(),
@@ -852,12 +928,17 @@ public class HammerStats implements Runnable
                 aggregateDownloadPercentLoss.getSum(),
                 aggregateDownloadRateKiloBitPerSec.getSum(),
                 aggregateJitterBufferDelayMs.getSum(),
+                aggregateJitterBufferDelayPackets.getSum(),
                 aggregateNbDiscarded.getSum(),
                 aggregateNbDiscardedFull.getSum(),
                 aggregateNbDiscardedLate.getSum(),
                 aggregateNbDiscardedReset.getSum(),
                 aggregateNbDiscardedShrink.getSum(),
                 aggregateNbFec.getSum(),
+                aggregateNbPackets.getSum(),
+                aggregateNbPacketsLost.getSum(),
+                aggregateNbReceivedBytes.getSum(),
+                aggregateNbSentBytes.getSum(),
                 aggregatePacketQueueCountPackets.getSum(),
                 aggregatePacketQueueSize.getSum(),
                 aggregatePercentDiscarded.getSum(),
@@ -876,12 +957,17 @@ public class HammerStats implements Runnable
                 aggregateDownloadPercentLoss.getVariance(),
                 aggregateDownloadRateKiloBitPerSec.getVariance(),
                 aggregateJitterBufferDelayMs.getVariance(),
+                aggregateJitterBufferDelayPackets.getVariance(),
                 aggregateNbDiscarded.getVariance(),
                 aggregateNbDiscardedFull.getVariance(),
                 aggregateNbDiscardedLate.getVariance(),
                 aggregateNbDiscardedReset.getVariance(),
                 aggregateNbDiscardedShrink.getVariance(),
                 aggregateNbFec.getVariance(),
+                aggregateNbPackets.getVariance(),
+                aggregateNbPacketsLost.getVariance(),
+                aggregateNbReceivedBytes.getVariance(),
+                aggregateNbSentBytes.getVariance(),
                 aggregatePacketQueueCountPackets.getVariance(),
                 aggregatePacketQueueSize.getVariance(),
                 aggregatePercentDiscarded.getVariance(),
