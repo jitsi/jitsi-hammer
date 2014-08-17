@@ -468,7 +468,7 @@ public class HammerStats implements Runnable
             File saveDir = new File(this.statsDirectoryPath);
             if(saveDir.exists() == false)
             {
-                logger.info("Creating " + this.statsDirectoryPath + " directory");
+                logger.info("Creating stats directory at : " + this.statsDirectoryPath);
                 saveDir.mkdirs();
             }
         }
@@ -487,6 +487,7 @@ public class HammerStats implements Runnable
             File saveDir = new File(this.statsDirectoryPath);
             if(saveDir.exists() == false)
             {
+                logger.info("Creating stats directory at : " + this.statsDirectoryPath);
                 saveDir.mkdirs();
             }
         }
@@ -505,7 +506,7 @@ public class HammerStats implements Runnable
             File saveDir = new File(this.statsDirectoryPath);
             if(saveDir.exists() == false)
             {
-                logger.info("Creating " + this.statsDirectoryPath + " directory");
+                logger.info("Creating stats directory at : " + this.statsDirectoryPath);
                 saveDir.mkdirs();
             }
         }
