@@ -224,7 +224,7 @@ public class HammerUtils {
                         candidate.setNamespace(IceUdpTransportPacketExtension.NAMESPACE);
                         candidate.setFoundation(localCandidate.getFoundation());
                         candidate.setComponent(localCandidate.getParentComponent().getComponentID());
-                        candidate.setProtocol(localCandidate.getParentComponent().getTransport().toString());
+//                        candidate.setProtocol(localCandidate.getParentComponent().getTransport().toString());
                         candidate.setPriority(localCandidate.getPriority());
                         candidate.setIP(localCandidate.getTransportAddress().getHostAddress());
                         candidate.setPort(localCandidate.getTransportAddress().getPort());

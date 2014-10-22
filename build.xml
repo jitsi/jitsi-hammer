@@ -99,7 +99,7 @@
                 property="run.java.library.path"
                 value="-Djava.library.path=${basedir}/lib/native/${run.lib.native}">
             <isset property="run.lib.native"/>
-	    </condition>
+	</condition>
         <java
 	            classname="org.jitsi.hammer.Main"
 	            classpathref="run.classpath"

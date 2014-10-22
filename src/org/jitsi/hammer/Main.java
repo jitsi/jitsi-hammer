@@ -467,12 +467,12 @@ public class Main
         
         
         
-        //control1.start(MediaType.AUDIO);
-        //control2.start(MediaType.AUDIO);
+        control1.start(MediaType.AUDIO);
+        control2.start(MediaType.AUDIO);
         
         mediaStream1.start();
         mediaStream2.start();
         
-        while(true) Thread.sleep(3600000);
+        do Thread.sleep(60 * 60 * 1000); while (true);
     }
 }
