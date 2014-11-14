@@ -10,7 +10,7 @@ kernel="$(uname -s)"
 if [ $kernel == "Darwin" ] ; then
 	SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 	
-	architecture = "mac"
+	architecture="mac"
 else
 	SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 	
