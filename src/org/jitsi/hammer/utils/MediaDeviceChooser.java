@@ -68,7 +68,8 @@ public class MediaDeviceChooser
     {
         if(cmdArg != null)
         {
-            String str = "Creating a MediaDeviceChooser from console arguments :\n";
+            String str
+                = "Creating a MediaDeviceChooser from console arguments :\n";
 
             MediaService service = LibJitsi.getMediaService();
             MediaFormatFactory factory = service.getFormatFactory();
@@ -90,10 +91,10 @@ public class MediaDeviceChooser
             }
             else
             {
-                str = str + "-with AudioSilenceMediaDevice for the audio stream.\n";
+                str = str
+                    + "-with AudioSilenceMediaDevice for the audio stream.\n";
                 audioMediaDevice = new AudioSilenceMediaDevice();
             }
-
 
             /*
              * For the video MediaDevice, an rtpdump CaptureDevice has priority
@@ -102,7 +103,7 @@ public class MediaDeviceChooser
              */
             if(cmdArg.getVideoRtpdumpFile() != null)
             {
-                str = str + "-with rtpdump file " + cmdArg.getAudioRtpdumpFile()
+                str = str + "-with rtpdump file " + cmdArg.getVideoRtpdumpFile()
                     + " for the video stream\n";
                 videoMediaDevice = RtpdumpMediaDevice.createRtpdumpMediaDevice(
                         cmdArg.getVideoRtpdumpFile(),
