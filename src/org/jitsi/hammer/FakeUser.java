@@ -427,6 +427,8 @@ public class FakeUser implements PacketListener
                 description = cpe.getFirstChildOfType(
                     RtpDescriptionPacketExtension.class);
 
+                if(description == null)
+                    continue;
 
                 listFormat = JingleUtils.extractFormats(
                     description,

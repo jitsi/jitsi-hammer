@@ -132,8 +132,9 @@ public class HammerUtils
             stream = agent.getStream(contentName);
             if(stream == null) continue;
 
-
             transports = content.getFirstChildOfType(IceUdpTransportPacketExtension.class);
+            if(transports == null)
+                continue;
 
             stream.setRemotePassword(transports.getPassword());
             stream.setRemoteUfrag(transports.getUfrag());
@@ -322,20 +323,20 @@ public class HammerUtils
         MediaFormat format = null;
         MediaDevice device = null;
 
-
-
         MediaService mediaService = LibJitsi.getMediaService();
 
         for(String mediaName : mediaFormatMap.keySet())
         {
             format = mediaFormatMap.get(mediaName);
-            if(format == null) continue;
-
+            if(format == null)
+                continue;
 
             stream = mediaStreamMap.get(mediaName);
 
             device = mediaDeviceChooser.getMediaDevice(format.getMediaType());
-            if(device != null) stream.setDevice(device);
+            if(device != null)
+                stream.setDevice(device);
+
             stream.setFormat(format);
 
             stream.setName(mediaName);
@@ -415,15 +416,15 @@ public class HammerUtils
             iceMediaStream = agent.getStream(mediaName);
             stream = mediaStreamMap.get(mediaName);
 
+            rtpPair = iceMediaStream.getComponent(Component.RTP)
+                .getSelectedPair();
+            rtcpPair = iceMediaStream.getComponent(Component.RTCP)
+                .getSelectedPair();
 
-            rtpPair = iceMediaStream.getComponent(Component.RTP).getSelectedPair();
-            rtcpPair = iceMediaStream.getComponent(Component.RTCP).getSelectedPair();
-
-            str = str + "-" + mediaName + " stream :\n" + rtpPair;
+            str = str + "-" + mediaName + " stream :\n" + rtpPair + "\n";
 
             rtpSocket = rtpPair.getLocalCandidate().getDatagramSocket();
             rtcpSocket = rtcpPair.getLocalCandidate().getDatagramSocket();
-
 
             connector = new DefaultStreamConnector(rtpSocket, rtcpSocket);
             stream.setConnector(connector);
