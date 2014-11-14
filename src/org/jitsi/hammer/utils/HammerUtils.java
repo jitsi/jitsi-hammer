@@ -229,7 +229,7 @@ public class HammerUtils
                         candidate.setNamespace(IceUdpTransportPacketExtension.NAMESPACE);
                         candidate.setFoundation(localCandidate.getFoundation());
                         candidate.setComponent(localCandidate.getParentComponent().getComponentID());
-                        candidate.setProtocol(localCandidate.getParentComponent().getTransport().toString());
+                        candidate.setProtocol(localCandidate.getTransport().toString());
                         candidate.setPriority(localCandidate.getPriority());
                         candidate.setIP(localCandidate.getTransportAddress().getHostAddress());
                         candidate.setPort(localCandidate.getTransportAddress().getPort());
@@ -305,7 +305,6 @@ public class HammerUtils
      * @param mediaFormatMap a <tt>Map</tt> of <tt>MediaFormat</tt> indexed by
      * the name/<tt>MediaType</tt> of the MediaStreams set with this
      * <tt>MediaFormat</tt>.
-     * @param listRtpExtension
      * @param mediaDeviceChooser used to chose the MediaDevice for each stream
      * @param ptRegistry the <tt>DynamicPayloadTypeRegistry</tt> containing
      * the dynamic payload type of the <tt>MediaFormat</tt> (if necessary).
