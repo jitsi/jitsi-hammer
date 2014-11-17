@@ -38,6 +38,7 @@ The **OPTIONAL_OPTIONS** are :
 -summarystats : enable the logging of the summary stats(min,max,mean,standard deviation) from the stats collected during the run
 -statspolling <time (in seconds) between two polling of stats (default : 5sec)>
 -credentials <filepath to a file containing users credentials>
+-interval <time in milliseconds between adding of users>
 ```
 
 When the option ```-credentials``` is used, instead of loging in anonymously to the XMPP server, Jitsi-Hammer will login with the credentials contained in the file.

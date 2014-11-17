@@ -307,7 +307,7 @@ public class Main
         if(credentials.size() > 0)
         {
             hammer.start(
-                2000,
+                infoCLI.getInterval(),
                 credentials,
                 infoCLI.getOverallStats(),
                 infoCLI.getAllStats(),
@@ -317,7 +317,7 @@ public class Main
         else
         {
             hammer.start(
-                2000,
+                infoCLI.getInterval(),
                 infoCLI.getOverallStats(),
                 infoCLI.getAllStats(),
                 infoCLI.getSummaryStats(),

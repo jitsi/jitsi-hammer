@@ -135,6 +135,10 @@ public class CmdLineArguments
         + " containing users credentials")
     String credentialsFilepath = null;
 
+    @Option(name="-interval", usage="The interval in milliseconds between "
+        + "the start of new users.")
+    private int interval = 2000;
+
     /**
      * Create a HostInfo from the CLI options
      * @return a HostInfo created from the CLI options
@@ -258,6 +262,15 @@ public class CmdLineArguments
     public int getStatsPolling()
     {
         return statsPolling;
+    }
+
+    /**
+     * Gets the number of milliseconds to wait before adding a new user.
+     * @return the number of milliseconds to wait before adding a new user.
+     */
+    public int getInterval()
+    {
+        return interval;
     }
 
     /**
