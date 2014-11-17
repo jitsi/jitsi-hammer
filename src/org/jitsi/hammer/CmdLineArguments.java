@@ -135,9 +135,18 @@ public class CmdLineArguments
         + " containing users credentials")
     String credentialsFilepath = null;
 
+    /**
+     * The number of milliseconds to wait before adding a new user.
+     */
     @Option(name="-interval", usage="The interval in milliseconds between "
         + "the start of new users.")
     private int interval = 2000;
+
+    /**
+     * Whether statistics should be disabled.
+     */
+    @Option(name="-nostats", usage="Whether to disable all statistics.")
+    private boolean disableStats = false;
 
     /**
      * Create a HostInfo from the CLI options
@@ -271,6 +280,15 @@ public class CmdLineArguments
     public int getInterval()
     {
         return interval;
+    }
+
+    /**
+     * Get the flag which indicates whether statistics should be disabled.
+     * @return the flag which indicates whether statistics should be disabled.
+     */
+    public boolean getDisableStats()
+    {
+        return disableStats;
     }
 
     /**

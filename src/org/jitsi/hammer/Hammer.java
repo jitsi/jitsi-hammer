@@ -135,7 +135,7 @@ public class Hammer
      * to keep track of the streams' stats of all the <tt>FakeUser</tt>
      * etc..
      */
-    private final HammerStats hammerStats = new HammerStats();
+    private HammerStats hammerStats;
 
     /**
      * The thread that run the <tt>HammerStats</tt> of this <tt>Hammer</tt>
@@ -273,69 +273,12 @@ public class Hammer
 
     /**
      * Start the connection of all the virtual user that this <tt>Hammer</tt>
-     * handles to the XMPP server(and then a MUC).
-     * The login will be anonymous.
-     *
-     * @param wait the number of milliseconds the Hammer will wait during the
-     * start of two consecutive fake users.
-     * @param overallStats enable or not the logging of the overall stats
-     * computed at the end of the run.
-     * @param allStats enable or not the logging of the all the stats collected
-     * by the <tt>HammerStats</tt> during the run.
-     * @param summaryStats enable or not the logging of the dummary stats
-     * computed from all the streams' stats collected by the
-     * <tt>HammerStats</tt> during the run.
-     * @param statsPollingTime the number of seconds between two polling of stats
-     * by the <tt>HammerStats</tt> run method.
-     */
-    public void start(
-        int wait,
-        boolean overallStats,
-        boolean allStats,
-        boolean summaryStats,
-        int statsPollingTime)
-    {
-        if(wait <= 0) wait = 1;
-        if(started)
-        {
-            logger.warn("Hammer already started");
-            return;
-        }
-
-        logger.info("Starting the Hammer : starting all "
-            + "FakeUsers with anonymous login");
-        try
-        {
-            for(FakeUser user : fakeUsers)
-            {
-                user.start();
-                hammerStats.addFakeUsersStats(user.getFakeUserStats());
-                Thread.sleep(wait);
-            }
-        }
-        catch (XMPPException e)
-        {
-            e.printStackTrace();
-            System.exit(1);
-        }
-        catch (InterruptedException e)
-        {
-            e.printStackTrace();
-        }
-        this.started = true;
-        logger.info("The Hammer has correctly been started");
-
-        startStats(overallStats, allStats, summaryStats, statsPollingTime);
-    }
-
-
-    /**
-     * Start the connection of all the virtual user that this <tt>Hammer</tt>
      * handles to the XMPP server(and then a MUC), using the <tt>Credential</tt>
      * given as arguments for the login.
      *
      * @param wait the number of milliseconds the Hammer will wait during the
      * start of two consecutive fake users.
+     * @param disableStats whether statistics should be disabled.
      * @param credentials a list of <tt>Credentials</tt> used for the login
      * of the fake users.
      * @param overallStats enable or not the logging of the overall stats
@@ -345,12 +288,12 @@ public class Hammer
      * @param summaryStats enable or not the logging of the dummary stats
      * computed from all the streams' stats collected by the
      * <tt>HammerStats</tt> during the run.
-     * @param b
      * @param statsPollingTime the number of seconds between two polling of stats
      * by the <tt>HammerStats</tt> run method.
      */
     public void start(
         int wait,
+        boolean disableStats,
         List<Credential> credentials,
         boolean overallStats,
         boolean allStats,
@@ -363,9 +306,32 @@ public class Hammer
             logger.warn("Hammer already started");
             return;
         }
+        if (!disableStats)
+            hammerStats = new HammerStats();
 
+        if (credentials != null)
+            startUsersWithCredentials(credentials, wait);
+        else
+            startUsersAnonymous(wait);
+        this.started = true;
+        logger.info("The Hammer has correctly been started");
+
+        if (!disableStats)
+            startStats(overallStats, allStats, summaryStats, statsPollingTime);
+    }
+
+    /**
+     * Start all users using authenticated login.
+     *
+     * @param credentials a list of <tt>Credentials</tt> used for the login of
+     * the fake users.
+     * @param wait the number of milliseconds the Hammer will wait during the
+     * start of two consecutive fake users.
+     */
+    private void startUsersWithCredentials(List<Credential> credentials, int wait)
+    {
         logger.info("Starting the Hammer : starting all FakeUsers "
-            + "with username/password login");
+                            + "with username/password login");
         try
         {
             Iterator<FakeUser> userIt = Arrays.asList(fakeUsers).iterator();
@@ -379,7 +345,8 @@ public class Hammer
                 credential = credIt.next();
 
                 user.start(credential.getUsername(),credential.getPassword());
-                hammerStats.addFakeUsersStats(user.getFakeUserStats());
+                if (hammerStats != null)
+                    hammerStats.addFakeUsersStats(user.getFakeUserStats());
                 Thread.sleep(wait);
             }
         }
@@ -392,12 +359,38 @@ public class Hammer
         {
             e.printStackTrace();
         }
-        this.started = true;
-        logger.info("The Hammer has correctly been started");
-
-        startStats(overallStats, allStats, summaryStats, statsPollingTime);
     }
 
+    /**
+     * Start all fake users with anonymous login.
+     * @param wait the number of milliseconds the Hammer will wait during the
+     * start of two consecutive fake users.
+     */
+    private void startUsersAnonymous(int wait)
+    {
+        logger.info("Starting the Hammer : starting all "
+                            + "FakeUsers with anonymous login");
+        try
+        {
+            for(FakeUser user : fakeUsers)
+            {
+                user.start();
+                if (hammerStats != null)
+                    hammerStats.addFakeUsersStats(user.getFakeUserStats());
+                Thread.sleep(wait);
+            }
+        }
+        catch (XMPPException e)
+        {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+
+    }
     /**
      * Start the <tt>HammerStats</tt> used by this <tt>Hammer</tt> to keep track
      * of the streams stats.
@@ -455,7 +448,8 @@ public class Hammer
          * instance hammerStatsThread, to allow it to cleanly stop.
          */
         logger.info("Stopping the HammerStats and waiting for its thread to return");
-        hammerStats.stop();
+        if (hammerStats != null)
+            hammerStats.stop();
         try
         {
             hammerStatsThread.join();

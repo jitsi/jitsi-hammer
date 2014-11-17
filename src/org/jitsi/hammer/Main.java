@@ -304,25 +304,14 @@ public class Main
 
         //After the initialization we start the Hammer (all its users will
         //connect to the XMPP server and try to setup media stream with it bridge
-        if(credentials.size() > 0)
-        {
-            hammer.start(
+        hammer.start(
                 infoCLI.getInterval(),
-                credentials,
+                infoCLI.getDisableStats(),
+                (credentials.size() > 0) ? credentials : null,
                 infoCLI.getOverallStats(),
                 infoCLI.getAllStats(),
                 infoCLI.getSummaryStats(),
                 infoCLI.getStatsPolling());
-        }
-        else
-        {
-            hammer.start(
-                infoCLI.getInterval(),
-                infoCLI.getOverallStats(),
-                infoCLI.getAllStats(),
-                infoCLI.getSummaryStats(),
-                infoCLI.getStatsPolling());
-        }
 
         if(infoCLI.getRunLength() > 0)
         {

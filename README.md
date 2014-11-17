@@ -25,20 +25,21 @@ The **MANDATORY_OPTIONS** are :
 The **OPTIONAL_OPTIONS** are :
 
 ```
--help : display the usage and help of the program
+-help <display the usage and help of the program>
 -room <name of the MUC room (default : TestHammer)>
--port <port number of the XMPP server (default : 5222)>
--users <number of fake users to create (default : 1)>
--length <length of the run in seconds (default : 0)>
+-port <port number of the XMPP server (default: 5222)>
+-users <number of fake users to create (default: 1)>
+-length <length of the run in seconds (default: 0)>
 -ivf <path to an ivf file for the video streams>
 -videortpdump <path to a rtpdump file containing VP8 RTP packets for the video streams>
 -audiortpdump <path to a rtpdump file containing Opus RTP packets for the video streams>
--overallstats : enable the logging of the overall stats at the end of the run.
--allstats : enable the logging of all the stats collected during the run
--summarystats : enable the logging of the summary stats(min,max,mean,standard deviation) from the stats collected during the run
--statspolling <time (in seconds) between two polling of stats (default : 5sec)>
+-overallstats <enable the logging of the overall stats at the end of the run>
+-allstats <enable the logging of all the stats collected during the run>
+-summarystats <enable the logging of the summary stats(min,max,mean,standard deviation) from the stats collected during the run>
+-statspolling <time (in seconds) between two polling of stats (default: 5sec)>
 -credentials <filepath to a file containing users credentials>
--interval <time in milliseconds between adding of users>
+-interval <time in milliseconds between adding of users (default: 2sec)>
+-nostats <disable all stats (default: stats are enabled)>
 ```
 
 When the option ```-credentials``` is used, instead of loging in anonymously to the XMPP server, Jitsi-Hammer will login with the credentials contained in the file.
