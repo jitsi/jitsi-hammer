@@ -452,7 +452,8 @@ public class Hammer
             hammerStats.stop();
         try
         {
-            hammerStatsThread.join();
+            if(hammerStatsThread != null)
+                hammerStatsThread.join();
         }
         catch (InterruptedException e)
         {
