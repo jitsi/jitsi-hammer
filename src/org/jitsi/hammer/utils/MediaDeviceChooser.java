@@ -20,6 +20,8 @@ import org.jitsi.service.neomedia.format.MediaFormatFactory;
 import org.jitsi.util.Logger;
 import org.jitsi.videobridge.*;
 
+import javax.media.*;
+import javax.media.format.*;
 
 /**
  * This class is used to get the chosen MediaDevice for a given MediaType.
@@ -82,11 +84,30 @@ public class MediaDeviceChooser
             {
                 str = str + "-with rtpdump file " + cmdArg.getAudioRtpdumpFile()
                     + " for the audio stream.\n";
-                logger.info("");
-                audioMediaDevice = RtpdumpMediaDevice.createRtpdumpMediaDevice(
-                        cmdArg.getAudioRtpdumpFile(),
-                        Constants.OPUS_RTP,
-                        factory.createMediaFormat("Opus", 48000, 2));
+                AudioFormat opusFormat
+                    = new AudioFormat(
+                            Constants.OPUS_RTP,
+                            48000,
+                            Format.NOT_SPECIFIED,
+                            2 /* channels */)
+                {
+                    /**
+                     * FMJ depends on this value when it calculates the RTP
+                     * timestamps on the packets that it sends.
+                     *
+                     * This limits the supported files to only files with 20ms
+                     * opus frames.
+                     */
+                    @Override
+                    public long computeDuration(long length)
+                    {
+                        return 20L * 1000 * 1000;
+                    }
+                };
+                audioMediaDevice
+                    = RtpdumpMediaDevice.createRtpdumpAudioMediaDevice(
+                            cmdArg.getAudioRtpdumpFile(),
+                            opusFormat);
 
             }
             else
@@ -105,10 +126,11 @@ public class MediaDeviceChooser
             {
                 str = str + "-with rtpdump file " + cmdArg.getVideoRtpdumpFile()
                     + " for the video stream\n";
-                videoMediaDevice = RtpdumpMediaDevice.createRtpdumpMediaDevice(
-                        cmdArg.getVideoRtpdumpFile(),
-                        Constants.VP8_RTP,
-                        factory.createMediaFormat("vp8", 90000));
+                videoMediaDevice
+                    = RtpdumpMediaDevice.createRtpdumpVideoMediaDevice(
+                            cmdArg.getVideoRtpdumpFile(),
+                            Constants.VP8_RTP,
+                            factory.createMediaFormat("vp8", 90000));
             }
             else if(cmdArg.getIVFFile() != null)
             {
