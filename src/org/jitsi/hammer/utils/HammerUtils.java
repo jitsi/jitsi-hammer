@@ -13,6 +13,7 @@ import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.Candidat
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
 import net.java.sip.communicator.service.protocol.media.*;
 
+import org.ice4j.socket.*;
 import org.jitsi.hammer.extension.*;
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
@@ -423,8 +424,27 @@ public class HammerUtils
 
             str = str + "-" + mediaName + " stream :\n" + rtpPair + "\n";
 
-            rtpSocket = rtpPair.getLocalCandidate().getDatagramSocket();
-            rtcpSocket = rtcpPair.getLocalCandidate().getDatagramSocket();
+            rtpSocket = rtpPair.getIceSocketWrapper().getUDPSocket();
+
+            if (rtpSocket instanceof MultiplexingDatagramSocket)
+            {
+                try
+                {
+                    // We are not going to handle any incoming RTP packets
+                    // anyway, so we might as well drop them early and not
+                    // waste resources processing them further.
+                    // This sets up a filtered socket, which receives only
+                    // DTLS packets.
+                    rtpSocket
+                        = ((MultiplexingDatagramSocket) rtpSocket)
+                            .getSocket(new DTLSDatagramFilter());
+                }
+                catch (SocketException se)
+                {
+                    // Whatever, this is just an optimization, anyway.
+                }
+            }
+            rtcpSocket = rtcpPair.getIceSocketWrapper().getUDPSocket();
 
             connector = new DefaultStreamConnector(rtpSocket, rtcpSocket);
             stream.setConnector(connector);
