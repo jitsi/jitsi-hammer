@@ -79,13 +79,9 @@ public class Main
          * already in use).
          */
         String profileLocation = System.getProperty(PNAME_SC_HOME_DIR_LOCATION);
-        String cacheLocation = System.getProperty(PNAME_SC_CACHE_DIR_LOCATION);
-        String logLocation = System.getProperty(PNAME_SC_LOG_DIR_LOCATION);
         String name = System.getProperty(PNAME_SC_HOME_DIR_NAME);
 
         if (profileLocation == null
-            || cacheLocation == null
-            || logLocation == null
             || name == null)
         {
             String defaultLocation = System.getProperty("user.home");
@@ -98,16 +94,6 @@ public class Main
                     System.getProperty("user.home") + File.separator
                     + "Library" + File.separator
                     + "Application Support";
-                if (cacheLocation == null)
-                    cacheLocation =
-                    System.getProperty("user.home") + File.separator
-                    + "Library" + File.separator
-                    + "Caches";
-                if (logLocation == null)
-                    logLocation =
-                    System.getProperty("user.home") + File.separator
-                    + "Library" + File.separator
-                    + "Logs";
 
                 if (name == null)
                     name = "Jitsi-Hammer";
@@ -122,10 +108,6 @@ public class Main
                  */
                 if (profileLocation == null)
                     profileLocation = System.getenv("APPDATA");
-                if (cacheLocation == null)
-                    cacheLocation = System.getenv("LOCALAPPDATA");
-                if (logLocation == null)
-                    logLocation = System.getenv("LOCALAPPDATA");
                 if (name == null)
                     name = "Jitsi-Hammer";
             }
@@ -133,21 +115,15 @@ public class Main
             /* If there're no OS specifics, use the defaults. */
             if (profileLocation == null)
                 profileLocation = defaultLocation;
-            if (cacheLocation == null)
-                cacheLocation = profileLocation;
-            if (logLocation == null)
-                logLocation = profileLocation;
             if (name == null)
                 name = defaultName;
 
             System.setProperty(PNAME_SC_HOME_DIR_LOCATION, profileLocation);
-            System.setProperty(PNAME_SC_CACHE_DIR_LOCATION, cacheLocation);
-            System.setProperty(PNAME_SC_LOG_DIR_LOCATION, logLocation);
             System.setProperty(PNAME_SC_HOME_DIR_NAME, name);
         }
 
         // when we end up with the home dirs, make sure we have log dir
-        new File(new File(logLocation, name), "log").mkdirs();
+        new File(new File(profileLocation, name), "log").mkdirs();
     }
 
 
