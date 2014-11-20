@@ -124,6 +124,11 @@ public class Main
 
         // when we end up with the home dirs, make sure we have log dir
         new File(new File(profileLocation, name), "log").mkdirs();
+
+        // Make libjitsi treat the configuration file as read-only
+        System.setProperty(
+                "net.java.sip.communicator.CONFIGURATION_FILE_IS_READ_ONLY",
+                "true");
     }
 
 
