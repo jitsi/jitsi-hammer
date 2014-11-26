@@ -27,6 +27,7 @@ import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
 import net.java.sip.communicator.service.protocol.media.*;
 
+import java.beans.*;
 import java.io.*;
 import java.util.*;
 
@@ -179,9 +180,6 @@ public class FakeUser implements PacketListener
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
      * <tt>FakeUser</tt> to choose the <tt>MediaDevice</tt> for each of its
      * <tt>MediaStream</tt>s.
-     * @param hammerStats The <tt>HammerStat</tt> to which this
-     * <tt>FakeUser</tt> will register its <tt>MediaStream</tt>s for their
-     * stats.
      */
     public FakeUser(
         HostInfo hostInfo,
@@ -198,9 +196,6 @@ public class FakeUser implements PacketListener
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
      * <tt>FakeUser</tt> to choose the <tt>MediaDevice</tt> for each of its
      * <tt>MediaStream</tt>s.
-     * @param hammerStats The <tt>HammerStat</tt> to which this
-     * <tt>FakeUser</tt> will register its <tt>MediaStream</tt>s for their
-     * stats.
      * @param nickname the nickname used by this <tt>FakeUser</tt> in the
      * connection.
      *
@@ -223,9 +218,6 @@ public class FakeUser implements PacketListener
      * <tt>MediaStream</tt>s.
      * @param nickname the nickname used by this <tt>FakeUser</tt> in the
      * connection.
-     * @param hammerStats The <tt>HammerStat</tt> to which this
-     * <tt>FakeUser</tt> will register its <tt>MediaStream</tt>s for their
-     * stats.
      * @param smackDebug the boolean activating or not the debug screen of smack
      */
     public FakeUser(
@@ -576,23 +568,75 @@ public class FakeUser implements PacketListener
         connection.sendPacket(sessionAccept);
         logger.info(this.nickname + " : Jingle accept-session message sent");
 
-        //Run ICE protocol on my streams.
-        agent.startConnectivityEstablishment();
-        while(IceProcessingState.TERMINATED != agent.getState())
+
+        // A listener to wake us up when the Agent enters a final state.
+        final Object syncRoot = new Object();
+        PropertyChangeListener propertyChangeListener
+                = new PropertyChangeListener()
         {
-            logger.info(this.nickname + " : Connectivity Establishment in process");
-            try
+            @Override
+            public void propertyChange(PropertyChangeEvent ev)
             {
-                Thread.sleep(1500);
+                Object newValue = ev.getNewValue();
+
+                if (IceProcessingState.COMPLETED.equals(newValue)
+                        || IceProcessingState.FAILED.equals(newValue)
+                        || IceProcessingState.TERMINATED.equals(newValue))
+                {
+                    Agent iceAgent = (Agent) ev.getSource();
+
+                    iceAgent.removeStateChangeListener(this);
+                    if (iceAgent == FakeUser.this.agent)
+                    {
+                        synchronized (syncRoot)
+                        {
+                            syncRoot.notify();
+                        }
+                    }
+                }
             }
-            catch (InterruptedException e)
+        };
+
+        agent.addStateChangeListener(propertyChangeListener);
+        agent.startConnectivityEstablishment();
+
+        synchronized (syncRoot)
+        {
+            long startWait = System.currentTimeMillis();
+            do
             {
-                logger.fatal(this.nickname + " : error during ICE "
-                    + "connectivity establishement",e);
+                IceProcessingState iceState = agent.getState();
+                if (IceProcessingState.COMPLETED.equals(iceState)
+                        || IceProcessingState.TERMINATED.equals(iceState)
+                        || IceProcessingState.FAILED.equals(iceState))
+                    break;
+
+                if (System.currentTimeMillis() - startWait > 10000)
+                    break; // Don't run for more than 10 seconds
+
+                try
+                {
+                    syncRoot.wait(1000);
+                }
+                catch (InterruptedException ie)
+                {
+                    logger.fatal("Interrupted: " + ie);
+                    break;
+                }
             }
+            while (true);
         }
 
+        agent.removeStateChangeListener(propertyChangeListener);
 
+        IceProcessingState iceState = agent.getState();
+        if (!IceProcessingState.COMPLETED.equals(iceState)
+                && !IceProcessingState.TERMINATED.equals(iceState))
+        {
+            logger.fatal("ICE failed for user " + nickname + ". Agent state: "
+                                 + iceState);
+            return;
+        }
 
         //Add socket created by ice4j to their associated MediaStreams
         HammerUtils.addSocketToMediaStream(agent, mediaStreamMap);
