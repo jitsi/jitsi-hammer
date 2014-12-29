@@ -511,7 +511,7 @@ public class HammerUtils
                     = new LinkedHashMap<String,String>();
 
                     //XXX videobridge send a session-initiate with only one
-                    //fingerprint, so I'm not sure using a loop here is usefull
+                    //fingerprint, so I'm not sure using a loop here is useful
                     for(DtlsFingerprintPacketExtension fingerprint : fingerprints)
                     {
                         remoteFingerprints.put(
@@ -526,6 +526,14 @@ public class HammerUtils
                             if(setup != null)
                             {
                                 dtlsSetup = DtlsControl.Setup.parseSetup(setup);
+                            }
+                            else
+                            {
+                                // Default to ACTPASS (and not ACTIVE, as
+                                // RFC4145 defines), because this is what is
+                                // expected in a jitsi-videobridge + (jicofo or
+                                // jitsi-meet) environment.
+                                dtlsSetup = DtlsControl.Setup.ACTPASS;
                             }
                         }
                     }
