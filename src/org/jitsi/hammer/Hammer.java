@@ -9,6 +9,7 @@ package org.jitsi.hammer;
 
 
 
+import org.jitsi.hammer.stats.*;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.*;
 import org.osgi.framework.startlevel.*;
@@ -19,7 +20,6 @@ import net.java.sip.communicator.impl.osgi.framework.launch.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 
 import org.jitsi.hammer.extension.*;
-import org.jitsi.hammer.stats.HammerStats;
 import org.jitsi.hammer.utils.MediaDeviceChooser;
 import org.jitsi.util.Logger;
 
@@ -172,7 +172,8 @@ public class Hammer
             fakeUsers[i] = new FakeUser(
                 this.serverInfo,
                 this.mediaDeviceChooser,
-                this.nickname+"_"+i);
+                this.nickname+"_"+i,
+                (hammerStats != null));
         }
         logger.info(String.format("Hammer created : %d fake users were created"
             + " with a base nickname %s", numberOfUser, nickname));
@@ -337,6 +338,7 @@ public class Hammer
             Iterator<FakeUser> userIt = Arrays.asList(fakeUsers).iterator();
             Iterator<Credential> credIt = credentials.iterator();
             FakeUser user = null;
+            FakeUserStats userStats;
             Credential credential = null;
 
             while(credIt.hasNext() && userIt.hasNext())
@@ -345,8 +347,9 @@ public class Hammer
                 credential = credIt.next();
 
                 user.start(credential.getUsername(),credential.getPassword());
-                if (hammerStats != null)
-                    hammerStats.addFakeUsersStats(user.getFakeUserStats());
+                if (hammerStats != null
+                        && (userStats = user.getFakeUserStats()) != null)
+                    hammerStats.addFakeUsersStats(userStats);
                 Thread.sleep(wait);
             }
         }
@@ -374,9 +377,11 @@ public class Hammer
         {
             for(FakeUser user : fakeUsers)
             {
+                FakeUserStats userStats;
                 user.start();
-                if (hammerStats != null)
-                    hammerStats.addFakeUsersStats(user.getFakeUserStats());
+                if (hammerStats != null
+                        && (userStats = user.getFakeUserStats()) != null)
+                    hammerStats.addFakeUsersStats(userStats);
                 Thread.sleep(wait);
             }
         }

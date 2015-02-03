@@ -91,6 +91,11 @@ public class FakeUserStats
      */
     private MediaStreamStats videoStats;
 
+    public FakeUserStats(String username)
+    {
+        this.username = username;
+    }
+
     /**
      * Set the SSRC and <tt>MediaStreamStats</tt> of mediaStream
      * depending of the stream type.
@@ -165,18 +170,18 @@ public class FakeUserStats
     /**
      * Get the stats of the audio and video stream from the corresponding
      * <tt>MediaStreamStats</tt> in JSON.
-     * @param spaceIdent the number of space added to ident each line
+     * @param spaceIndent the number of space added to indent each line
      * of the returned JSON.
      * @return the stats of the audio and video stream from the corresponding
      * <tt>MediaStreamStats</tt> in JSON.
      */
-    public String getStatsJSON(int spaceIdent)
+    public String getStatsJSON(int spaceIndent)
     {
-        String ident = new String(new char[spaceIdent]).replace("\0" ,  " ");
+        String indent = new String(new char[spaceIndent]).replace("\0" ,  " ");
         StringBuilder builder = new StringBuilder();
-        builder.append(ident + "{\n");
-        builder.append(ident + "  \"username\" : \""+ this.username +"\" , \n");
-        builder.append(ident + "  \"streams\" :\n");
+        builder.append(indent + "{\n");
+        builder.append(indent + "  \"username\" : \""+ this.username +"\" , \n");
+        builder.append(indent + "  \"streams\" :\n");
 
         String str = String.format(jsonTemplate,
             audioSSRC ,
@@ -226,10 +231,10 @@ public class FakeUserStats
             videoStats.getUploadJitterMs(),
             videoStats.getUploadPercentLoss() ,
             videoStats.getUploadRateKiloBitPerSec());
-        str = ident + str.replaceAll("\n", "\n"+ident);
+        str = indent + str.replaceAll("\n", "\n"+indent);
         builder.append(str + '\n');
 
-        builder.append(ident + "}");
+        builder.append(indent + "}");
 
         return builder.toString();
     }

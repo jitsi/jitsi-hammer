@@ -400,7 +400,8 @@ public class HammerUtils
      */
     public static void addSocketToMediaStream(
         Agent agent,
-        Map<String,MediaStream> mediaStreamMap)
+        Map<String,MediaStream> mediaStreamMap,
+        boolean dropIncomingRtpPackets)
     {
         IceMediaStream iceMediaStream = null;
         CandidatePair rtpPair = null;
@@ -426,7 +427,8 @@ public class HammerUtils
 
             rtpSocket = rtpPair.getIceSocketWrapper().getUDPSocket();
 
-            if (rtpSocket instanceof MultiplexingDatagramSocket)
+            if (dropIncomingRtpPackets &&
+                    rtpSocket instanceof MultiplexingDatagramSocket)
             {
                 try
                 {

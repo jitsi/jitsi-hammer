@@ -168,15 +168,13 @@ public class FakeUser implements PacketListener
      * The <tt>FakeUserStats</tt> that represents the stats of the streams of
      * this <tt>FakeUser</tt>
      */
-    FakeUserStats fakeUserStats = new FakeUserStats();
-
-
+    private FakeUserStats fakeUserStats;
 
     /**
      * Instantiates a <tt>FakeUser</tt> with a default nickname that
      * will connect to the XMPP server contained in <tt>hostInfo</tt>.
      *
-     * @param hostInfo the XMPP server informations needed for the connection.
+     * @param hostInfo the XMPP server information needed for the connection.
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
      * <tt>FakeUser</tt> to choose the <tt>MediaDevice</tt> for each of its
      * <tt>MediaStream</tt>s.
@@ -185,14 +183,14 @@ public class FakeUser implements PacketListener
         HostInfo hostInfo,
         MediaDeviceChooser mdc)
     {
-        this(hostInfo, mdc, null);
+        this(hostInfo, mdc, null, true);
     }
 
     /**
      * Instantiates a <tt>FakeUser</tt> with a specified <tt>nickname</tt>
      * that will connect to the XMPP server contained in <tt>hostInfo</tt>.
      *
-     * @param hostInfo the XMPP server informations needed for the connection.
+     * @param hostInfo the XMPP server information needed for the connection.
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
      * <tt>FakeUser</tt> to choose the <tt>MediaDevice</tt> for each of its
      * <tt>MediaStream</tt>s.
@@ -203,16 +201,17 @@ public class FakeUser implements PacketListener
     public FakeUser(
         HostInfo hostInfo,
         MediaDeviceChooser mdc,
-        String nickname)
+        String nickname,
+        boolean statisticsEnabled)
     {
-        this(hostInfo, mdc, nickname, false);
+        this(hostInfo, mdc, nickname, false, statisticsEnabled);
     }
 
     /**
      * Instantiates a <tt>FakeUser</tt> with a specified <tt>nickname</tt>
      * that will connect to the XMPP server contained in <tt>hostInfo</tt>.
      *
-     * @param hostInfo the XMPP server informations needed for the connection.
+     * @param hostInfo the XMPP server information needed for the connection.
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
      * <tt>FakeUser</tt> to choose the <tt>MediaDevice</tt> for each of its
      * <tt>MediaStream</tt>s.
@@ -224,11 +223,13 @@ public class FakeUser implements PacketListener
         HostInfo hostInfo,
         MediaDeviceChooser mdc,
         String nickname,
-        boolean smackDebug)
+        boolean smackDebug,
+        boolean statisticsEnabled)
     {
         this.serverInfo = hostInfo;
         this.mediaDeviceChooser = mdc;
         this.nickname = (nickname == null) ? "Anonymous" : nickname;
+        fakeUserStats = statisticsEnabled ? new FakeUserStats(nickname) : null;
 
         config = new ConnectionConfiguration(
             serverInfo.getXMPPHostname(),
@@ -250,11 +251,13 @@ public class FakeUser implements PacketListener
          * so the HammerStats can register their MediaStreamStats now.
          */
         mediaStreamMap = HammerUtils.createMediaStreams();
-        fakeUserStats.setMediaStreamStats(
-            mediaStreamMap.get(MediaType.AUDIO.toString()));
-        fakeUserStats.setMediaStreamStats(
-            mediaStreamMap.get(MediaType.VIDEO.toString()));
-        fakeUserStats.setUsername(this.nickname);
+        if (fakeUserStats != null)
+        {
+            fakeUserStats.setMediaStreamStats(
+                    mediaStreamMap.get(MediaType.AUDIO.toString()));
+            fakeUserStats.setMediaStreamStats(
+                    mediaStreamMap.get(MediaType.VIDEO.toString()));
+        }
 
 
         ServiceDiscoveryManager discoManager =
@@ -638,8 +641,12 @@ public class FakeUser implements PacketListener
             return;
         }
 
-        //Add socket created by ice4j to their associated MediaStreams
-        HammerUtils.addSocketToMediaStream(agent, mediaStreamMap);
+        // Add socket created by ice4j to their associated MediaStreams
+        // We drop incoming RTP packets when statistics are disabled in order
+        // to improve performance.
+        HammerUtils.addSocketToMediaStream(agent,
+                                           mediaStreamMap,
+                                           fakeUserStats == null);
 
 
         //Start the encryption of the MediaStreams
