@@ -178,7 +178,7 @@ public class HammerStats implements Runnable
         }
 
         logger.info("Running the main loop");
-        while(threadStop == false)
+        while (!threadStop)
         {
             synchronized(this)
             {
@@ -340,7 +340,7 @@ public class HammerStats implements Runnable
      */
     public synchronized void stop()
     {
-        if(threadStop == false)
+        if (!threadStop)
         {
             logger.info("Stopping the main loop");
             threadStop = true;
@@ -355,7 +355,7 @@ public class HammerStats implements Runnable
     {
         try
         {
-            logger.info("Writting overall stats to file");
+            logger.info("Writing overall stats to file");
             PrintWriter writer = new PrintWriter(overallStatsFile, "UTF-8");
             writer.print(getOverallStatsJSON() + '\n');
             writer.close();
@@ -466,9 +466,10 @@ public class HammerStats implements Runnable
         if(allStats)
         {
             File saveDir = new File(this.statsDirectoryPath);
-            if(saveDir.exists() == false)
+            if (!saveDir.exists())
             {
-                logger.info("Creating stats directory at : " + this.statsDirectoryPath);
+                logger.info("Creating stats directory at : "
+                                    + this.statsDirectoryPath);
                 saveDir.mkdirs();
             }
         }
@@ -477,7 +478,7 @@ public class HammerStats implements Runnable
     /**
      * Enable or disable the logging of the summary stats computed with all
      * the stats collected by this <tt>HammerStats</tt>.
-     * @param allStats the boolean that enable of disable the logging.
+     * @param summaryStats the boolean that enable of disable the logging.
      */
     public void setSummaryStatsLogging(boolean summaryStats)
     {
@@ -485,9 +486,10 @@ public class HammerStats implements Runnable
         if(summaryStats)
         {
             File saveDir = new File(this.statsDirectoryPath);
-            if(saveDir.exists() == false)
+            if (!saveDir.exists())
             {
-                logger.info("Creating stats directory at : " + this.statsDirectoryPath);
+                logger.info("Creating stats directory at : "
+                                    + this.statsDirectoryPath);
                 saveDir.mkdirs();
             }
         }
@@ -496,7 +498,7 @@ public class HammerStats implements Runnable
     /**
      * Enable or disable the logging of all the stats collected by this
      * <tt>HammerStats</tt>.
-     * @param allStats the boolean that enable of disable the logging.
+     * @param overallStats the boolean that enable of disable the logging.
      */
     public void setOverallStatsLogging(boolean overallStats)
     {
@@ -504,9 +506,10 @@ public class HammerStats implements Runnable
         if(overallStats)
         {
             File saveDir = new File(this.statsDirectoryPath);
-            if(saveDir.exists() == false)
+            if (!saveDir.exists())
             {
-                logger.info("Creating stats directory at : " + this.statsDirectoryPath);
+                logger.info("Creating stats directory at : "
+                                    + this.statsDirectoryPath);
                 saveDir.mkdirs();
             }
         }
@@ -536,28 +539,50 @@ public class HammerStats implements Runnable
          * (in JSON), and are replace by newly created SummaryStatistics by
          * the AggregateSummaryStatistics (for the next iteration).
          */
-        AggregateSummaryStatistics aggregateDownloadJitterMs = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateDownloadPercentLoss = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateDownloadRateKiloBitPerSec = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateJitterBufferDelayMs = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateJitterBufferDelayPackets = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateNbDiscarded = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateNbDiscardedFull = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateNbDiscardedLate = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateNbDiscardedReset = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateNbDiscardedShrink = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateNbFec = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateNbPackets = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateNbPacketsLost = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateNbReceivedBytes = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateNbSentBytes = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregatePacketQueueCountPackets = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregatePacketQueueSize = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregatePercentDiscarded = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateRttMs = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateUploadJitterMs = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateUploadPercentLoss = new AggregateSummaryStatistics();
-        AggregateSummaryStatistics aggregateUploadRateKiloBitPerSec = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateDownloadJitterMs
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateDownloadPercentLoss
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateDownloadRateKiloBitPerSec
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateJitterBufferDelayMs
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateJitterBufferDelayPackets
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateNbDiscarded
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateNbDiscardedFull
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateNbDiscardedLate
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateNbDiscardedReset
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateNbDiscardedShrink
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateNbFec
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateNbPackets
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateNbPacketsLost
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateNbReceivedBytes
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateNbSentBytes
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregatePacketQueueCountPackets
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregatePacketQueueSize
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregatePercentDiscarded
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateRttMs
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateUploadJitterMs
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateUploadPercentLoss
+                = new AggregateSummaryStatistics();
+        AggregateSummaryStatistics aggregateUploadRateKiloBitPerSec
+                = new AggregateSummaryStatistics();
 
         SummaryStatistics downloadJitterMs;
         SummaryStatistics downloadPercentLoss;

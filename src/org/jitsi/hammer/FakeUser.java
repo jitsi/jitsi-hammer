@@ -364,7 +364,8 @@ public class FakeUser implements PacketListener
     {
         logger.info(this.nickname + " : stopping the streams, leaving the MUC"
             + " and disconnecting from the XMPP server");
-        if(agent != null) agent.free();
+        if(agent != null)
+            agent.free();
         for(MediaStream stream : mediaStreamMap.values())
         {
             stream.close();

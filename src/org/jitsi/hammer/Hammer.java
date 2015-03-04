@@ -404,7 +404,7 @@ public class Hammer
      * computed at the end of the run.
      * @param allStats enable or not the logging of the all the stats collected
      * by the <tt>HammerStats</tt> during the run.
-     * @param summaryStats enable or not the logging of the dummary stats
+     * @param summaryStats enable or not the logging of the summary stats
      * computed from all the streams' stats collected by the
      * <tt>HammerStats</tt> during the run.
      * @param statsPollingTime the number of seconds between two polling of stats
@@ -436,7 +436,7 @@ public class Hammer
      */
     public void stop()
     {
-        if(this.started == false)
+        if (!this.started)
         {
             logger.warn("Hammer already stopped !");
             return;
