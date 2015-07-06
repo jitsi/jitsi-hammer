@@ -30,7 +30,7 @@ RUN apt-get install -y \
 
 
 ENTRYPOINT [ "/usr/bin/reefer", \
-    "-t", "/templates/logging.properties.tmpl:/jitsi-hammer/lib/logging.properties", \
+    "-t", "templates/logging.properties.tmpl:/jitsi-hammer/lib/logging.properties", \
     "-E" \
 ]
 
