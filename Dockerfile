@@ -41,7 +41,7 @@ CMD /etc/init.d/alsa-utils start && env && set -x && /jitsi-hammer/jitsi-hammer.
     -MUCdomain $MUC_PREFIX.$XMPP_DOMAIN \
     -overallstats \
     -ivf /jitsi-hammer/resources/big-buck-bunny_trailer_track1_eng.ivf \
-    -audiortpdump /jitsi-hammer/resources/rtp_opus.rtpdump \
+    -audiortpdump /jitsi-hammer/resources/hammer-opus.rtpdump \
     -room $ROOM_NAME \
     -interval $INTERVAL \
     -length $LENGTH \
