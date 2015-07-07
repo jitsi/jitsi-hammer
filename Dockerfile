@@ -39,6 +39,8 @@ CMD /etc/init.d/alsa-utils start && env && set -x && /jitsi-hammer/jitsi-hammer.
     -XMPPhost $HAMMER_XMPP_HOST \
     -port $PORT \
     -MUCdomain $MUC_PREFIX.$XMPP_DOMAIN \
+    -allstats \
+    -summarystats \
     -overallstats \
     -ivf /jitsi-hammer/resources/big-buck-bunny_trailer_track1_eng.ivf \
     -audiortpdump /jitsi-hammer/resources/hammer-opus.rtpdump \
