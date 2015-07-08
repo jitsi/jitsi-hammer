@@ -169,12 +169,15 @@ public class Hammer
      * @param numberOfUser The number of virtual users this <tt>Hammer</tt>
      * will create and handle.
      */
-    public Hammer(HostInfo host, MediaDeviceChooser mdc, String nickname, int numberOfUser)
+    public Hammer(HostInfo host, MediaDeviceChooser mdc, String nickname, int numberOfUser, boolean disableStats)
     {
         this.nickname = nickname;
         this.serverInfo = host;
         this.mediaDeviceChooser = mdc;
         fakeUsers = new FakeUser[numberOfUser];
+
+        if (!disableStats)
+            hammerStats = new HammerStats();
 
         for(int i = 0; i<fakeUsers.length; i++)
         {
@@ -182,7 +185,7 @@ public class Hammer
                 this.serverInfo,
                 this.mediaDeviceChooser,
                 this.nickname+"_"+i,
-                (hammerStats != null));
+                !disableStats);
         }
         logger.info(String.format("Hammer created : %d fake users were created"
             + " with a base nickname %s", numberOfUser, nickname));
@@ -303,7 +306,6 @@ public class Hammer
      */
     public void start(
         int wait,
-        boolean disableStats,
         List<Credential> credentials,
         boolean overallStats,
         boolean allStats,
@@ -316,8 +318,6 @@ public class Hammer
             logger.warn("Hammer already started");
             return;
         }
-        if (!disableStats)
-            hammerStats = new HammerStats();
 
         if (credentials != null)
             startUsersWithCredentials(credentials, wait);
@@ -326,7 +326,7 @@ public class Hammer
         this.started = true;
         logger.info("The Hammer has correctly been started");
 
-        if (!disableStats)
+        if (hammerStats != null)
             startStats(overallStats, allStats, summaryStats, statsPollingTime);
     }
 
