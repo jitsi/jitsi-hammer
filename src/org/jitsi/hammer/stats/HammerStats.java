@@ -197,11 +197,12 @@ public class HammerStats implements Runnable
                     {
                         if(writer == null)
                         {
-                            try
-                            {
-                                writer = new PrintWriter(allStatsFile, "UTF-8");
+                            /*try
+                            {*/
+                                //writer = new PrintWriter(allStatsFile, "UTF-8");
+                                writer = new PrintWriter(System.err, true);
                                 writer.print("[\n");
-                            }
+                            /*}
                             catch (FileNotFoundException e)
                             {
                                 logger.fatal("HammerStats stopping due to FileNotFound",e);
@@ -211,7 +212,7 @@ public class HammerStats implements Runnable
                             {
                                 logger.fatal("HammerStats stopping due to "
                                     + "UnsupportedEncoding", e);
-                            }
+                            }*/
                         }
 
                         //Clear the StringBuilder
@@ -334,7 +335,7 @@ public class HammerStats implements Runnable
         if(writer != null)
         {
             writer.print("]\n");
-            writer.close();
+            //writer.close();
         }
 
         if(overallStatsLogging) writeOverallStats();
@@ -362,13 +363,14 @@ public class HammerStats implements Runnable
      */
     public void writeOverallStats()
     {
-        try
-        {
+        /*try
+        {*/
             logger.info("Writing overall stats to file");
-            PrintWriter writer = new PrintWriter(overallStatsFile, "UTF-8");
+            PrintWriter writer = new PrintWriter(System.err, true);
+            //PrintWriter writer = new PrintWriter(overallStatsFile, "UTF-8");
             writer.print(getOverallStatsJSON() + '\n');
-            writer.close();
-        }
+            //writer.close();
+        /*}
         catch (FileNotFoundException e)
         {
             logger.fatal("Overall stats file opening error",e);
@@ -376,7 +378,7 @@ public class HammerStats implements Runnable
         catch (UnsupportedEncodingException e)
         {
             logger.fatal("Overall stats file opening error",e);
-        }
+        }*/
     }
 
     /**
