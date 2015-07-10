@@ -32,6 +32,8 @@ import org.jitsi.hammer.extension.*;
 import org.jitsi.hammer.utils.MediaDeviceChooser;
 import org.jitsi.util.Logger;
 
+import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 /**
@@ -176,8 +178,16 @@ public class Hammer
         this.mediaDeviceChooser = mdc;
         fakeUsers = new FakeUser[numberOfUser];
 
-        if (!disableStats)
-            hammerStats = new HammerStats();
+        if (!disableStats) {
+            /*try {
+                hammerStats = new HammerStats();
+            } catch (FileNotFoundException e) {
+                logger.fatal("Failed to start up hammer stats", e);
+            } catch (UnsupportedEncodingException e) {
+                logger.fatal("Failed to start up hammer stats", e);
+            }*/
+            hammerStats = new HammerStats(System.err);
+        }
 
         for(int i = 0; i<fakeUsers.length; i++)
         {
@@ -291,7 +301,6 @@ public class Hammer
      *
      * @param wait the number of milliseconds the Hammer will wait during the
      * start of two consecutive fake users.
-     * @param disableStats whether statistics should be disabled.
      * @param credentials a list of <tt>Credentials</tt> used for the login
      * of the fake users.
      * @param overallStats enable or not the logging of the overall stats
@@ -451,7 +460,7 @@ public class Hammer
             return;
         }
 
-        logger.info("Stoppig the Hammer : stopping all FakeUser");
+        logger.info("Stopping the Hammer : stopping all FakeUser");
         for(FakeUser user : fakeUsers)
         {
             user.stop();

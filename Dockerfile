@@ -1,9 +1,5 @@
 FROM java:6
 
-COPY . /jitsi-hammer
-WORKDIR /jitsi-hammer
-
-
 ENV INTERVAL=2000 \
     LENGTH=120 \
     LOG_LEVEL="WARNING" \
@@ -21,13 +17,16 @@ RUN apt-get install -y \
     alsa-utils \
     curl \
     --no-install-recommends && \
-    ant make && \
     curl -L https://github.com/docker-infra/reefer/releases/download/v0.0.4/reefer.gz | \
        gunzip >/usr/bin/reefer && \
     chmod a+x /usr/bin/reefer && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
+COPY . /jitsi-hammer
+WORKDIR /jitsi-hammer
+
+RUN ant make
 
 ENTRYPOINT [ "/usr/bin/reefer", \
     "-t", "templates/logging.properties.tmpl:/jitsi-hammer/lib/logging.properties", \
