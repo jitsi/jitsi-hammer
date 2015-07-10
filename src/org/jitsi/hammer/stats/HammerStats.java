@@ -47,7 +47,7 @@ public class HammerStats implements Runnable
     /**
      * A boolean used to stop the run method of this <tt>HammerStats</tt>.
      */
-    private boolean threadStop = false;
+    private volatile boolean threadStop = false;
 
     /**
      * The name (not the path or location) of the directory where
@@ -55,21 +55,9 @@ public class HammerStats implements Runnable
      */
     private static final String STATS_DIR_NAME = "stats";
 
-    /**
-     * The path to the stats directory. All stats will be written in files
-     * located in this directory.
-     */
-    private final String statsDirectoryPath;
-
-    /**
-     * The file that will contain the overall stats
-     */
-    private final File overallStatsFile;
-
-    /**
-     * The file that will contain all the stats recorded by run()
-     */
-    private final File allStatsFile;
+    private final PrintWriter overallStatsWriter;
+    private final PrintWriter allStatsWriter;
+    private final boolean shouldCloseWriters;
 
     /**
      * An <tt>List</tt> of <tt>FakeUserStats</tt> that contains the
@@ -120,7 +108,7 @@ public class HammerStats implements Runnable
      * Initialize an instance of a <tt>HammerStats</tt> with the default
      * stats directory path.
      */
-    public HammerStats()
+    public HammerStats() throws FileNotFoundException, UnsupportedEncodingException
     {
         this( System.getProperty(Main.PNAME_SC_HOME_DIR_LOCATION)
             + File.separator
@@ -135,25 +123,43 @@ public class HammerStats implements Runnable
      * @param statsDirectoryPath the path to the stats directory, where the
      * stats files will be saved.
      */
-    public HammerStats(String statsDirectoryPath)
+    public HammerStats(String statsDirectoryPath) throws FileNotFoundException, UnsupportedEncodingException
     {
-        this.statsDirectoryPath =
+        this.shouldCloseWriters = true;
+        statsDirectoryPath =
             statsDirectoryPath
             + File.separator
             + new SimpleDateFormat("yyyy-MM-dd'  'HH'h'mm'm'ss's'").format(new Date());
 
-        this.overallStatsFile = new File(
-            this.statsDirectoryPath
+        logger.info("Stats directory : " + statsDirectoryPath);
+        File saveDir = new File(statsDirectoryPath);
+        if (!saveDir.exists())
+        {
+            logger.info("Creating stats directory at : "
+                + statsDirectoryPath);
+            saveDir.mkdirs();
+        }
+
+        File overallStatsFile = new File(
+            statsDirectoryPath
             + File.separator
             + "overallStats.json");
-        this.allStatsFile = new File(
-            this.statsDirectoryPath
+        File allStatsFile = new File(
+            statsDirectoryPath
             + File.separator
             + "AllAndSummaryStats.json");
-
-        logger.info("Stats directory : " + this.statsDirectoryPath);
+   
+        //TODO: Clean up if one of these fails.
+        this.overallStatsWriter = new PrintWriter(overallStatsFile, "UTF-8");
+        this.allStatsWriter = new PrintWriter(allStatsFile, "UTF-8");
     }
 
+    public HammerStats(OutputStream statsOutputStream)
+    {
+        this.shouldCloseWriters = false;
+        this.overallStatsWriter = new PrintWriter(statsOutputStream, true);
+        this.allStatsWriter = overallStatsWriter;
+    }
 
     /**
      * Add a <tt>FakeUserStats</tt> to the list this <tt>HammerStats</tt> is watching
@@ -177,14 +183,13 @@ public class HammerStats implements Runnable
      */
     public void run()
     {
-        PrintWriter writer = null;
+        if (threadStop) {
+            throw new IllegalStateException("This runnable has already been run");
+        }
+        PrintWriter writer = allStatsWriter;
         StringBuilder allBldr = new StringBuilder();
         String delim;
         String delim_ = "";
-        synchronized(this)
-        {
-            threadStop = false;
-        }
 
         logger.info("Running the main loop");
         while (!threadStop)
@@ -195,26 +200,6 @@ public class HammerStats implements Runnable
                 {
                     if(allStatsLogging || summaryStatsLogging)
                     {
-                        if(writer == null)
-                        {
-                            /*try
-                            {*/
-                                //writer = new PrintWriter(allStatsFile, "UTF-8");
-                                writer = new PrintWriter(System.err, true);
-                                writer.print("[\n");
-                            /*}
-                            catch (FileNotFoundException e)
-                            {
-                                logger.fatal("HammerStats stopping due to FileNotFound",e);
-                                stop();
-                            }
-                            catch (UnsupportedEncodingException e)
-                            {
-                                logger.fatal("HammerStats stopping due to "
-                                    + "UnsupportedEncoding", e);
-                            }*/
-                        }
-
                         //Clear the StringBuilder
                         allBldr.setLength(0);
 
@@ -326,19 +311,20 @@ public class HammerStats implements Runnable
             }
             catch (InterruptedException e)
             {
-                logger.fatal("Error during sleep in main loop : " + e);
+                logger.warn("Sleep in main loop was interrupted: " + e);
                 stop();
             }
         }
         logger.info("Exiting the main loop");
 
-        if(writer != null)
-        {
-            writer.print("]\n");
-            //writer.close();
-        }
+        writer.print("]\n");
 
         if(overallStatsLogging) writeOverallStats();
+
+        if (shouldCloseWriters) {
+            overallStatsWriter.close();
+            allStatsWriter.close();
+        }
     }
 
     /**
@@ -348,7 +334,7 @@ public class HammerStats implements Runnable
      * If the method run() is not running,
      * calling this method won't do anything
      */
-    public synchronized void stop()
+    public void stop()
     {
         if (!threadStop)
         {
@@ -363,22 +349,8 @@ public class HammerStats implements Runnable
      */
     public void writeOverallStats()
     {
-        /*try
-        {*/
-            logger.info("Writing overall stats to file");
-            PrintWriter writer = new PrintWriter(System.err, true);
-            //PrintWriter writer = new PrintWriter(overallStatsFile, "UTF-8");
-            writer.print(getOverallStatsJSON() + '\n');
-            //writer.close();
-        /*}
-        catch (FileNotFoundException e)
-        {
-            logger.fatal("Overall stats file opening error",e);
-        }
-        catch (UnsupportedEncodingException e)
-        {
-            logger.fatal("Overall stats file opening error",e);
-        }*/
+        logger.info("Writing overall stats to file");
+        overallStatsWriter.print(getOverallStatsJSON() + '\n');
     }
 
     /**
@@ -474,16 +446,6 @@ public class HammerStats implements Runnable
     public void setAllStatsLogging(boolean allStats)
     {
         this.allStatsLogging = allStats;
-        if(allStats)
-        {
-            File saveDir = new File(this.statsDirectoryPath);
-            if (!saveDir.exists())
-            {
-                logger.info("Creating stats directory at : "
-                                    + this.statsDirectoryPath);
-                saveDir.mkdirs();
-            }
-        }
     }
 
     /**
@@ -494,16 +456,6 @@ public class HammerStats implements Runnable
     public void setSummaryStatsLogging(boolean summaryStats)
     {
         this.summaryStatsLogging = summaryStats;
-        if(summaryStats)
-        {
-            File saveDir = new File(this.statsDirectoryPath);
-            if (!saveDir.exists())
-            {
-                logger.info("Creating stats directory at : "
-                                    + this.statsDirectoryPath);
-                saveDir.mkdirs();
-            }
-        }
     }
 
     /**
@@ -514,16 +466,6 @@ public class HammerStats implements Runnable
     public void setOverallStatsLogging(boolean overallStats)
     {
         this.overallStatsLogging = overallStats;
-        if(overallStats)
-        {
-            File saveDir = new File(this.statsDirectoryPath);
-            if (!saveDir.exists())
-            {
-                logger.info("Creating stats directory at : "
-                                    + this.statsDirectoryPath);
-                saveDir.mkdirs();
-            }
-        }
     }
 
 
