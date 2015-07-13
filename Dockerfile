@@ -2,7 +2,7 @@ FROM java:6
 
 ENV INTERVAL=2000 \
     LENGTH=120 \
-    LOG_LEVEL="OFF" \
+    LOG_LEVEL="WARNING" \
     MUC_PREFIX="conference" \
     PORT=5222 \
     ROOM_NAME="hammer.test" \
