@@ -39,6 +39,9 @@ public class CmdLineArguments
      * for this program.
      */
 
+    @Option(name="-logfile")
+    private String logfile;
+
     @Option(name="-h", aliases= { "--help", "-help" }, usage="Get help and usage"
         + " to run the program")
     private boolean help = false;
@@ -159,6 +162,10 @@ public class CmdLineArguments
      */
     @Option(name="-nostats", usage="Whether to disable all statistics.")
     private boolean disableStats = false;
+
+    public String getLogfile() {
+        return logfile;
+    }
 
     /**
      * Create a HostInfo from the CLI options

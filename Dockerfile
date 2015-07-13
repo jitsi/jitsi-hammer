@@ -2,7 +2,7 @@ FROM java:6
 
 ENV INTERVAL=2000 \
     LENGTH=120 \
-    LOG_LEVEL="WARNING" \
+    LOG_LEVEL="OFF" \
     MUC_PREFIX="conference" \
     PORT=5222 \
     ROOM_NAME="hammer.test" \
@@ -33,7 +33,7 @@ ENTRYPOINT [ "/usr/bin/reefer", \
     "-E" \
 ]
 
-CMD /etc/init.d/alsa-utils start && env && set -x && /jitsi-hammer/jitsi-hammer.sh \
+CMD /etc/init.d/alsa-utils start && env && /jitsi-hammer/jitsi-hammer.sh \
     -XMPPdomain $XMPP_DOMAIN \
     -XMPPhost $HAMMER_XMPP_HOST \
     -port $PORT \

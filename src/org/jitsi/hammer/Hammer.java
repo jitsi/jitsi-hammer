@@ -16,25 +16,33 @@
 
 package org.jitsi.hammer;
 
-
-
-import org.jitsi.hammer.stats.*;
-import org.osgi.framework.*;
-import org.osgi.framework.launch.*;
-import org.osgi.framework.startlevel.*;
-import org.jivesoftware.smack.*;
-import org.jivesoftware.smack.provider.*;
-
-import net.java.sip.communicator.impl.osgi.framework.launch.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-
-import org.jitsi.hammer.extension.*;
+import net.java.sip.communicator.impl.osgi.framework.launch.FrameworkFactoryImpl;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.JingleIQ;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.JingleIQProvider;
+import org.jitsi.hammer.extension.MediaProvider;
+import org.jitsi.hammer.extension.SsrcProvider;
+import org.jitsi.hammer.stats.FakeUserStats;
+import org.jitsi.hammer.stats.HammerStats;
 import org.jitsi.hammer.utils.MediaDeviceChooser;
 import org.jitsi.util.Logger;
+import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.provider.ProviderManager;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
+import org.osgi.framework.Constants;
+import org.osgi.framework.launch.Framework;
+import org.osgi.framework.launch.FrameworkFactory;
+import org.osgi.framework.startlevel.BundleStartLevel;
 
-import java.io.FileNotFoundException;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -171,7 +179,7 @@ public class Hammer
      * @param numberOfUser The number of virtual users this <tt>Hammer</tt>
      * will create and handle.
      */
-    public Hammer(HostInfo host, MediaDeviceChooser mdc, String nickname, int numberOfUser, boolean disableStats)
+    public Hammer(HostInfo host, MediaDeviceChooser mdc, String nickname, int numberOfUser, boolean disableStats, String logFile)
     {
         this.nickname = nickname;
         this.serverInfo = host;
@@ -186,7 +194,14 @@ public class Hammer
             } catch (UnsupportedEncodingException e) {
                 logger.fatal("Failed to start up hammer stats", e);
             }*/
-            hammerStats = new HammerStats(System.err);
+            File output = new File(logFile);
+            try {
+                OutputStream writer = new FileOutputStream(output);
+                hammerStats = new HammerStats(writer);
+            } catch (Exception e) {
+                logger.error("Failed to create hammer stats file", e);
+                throw new RuntimeException(e);
+            }
         }
 
         for(int i = 0; i<fakeUsers.length; i++)

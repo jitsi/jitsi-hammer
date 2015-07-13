@@ -275,7 +275,7 @@ public class Main
             hostInfo,
             mdc,
             "Jitsi-Hammer",
-            numberOfFakeUsers, infoCLI.getDisableStats());
+            numberOfFakeUsers, infoCLI.getDisableStats(), infoCLI.getLogfile());
 
 
         //Cleanly stop the hammer when the program shutdown
