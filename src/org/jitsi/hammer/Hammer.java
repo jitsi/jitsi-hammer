@@ -16,23 +16,34 @@
 
 package org.jitsi.hammer;
 
-
-
-import org.jitsi.hammer.stats.*;
-import org.osgi.framework.*;
-import org.osgi.framework.launch.*;
-import org.osgi.framework.startlevel.*;
-import org.jivesoftware.smack.*;
-import org.jivesoftware.smack.provider.*;
-
-import net.java.sip.communicator.impl.osgi.framework.launch.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-
-import org.jitsi.hammer.extension.*;
+import com.google.common.collect.ImmutableList;
+import net.java.sip.communicator.impl.osgi.framework.launch.FrameworkFactoryImpl;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.JingleIQ;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.JingleIQProvider;
+import org.jitsi.hammer.extension.MediaProvider;
+import org.jitsi.hammer.extension.SsrcProvider;
+import org.jitsi.hammer.stats.FakeUserStats;
+import org.jitsi.hammer.stats.HammerStats;
 import org.jitsi.hammer.utils.MediaDeviceChooser;
 import org.jitsi.util.Logger;
+import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.provider.ProviderManager;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
+import org.osgi.framework.Constants;
+import org.osgi.framework.launch.Framework;
+import org.osgi.framework.launch.FrameworkFactory;
+import org.osgi.framework.startlevel.BundleStartLevel;
 
-import java.util.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -137,22 +148,23 @@ public class Hammer
      * handle, representing all the virtual user that will connect to the XMPP
      * server and start MediaStream with its jitsi-videobridge
      */
-    private FakeUser fakeUsers[] = null;
+    private final ImmutableList<FakeUser> fakeUsers;
 
     /**
      * The <tt>HammerStats/tt> that will be used by this <tt>Hammer</tt>
      * to keep track of the streams' stats of all the <tt>FakeUser</tt>
      * etc..
      */
-    private HammerStats hammerStats;
+    private final HammerStats hammerStats;
 
     /**
      * The thread that run the <tt>HammerStats</tt> of this <tt>Hammer</tt>
      */
-    private Thread hammerStatsThread;
+    private final Thread hammerStatsThread;
 
     /**
      * boolean used to know if the <tt>Hammer</tt> is started or not.
+     * protected by the synchronized methods start and stop
      */
     private boolean started = false;
 
@@ -169,21 +181,37 @@ public class Hammer
      * @param numberOfUser The number of virtual users this <tt>Hammer</tt>
      * will create and handle.
      */
-    public Hammer(HostInfo host, MediaDeviceChooser mdc, String nickname, int numberOfUser)
+    public Hammer(HostInfo host, MediaDeviceChooser mdc, String nickname, int numberOfUser, boolean disableStats, String logFile)
     {
         this.nickname = nickname;
         this.serverInfo = host;
         this.mediaDeviceChooser = mdc;
-        fakeUsers = new FakeUser[numberOfUser];
 
-        for(int i = 0; i<fakeUsers.length; i++)
+        if (!disableStats) {
+            File output = new File(logFile);
+            try {
+                OutputStream writer = new FileOutputStream(output);
+                hammerStats = new HammerStats(writer);
+                hammerStatsThread = new Thread(hammerStats);
+            } catch (Exception e) {
+                logger.error("Failed to create hammer stats file", e);
+                throw new RuntimeException(e);
+            }
+        } else {
+            hammerStats = null;
+            hammerStatsThread = null;
+        }
+
+        ImmutableList.Builder<FakeUser> userListBuilder = ImmutableList.builder();
+        for(int i = 0; i<numberOfUser; i++)
         {
-            fakeUsers[i] = new FakeUser(
+            userListBuilder.add(new FakeUser(
                 this.serverInfo,
                 this.mediaDeviceChooser,
                 this.nickname+"_"+i,
-                (hammerStats != null));
+                !disableStats));
         }
+        fakeUsers = userListBuilder.build();
         logger.info(String.format("Hammer created : %d fake users were created"
             + " with a base nickname %s", numberOfUser, nickname));
     }
@@ -288,7 +316,6 @@ public class Hammer
      *
      * @param wait the number of milliseconds the Hammer will wait during the
      * start of two consecutive fake users.
-     * @param disableStats whether statistics should be disabled.
      * @param credentials a list of <tt>Credentials</tt> used for the login
      * of the fake users.
      * @param overallStats enable or not the logging of the overall stats
@@ -301,9 +328,8 @@ public class Hammer
      * @param statsPollingTime the number of seconds between two polling of stats
      * by the <tt>HammerStats</tt> run method.
      */
-    public void start(
+    public synchronized void start(
         int wait,
-        boolean disableStats,
         List<Credential> credentials,
         boolean overallStats,
         boolean allStats,
@@ -316,8 +342,6 @@ public class Hammer
             logger.warn("Hammer already started");
             return;
         }
-        if (!disableStats)
-            hammerStats = new HammerStats();
 
         if (credentials != null)
             startUsersWithCredentials(credentials, wait);
@@ -326,7 +350,7 @@ public class Hammer
         this.started = true;
         logger.info("The Hammer has correctly been started");
 
-        if (!disableStats)
+        if (hammerStats != null)
             startStats(overallStats, allStats, summaryStats, statsPollingTime);
     }
 
@@ -344,7 +368,7 @@ public class Hammer
                             + "with username/password login");
         try
         {
-            Iterator<FakeUser> userIt = Arrays.asList(fakeUsers).iterator();
+            Iterator<FakeUser> userIt = fakeUsers.iterator();
             Iterator<Credential> credIt = credentials.iterator();
             FakeUser user = null;
             FakeUserStats userStats;
@@ -426,14 +450,13 @@ public class Hammer
         int statsPollingTime)
     {
         logger.info(String.format("Starting the HammerStats with "
-            + "(overall stats : %s), "
-            + "(summary stats : %s), (all stats : %s) and a polling of %dsec",
-            overallStats, summaryStats, allStats, statsPollingTime));
+                        + "(overall stats : %s), "
+                        + "(summary stats : %s), (all stats : %s) and a polling of %dsec",
+                overallStats, summaryStats, allStats, statsPollingTime));
         hammerStats.setOverallStatsLogging(overallStats);
         hammerStats.setAllStatsLogging(allStats);
         hammerStats.setSummaryStatsLogging(summaryStats);
         hammerStats.setTimeBetweenUpdate(statsPollingTime);
-        hammerStatsThread = new Thread(hammerStats);
         hammerStatsThread.start();
     }
 
@@ -443,7 +466,7 @@ public class Hammer
      * from the MUC and the XMPP server.
      * Also stop the <tt>HammerStats</tt> thread.
      */
-    public void stop()
+    public synchronized void stop()
     {
         if (!this.started)
         {
@@ -451,7 +474,7 @@ public class Hammer
             return;
         }
 
-        logger.info("Stoppig the Hammer : stopping all FakeUser");
+        logger.info("Stopping the Hammer : stopping all FakeUser");
         for(FakeUser user : fakeUsers)
         {
             user.stop();
@@ -471,7 +494,7 @@ public class Hammer
         }
         catch (InterruptedException e)
         {
-            e.printStackTrace();
+            logger.warn("Exception while waiting for the statistics thread to end", e);
         }
 
         this.started = false;
