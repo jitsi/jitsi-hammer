@@ -64,13 +64,13 @@ public class FakeUser implements PacketListener
      * The XMPP server info to which this <tt>FakeUser</tt> will
      * communicate
      */
-    private HostInfo serverInfo;
+    private final HostInfo serverInfo;
 
     /**
      * The <tt>MediaDeviceChooser</tt> that will be used to choose the
      * <tt>MediaDevice</tt>s of this <tt>FakeUser</tt>
      */
-    private MediaDeviceChooser mediaDeviceChooser;
+    private final MediaDeviceChooser mediaDeviceChooser;
 
     /**
      * The nickname/nickname taken by this <tt>FakeUser</tt> in the
@@ -82,12 +82,12 @@ public class FakeUser implements PacketListener
     /**
      * The <tt>ConnectionConfiguration</tt> equivalent of <tt>serverInfo</tt>.
      */
-    private ConnectionConfiguration config;
+    private final ConnectionConfiguration config;
 
     /**
      * The object use to connect to and then communicate with the XMPP server.
      */
-    private XMPPConnection connection;
+    private final XMPPConnection connection;
 
     /**
      * The object use to connect to and then send message to the MUC chatroom.
@@ -156,12 +156,12 @@ public class FakeUser implements PacketListener
      * A Map of the different <tt>MediaStream</tt> this <tt>FakeUser</tt>
      * handles.
      */
-    private Map<String,MediaStream> mediaStreamMap;
+    private final Map<String,MediaStream> mediaStreamMap;
 
     /**
      * The <tt>Agent</tt> handling the ICE protocol of the stream
      */
-    private Agent agent = new Agent();
+    private final Agent agent = new Agent();
 
     /**
      * <tt>Presence</tt> packet containing the SSRC of the streams of this
@@ -177,7 +177,7 @@ public class FakeUser implements PacketListener
      * The <tt>FakeUserStats</tt> that represents the stats of the streams of
      * this <tt>FakeUser</tt>
      */
-    private FakeUserStats fakeUserStats;
+    private final FakeUserStats fakeUserStats;
 
     /**
      * Instantiates a <tt>FakeUser</tt> with a default nickname that
@@ -286,7 +286,7 @@ public class FakeUser implements PacketListener
      * Connect to the XMPP server, login anonymously then join the MUC chatroom.
      * @throws XMPPException if the connection to the XMPP server goes wrong
      */
-    public void start() throws XMPPException
+    public synchronized void start() throws XMPPException
     {
         logger.info(this.nickname + " : Login anonymously to the XMPP server.");
         connection.connect();
@@ -300,7 +300,7 @@ public class FakeUser implements PacketListener
      * then join the MUC chatroom.
      * @throws XMPPException if the connection to the XMPP server goes wrong
      */
-    public void start(String username,String password) throws XMPPException
+    public synchronized void start(String username,String password) throws XMPPException
     {
         logger.info(this.nickname + " : Login with username "
             + username +" to the XMPP server.");
@@ -369,7 +369,7 @@ public class FakeUser implements PacketListener
      * Stop and close all media stream
      * and disconnect from the MUC and the XMPP server
      */
-    public void stop()
+    public synchronized void stop()
     {
         logger.info(this.nickname + " : stopping the streams, leaving the MUC"
             + " and disconnecting from the XMPP server");
