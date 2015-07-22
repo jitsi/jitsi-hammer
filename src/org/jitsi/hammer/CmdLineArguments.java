@@ -72,6 +72,18 @@ public class CmdLineArguments
     private String roomName = "TestHammer";
 
     /**
+     * The name of the MUC user with permissions to create/destroy rooms
+     */
+    @Option(name="-focususerjid",usage="The MUC user with permissions to create/destroy rooms")
+    private String focusUserJid = null;
+
+    /**
+     * The name of the videobridge to send to the MUC server, when creating rooms
+     */
+    @Option(name="-MUCvideobridge",usage="The 'bridge' parameter to send to the MUC server, when creating rooms")
+    private String MUCvideobridge = null;
+
+    /**
      * The port used by the XMPP server.
      */
     @Option(name="-port",usage="The port of the XMPP server")
@@ -173,7 +185,7 @@ public class CmdLineArguments
      */
     public HostInfo getHostInfoFromArguments()
     {
-        return new HostInfo(XMPPdomain, XMPPhost, port,MUCdomain,roomName);
+        return new HostInfo(XMPPdomain, XMPPhost, port,MUCdomain,roomName, focusUserJid, MUCvideobridge);
     }
 
     /**

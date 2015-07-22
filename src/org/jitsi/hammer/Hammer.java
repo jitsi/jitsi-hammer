@@ -412,6 +412,9 @@ public class Hammer
             {
                 FakeUserStats userStats;
                 user.start();
+                if(serverInfo.getFocusUserJid() != null) {
+                    user.createConference(serverInfo.getFocusUserJid());
+                }
                 if (hammerStats != null
                         && (userStats = user.getFakeUserStats()) != null)
                     hammerStats.addFakeUsersStats(userStats);

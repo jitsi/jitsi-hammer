@@ -46,4 +46,6 @@ CMD /etc/init.d/alsa-utils start && env && /jitsi-hammer/jitsi-hammer.sh \
     -room $ROOM_NAME \
     -interval $INTERVAL \
     -length $LENGTH \
-    -users $USERS
+    -users $USERS \
+    -focususerjid $FOCUSUSERJID \
+    -MUCvideobridge $MUC_VIDEOBRIDGE
