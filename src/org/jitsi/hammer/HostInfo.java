@@ -27,34 +27,53 @@ public class HostInfo
     /**
      * The domain name of the XMPP server.
      */
-    private String XMPPdomain;
+    private final String XMPPdomain;
     
     /**
      * The hostname used to access the XMPP server.
      */
-    private String XMPPhost;
+    private final String XMPPhost;
     
     
     /**
      * The hostname used by the XMPP server (used to access to the MUC).
      */
-    private String MUCdomain;
+    private final String MUCdomain;
+
+    
     
     /**
      * The name of the MUC room that we'll use.
      */
-    private String roomName;
+    private final String roomName;
     
     /**
      * The port used by the XMPP server.
      */
-    private int port;
+    private final int port;
 
+    /**
+     * The jid (jitsi-id) to pass to the MUC, assumed to have permissions to create/destroy rooms.
+     */
+    private final String focusUserJid;
+
+    /**
+     * The name of the videobridge to send to the MUC server, when creating rooms
+     */
+    private final String MUCvideobridge;
     
     /**
      * Instantiates a new <tt>HostInfo</tt> instance with default attribut. 
      */
-    public HostInfo() {}
+    public HostInfo() {
+        this.XMPPdomain = null;
+        this.XMPPhost = null;
+        this.MUCdomain = null;
+        this.roomName = null;
+        this.port = 0;
+        this.focusUserJid = null;
+	this.MUCvideobridge = null;
+    }
     
     /**
      * @arg XMPPdomain the domain name of the XMPP server.
@@ -70,13 +89,17 @@ public class HostInfo
             String XMPPhost,
             int port,
             String MUCdomain,
-            String roomName)
+            String roomName,
+            String focusUserJid,
+	    String MUCvideobridge)
     {
         this.XMPPdomain = XMPPdomain;
         this.port = port;
         this.XMPPhost = XMPPhost;
         this.MUCdomain = MUCdomain;
         this.roomName = roomName;
+        this.focusUserJid = focusUserJid;
+	this.MUCvideobridge = MUCvideobridge;
     }
     
     
@@ -128,5 +151,23 @@ public class HostInfo
     public int getPort()
     {
         return this.port;
+    }
+
+    /**
+     * The jid (jitsi-id) to pass to the MUC, assumed to have permissions to create/destroy rooms.
+     * @return the jid of the focus user.
+     */
+    public String getFocusUserJid()
+    {
+        return this.focusUserJid;
+    }
+
+    /**
+     * The name of the videobridge to send to the MUC server, when creating rooms
+     * @return the name of the videobridge to pass to the MUC
+     */
+    public String getMUCvideobridge()
+    {
+        return this.MUCvideobridge;
     }
 }

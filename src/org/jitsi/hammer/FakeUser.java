@@ -179,6 +179,8 @@ public class FakeUser implements PacketListener
      */
     private final FakeUserStats fakeUserStats;
 
+    private String roomURL = null;
+
     /**
      * Instantiates a <tt>FakeUser</tt> with a default nickname that
      * will connect to the XMPP server contained in <tt>hostInfo</tt>.
@@ -295,6 +297,69 @@ public class FakeUser implements PacketListener
         connectMUC();
     }
 
+    public void createConference(String focusUserJid) {
+        final IQ iq = new IQ() {
+            @Override
+            public String getChildElementXML() {
+                String xml = "";
+                for (PacketExtension p : this.getExtensions()) {
+                    xml += p.toXML();
+                }
+                return xml;
+            }
+        };
+        iq.setType(IQ.Type.SET);
+        iq.setTo(focusUserJid);
+        iq.setProperty("bridge", serverInfo.getMUCvideobridge());
+        iq.setProperty("channelLastN", "-1");
+        iq.setProperty("adaptiveLastN", "false");
+        iq.setProperty("adaptiveSimulcast", "false");
+        iq.setProperty("openSctp", "true");
+
+        iq.addExtension(new PacketExtension() {
+            @Override
+            public String getElementName() {
+                return "conference";
+            }
+
+            @Override
+            public String getNamespace() {
+                return "'http://jitsi.org/protocol/focus'";
+            }
+
+            @Override
+            public String toXML() {
+                return "<" + getElementName() +
+                        " xmlns=" + getNamespace() +
+                        " room='" + roomURL + "'" +
+                        " machine-uid='" + generateUniqueId() + "'" +
+                        ">" + propertiesString() + "</" + getElementName()
+                        + ">";
+
+            }
+
+            private String propertiesString() {
+                String result = "";
+
+                for (String name : iq.getPropertyNames()) {
+                    result += "<property name='" + name + "' ";
+                    result += "value='" + iq.getProperty(name).toString() + "'";
+                    result += "/>";
+                }
+                return result;
+            }
+        });
+
+        connection.sendPacket(iq);
+    }
+
+    private String generateUniqueId() {
+        return (Math.random() + "000000000").toCharArray().toString().substring(3, 9)
+                +(Math.random() + "000000000").toCharArray().toString().substring(3, 9)
+                +(Math.random() + "000000000").toCharArray().toString().substring(3, 9)
+                +(Math.random() + "000000000").toCharArray().toString().substring(3, 9);
+    }
+
     /**
      * Connect to the XMPP server, login with the username and password given
      * then join the MUC chatroom.
@@ -322,7 +387,7 @@ public class FakeUser implements PacketListener
      */
     private void connectMUC()
     {
-        String roomURL = serverInfo.getRoomName()+"@"+serverInfo.getMUCDomain();
+        roomURL = serverInfo.getRoomName()+"@"+serverInfo.getMUCDomain();
         logger.info(this.nickname + " : Trying to connect to MUC " + roomURL);
         muc = new MultiUserChat(connection, roomURL);
         while(true)
