@@ -362,37 +362,29 @@ public class Hammer
      * @param wait the number of milliseconds the Hammer will wait during the
      * start of two consecutive fake users.
      */
-    private void startUsersWithCredentials(List<Credential> credentials, int wait)
-    {
-        logger.info("Starting the Hammer : starting all FakeUsers "
-                            + "with username/password login");
-        try
-        {
-            Iterator<FakeUser> userIt = fakeUsers.iterator();
+    private void startUsersWithCredentials(List<Credential> credentials, int wait) {
+        logger.info("Starting the Hammer : starting all FakeUsers with username/password login");
+        try {
             Iterator<Credential> credIt = credentials.iterator();
-            FakeUser user = null;
-            FakeUserStats userStats;
             Credential credential = null;
+            boolean isFirst = true;
 
-            while(credIt.hasNext() && userIt.hasNext())
-            {
-                user = userIt.next();
+            for(FakeUser user : fakeUsers) {
                 credential = credIt.next();
-
                 user.start(credential.getUsername(),credential.getPassword());
-                if (hammerStats != null
-                        && (userStats = user.getFakeUserStats()) != null)
-                    hammerStats.addFakeUsersStats(userStats);
+                if(isFirst) {
+                    user.createConference(this.serverInfo.getFocusUserJid());
+                    isFirst = false;
+                }
+                if (hammerStats != null && user.getFakeUserStats() != null) {
+                    hammerStats.addFakeUsersStats(user.getFakeUserStats());
+                }
                 Thread.sleep(wait);
             }
-        }
-        catch (XMPPException e)
-        {
+        } catch (XMPPException e) {
             e.printStackTrace();
             System.exit(1);
-        }
-        catch (InterruptedException e)
-        {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
