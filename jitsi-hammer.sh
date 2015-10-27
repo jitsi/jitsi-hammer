@@ -1,10 +1,8 @@
 #!/bin/bash
 
-if [ $# -lt 1 ] ; then #[ "$1" == "--help" ] || [ "$1" == "-help" ] || [ "$1" == "-h" ] || [ $# -lt 1 ] ; then
+if [ $# -lt 2 ] ; then #[ "$1" == "--help" ] || [ "$1" == "-help" ] || [ "$1" == "-h" ] || [ $# -lt 1 ] ; then
     set -- "-help"
 fi
-
-
 
 kernel="$(uname -s)"
 if [ $kernel == "Darwin" ] ; then
