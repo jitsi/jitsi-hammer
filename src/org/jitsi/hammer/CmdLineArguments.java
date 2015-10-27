@@ -39,6 +39,9 @@ public class CmdLineArguments
      * for this program.
      */
 
+    @Option(name="-logfile")
+    private String logfile;
+
     @Option(name="-h", aliases= { "--help", "-help" }, usage="Get help and usage"
         + " to run the program")
     private boolean help = false;
@@ -67,6 +70,18 @@ public class CmdLineArguments
      */
     @Option(name="-room",usage="The MUC room name")
     private String roomName = "TestHammer";
+
+    /**
+     * The name of the MUC user with permissions to create/destroy rooms
+     */
+    @Option(name="-focususerjid",usage="The MUC user with permissions to create/destroy rooms")
+    private String focusUserJid = null;
+
+    /**
+     * The name of the videobridge to send to the MUC server, when creating rooms
+     */
+    @Option(name="-MUCvideobridge",usage="The 'bridge' parameter to send to the MUC server, when creating rooms")
+    private String MUCvideobridge = null;
 
     /**
      * The port used by the XMPP server.
@@ -160,13 +175,17 @@ public class CmdLineArguments
     @Option(name="-nostats", usage="Whether to disable all statistics.")
     private boolean disableStats = false;
 
+    public String getLogfile() {
+        return logfile;
+    }
+
     /**
      * Create a HostInfo from the CLI options
      * @return a HostInfo created from the CLI options
      */
     public HostInfo getHostInfoFromArguments()
     {
-        return new HostInfo(XMPPdomain, XMPPhost, port,MUCdomain,roomName);
+        return new HostInfo(XMPPdomain, XMPPhost, port,MUCdomain,roomName, focusUserJid, MUCvideobridge);
     }
 
     /**

@@ -1,0 +1,8 @@
+*.md
+Dockerfile
+.dockerignore
+lib/native/mac*
+lib/native/windows*
+lib/native/freebsd*
+nbproject*
+*.git

@@ -64,13 +64,13 @@ public class FakeUser implements PacketListener
      * The XMPP server info to which this <tt>FakeUser</tt> will
      * communicate
      */
-    private HostInfo serverInfo;
+    private final HostInfo serverInfo;
 
     /**
      * The <tt>MediaDeviceChooser</tt> that will be used to choose the
      * <tt>MediaDevice</tt>s of this <tt>FakeUser</tt>
      */
-    private MediaDeviceChooser mediaDeviceChooser;
+    private final MediaDeviceChooser mediaDeviceChooser;
 
     /**
      * The nickname/nickname taken by this <tt>FakeUser</tt> in the
@@ -82,12 +82,12 @@ public class FakeUser implements PacketListener
     /**
      * The <tt>ConnectionConfiguration</tt> equivalent of <tt>serverInfo</tt>.
      */
-    private ConnectionConfiguration config;
+    private final ConnectionConfiguration config;
 
     /**
      * The object use to connect to and then communicate with the XMPP server.
      */
-    private XMPPConnection connection;
+    private final XMPPConnection connection;
 
     /**
      * The object use to connect to and then send message to the MUC chatroom.
@@ -156,12 +156,12 @@ public class FakeUser implements PacketListener
      * A Map of the different <tt>MediaStream</tt> this <tt>FakeUser</tt>
      * handles.
      */
-    private Map<String,MediaStream> mediaStreamMap;
+    private final Map<String,MediaStream> mediaStreamMap;
 
     /**
      * The <tt>Agent</tt> handling the ICE protocol of the stream
      */
-    private Agent agent = new Agent();
+    private final Agent agent = new Agent();
 
     /**
      * <tt>Presence</tt> packet containing the SSRC of the streams of this
@@ -177,7 +177,9 @@ public class FakeUser implements PacketListener
      * The <tt>FakeUserStats</tt> that represents the stats of the streams of
      * this <tt>FakeUser</tt>
      */
-    private FakeUserStats fakeUserStats;
+    private final FakeUserStats fakeUserStats;
+
+    private String roomURL = null;
 
     /**
      * Instantiates a <tt>FakeUser</tt> with a default nickname that
@@ -286,7 +288,7 @@ public class FakeUser implements PacketListener
      * Connect to the XMPP server, login anonymously then join the MUC chatroom.
      * @throws XMPPException if the connection to the XMPP server goes wrong
      */
-    public void start() throws XMPPException
+    public synchronized void start() throws XMPPException
     {
         logger.info(this.nickname + " : Login anonymously to the XMPP server.");
         connection.connect();
@@ -295,12 +297,75 @@ public class FakeUser implements PacketListener
         connectMUC();
     }
 
+    public void createConference(String focusUserJid) {
+        final IQ iq = new IQ() {
+            @Override
+            public String getChildElementXML() {
+                String xml = "";
+                for (PacketExtension p : this.getExtensions()) {
+                    xml += p.toXML();
+                }
+                return xml;
+            }
+        };
+        iq.setType(IQ.Type.SET);
+        iq.setTo(focusUserJid);
+        iq.setProperty("bridge", serverInfo.getMUCvideobridge());
+        iq.setProperty("channelLastN", "-1");
+        iq.setProperty("adaptiveLastN", "false");
+        iq.setProperty("adaptiveSimulcast", "false");
+        iq.setProperty("openSctp", "true");
+
+        iq.addExtension(new PacketExtension() {
+            @Override
+            public String getElementName() {
+                return "conference";
+            }
+
+            @Override
+            public String getNamespace() {
+                return "'http://jitsi.org/protocol/focus'";
+            }
+
+            @Override
+            public String toXML() {
+                return "<" + getElementName() +
+                        " xmlns=" + getNamespace() +
+                        " room='" + roomURL + "'" +
+                        " machine-uid='" + generateUniqueId() + "'" +
+                        ">" + propertiesString() + "</" + getElementName()
+                        + ">";
+
+            }
+
+            private String propertiesString() {
+                String result = "";
+
+                for (String name : iq.getPropertyNames()) {
+                    result += "<property name='" + name + "' ";
+                    result += "value='" + iq.getProperty(name).toString() + "'";
+                    result += "/>";
+                }
+                return result;
+            }
+        });
+
+        connection.sendPacket(iq);
+    }
+
+    private String generateUniqueId() {
+        return (Math.random() + "000000000").toCharArray().toString().substring(3, 9)
+                +(Math.random() + "000000000").toCharArray().toString().substring(3, 9)
+                +(Math.random() + "000000000").toCharArray().toString().substring(3, 9)
+                +(Math.random() + "000000000").toCharArray().toString().substring(3, 9);
+    }
+
     /**
      * Connect to the XMPP server, login with the username and password given
      * then join the MUC chatroom.
      * @throws XMPPException if the connection to the XMPP server goes wrong
      */
-    public void start(String username,String password) throws XMPPException
+    public synchronized void start(String username,String password) throws XMPPException
     {
         logger.info(this.nickname + " : Login with username "
             + username +" to the XMPP server.");
@@ -322,7 +387,7 @@ public class FakeUser implements PacketListener
      */
     private void connectMUC()
     {
-        String roomURL = serverInfo.getRoomName()+"@"+serverInfo.getMUCDomain();
+        roomURL = serverInfo.getRoomName()+"@"+serverInfo.getMUCDomain();
         logger.info(this.nickname + " : Trying to connect to MUC " + roomURL);
         muc = new MultiUserChat(connection, roomURL);
         while(true)
@@ -369,7 +434,7 @@ public class FakeUser implements PacketListener
      * Stop and close all media stream
      * and disconnect from the MUC and the XMPP server
      */
-    public void stop()
+    public synchronized void stop()
     {
         logger.info(this.nickname + " : stopping the streams, leaving the MUC"
             + " and disconnecting from the XMPP server");
