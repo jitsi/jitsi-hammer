@@ -18,11 +18,12 @@ package org.jitsi.hammer;
 
 
 import org.jivesoftware.smack.*;
-import org.jivesoftware.smackx.ServiceDiscoveryManager;
-import org.jivesoftware.smackx.muc.*;
-import org.jivesoftware.smackx.packet.*;
+import org.jivesoftware.smack.bosh.*;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.filter.*;
+import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
+import org.jivesoftware.smackx.muc.*;
+import org.jivesoftware.smackx.nick.packet.*;
 import org.ice4j.ice.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.format.*;
@@ -82,7 +83,7 @@ public class FakeUser implements PacketListener
     /**
      * The <tt>ConnectionConfiguration</tt> equivalent of <tt>serverInfo</tt>.
      */
-    private ConnectionConfiguration config;
+    private BOSHConfiguration config;
 
     /**
      * The object use to connect to and then communicate with the XMPP server.
@@ -164,16 +165,6 @@ public class FakeUser implements PacketListener
     private Agent agent = new Agent();
 
     /**
-     * <tt>Presence</tt> packet containing the SSRC of the streams of this
-     * <tt>FakeUser</tt> (ns = http://estos.de/ns/mjs).
-     *
-     * The packet is saved in these variable because it can be send multiple
-     * times if needed (to copy Jitsi Meet behavior), but now it's only send
-     * once (during the jingle accept).
-     */
-    private Packet presencePacketWithSSRC;
-
-    /**
      * The <tt>FakeUserStats</tt> that represents the stats of the streams of
      * this <tt>FakeUser</tt>
      */
@@ -240,13 +231,15 @@ public class FakeUser implements PacketListener
         this.nickname = (nickname == null) ? "Anonymous" : nickname;
         fakeUserStats = statisticsEnabled ? new FakeUserStats(nickname) : null;
 
-        config = new ConnectionConfiguration(
-            serverInfo.getXMPPHostname(),
-            serverInfo.getPort(),
-            serverInfo.getXMPPDomain());
-        config.setDebuggerEnabled(smackDebug);
+        config = new BOSHConfiguration(
+                serverInfo.getUseHTTPS(),
+                serverInfo.getBOSHhostname(),
+                serverInfo.getPort(),
+                serverInfo.getBOSHuri(),
+                serverInfo.getXMPPDomain());
+        config.setDebuggerEnabled(true);
 
-        connection = new XMPPConnection(config);
+        connection = new XMPPBOSHConnection(config);
         connection.addPacketListener(this,new PacketFilter()
         {
             public boolean accept(Packet packet)
@@ -284,14 +277,18 @@ public class FakeUser implements PacketListener
 
     /**
      * Connect to the XMPP server, login anonymously then join the MUC chatroom.
-     * @throws XMPPException if the connection to the XMPP server goes wrong
+     * @throws XMPPException on XMPP protocol errors
+     * @throws SmackException on connection-level errors (i.e. BOSH problems)
+     * @throws IOError on I/O error
      */
-    public void start() throws XMPPException
+    public void start()
+            throws SmackException,
+            IOException,
+            XMPPException
     {
         logger.info(this.nickname + " : Login anonymously to the XMPP server.");
         connection.connect();
         connection.loginAnonymously();
-
         connectMUC();
     }
 
@@ -299,8 +296,12 @@ public class FakeUser implements PacketListener
      * Connect to the XMPP server, login with the username and password given
      * then join the MUC chatroom.
      * @throws XMPPException if the connection to the XMPP server goes wrong
+     * @throws XMPPException on XMPP protocol errors
      */
-    public void start(String username,String password) throws XMPPException
+    public void start(String username,String password)
+            throws SmackException,
+            IOException,
+            XMPPException
     {
         logger.info(this.nickname + " : Login with username "
             + username +" to the XMPP server.");
@@ -312,15 +313,16 @@ public class FakeUser implements PacketListener
         presence.setPriority(128);
         presence.setStatus("Fake User");
         connection.sendPacket(presence);
-
         connectMUC();
     }
 
     /**
      * Join the MUC, send a presence packet to display the current nickname
-     * @throws XMPPException if the connection to the MUC goes wrong
+     * @throws XMPPException on XMPP protocol errors
+     * @throws SmackException on connection-level errors (i.e. BOSH problems)
+     * @throws IOException for I/O problems
      */
-    private void connectMUC()
+    private void connectMUC() throws SmackException, XMPPException, IOException
     {
         String roomURL = serverInfo.getRoomName()+"@"+serverInfo.getMUCDomain();
         logger.info(this.nickname + " : Trying to connect to MUC " + roomURL);
@@ -342,13 +344,16 @@ public class FakeUser implements PacketListener
                 presencePacket.addExtension(new Nick(nickname));
                 connection.sendPacket(presencePacket);
             }
-            catch (XMPPException e)
+            catch (XMPPException.XMPPErrorException e)
             {
                 /*
                  * IF the nickname is already taken in the MUC (code 409)
                  * then we append '_' to the nickname, and retry
                  */
-                if((e.getXMPPError() != null) && (e.getXMPPError().getCode() == 409))
+                if(
+                        (e.getXMPPError() != null) &&
+                        (e.getXMPPError().getCondition()
+                                .equals(XMPPError.Condition.conflict)))
                 {
                     logger.warn(this.nickname + " nickname already used, "
                         + "changing to " + nickname + '_');
@@ -361,6 +366,17 @@ public class FakeUser implements PacketListener
                     muc = null;
                 }
             }
+            catch (SmackException.NotConnectedException e)
+            {
+                /**
+                 * Reconnect on lost connection
+                 */
+                logger.warn("The connection needs to be re-established");
+                connection.connect();
+                continue;
+
+            }
+
             break;
         }
     }
@@ -383,17 +399,27 @@ public class FakeUser implements PacketListener
         {
             if(sessionAccept != null)
             {
-                connection.sendPacket(
-                    JinglePacketFactory.createSessionTerminate(
-                        sessionAccept.getFrom(),
-                        sessionAccept.getTo(),
-                        sessionAccept.getSID(),
-                        Reason.GONE,
-                        "Bye Bye"));
+                try
+                {
+                    connection.sendPacket(
+                            JinglePacketFactory.createSessionTerminate(
+                                    sessionAccept.getFrom(),
+                                    sessionAccept.getTo(),
+                                    sessionAccept.getSID(),
+                                    Reason.GONE,
+                                    "Bye Bye"));
+                    if(muc != null) muc.leave();
+                    connection.disconnect();
+                }
+                catch (SmackException.NotConnectedException e) {
+                    logger.fatal("Not connected, so cannot properly " +
+                            "stop the conference");
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+
             }
 
-            if(muc != null) muc.leave();
-            connection.disconnect();
         }
     }
 
@@ -536,7 +562,7 @@ public class FakeUser implements PacketListener
          * It seems like Jitsi Meet can work arround this error,
          * but better safe than sorry.
          */
-        presencePacketWithSSRC = new Presence(Presence.Type.available);
+        Packet presencePacketWithSSRC = new Presence(Presence.Type.available);
         String recipient =
             serverInfo.getRoomName()
             +"@"
@@ -555,31 +581,37 @@ public class FakeUser implements PacketListener
                 MediaDirection.SENDRECV.toString());
         }
         presencePacketWithSSRC.addExtension(mediaPacket);
-        connection.sendPacket(presencePacketWithSSRC);
+
+        try
+        {
+            connection.sendPacket(presencePacketWithSSRC);
+
+            //Creation of a session-accept message
+            sessionAccept = JinglePacketFactory.createSessionAccept(
+                sessionInitiate.getTo(),
+                sessionInitiate.getFrom(),
+                sessionInitiate.getSID(),
+                contentMap.values());
+            sessionAccept.setInitiator(sessionInitiate.getFrom());
 
 
+            //Set the remote fingerprint on my streams and add the fingerprints
+            //of my streams to the content list of the session-accept
+            HammerUtils.setDtlsEncryptionOnTransport(
+                mediaStreamMap,
+                sessionAccept.getContentList(),
+                sessionInitiate.getContentList());
 
-
-        //Creation of a session-accept message
-        sessionAccept = JinglePacketFactory.createSessionAccept(
-            sessionInitiate.getTo(),
-            sessionInitiate.getFrom(),
-            sessionInitiate.getSID(),
-            contentMap.values());
-        sessionAccept.setInitiator(sessionInitiate.getFrom());
-
-
-        //Set the remote fingerprint on my streams and add the fingerprints
-        //of my streams to the content list of the session-accept
-        HammerUtils.setDtlsEncryptionOnTransport(
-            mediaStreamMap,
-            sessionAccept.getContentList(),
-            sessionInitiate.getContentList());
-
-
-        //Send the session-accept IQ
-        connection.sendPacket(sessionAccept);
-        logger.info(this.nickname + " : Jingle accept-session message sent");
+            //Send the session-accept IQ
+            connection.sendPacket(sessionAccept);
+            logger.info(
+                    this.nickname + " : Jingle accept-session message sent");
+        }
+        catch (SmackException.NotConnectedException e)
+        {
+            logger.fatal("Cannot accept Jingle session: not connected");
+            System.exit(1);
+        }
 
 
         // A listener to wake us up when the Agent enters a final state.
@@ -723,7 +755,14 @@ public class FakeUser implements PacketListener
     private void ackJingleIQ(JingleIQ packetToAck)
     {
         IQ ackPacket = IQ.createResultIQ(packetToAck);
-        connection.sendPacket(ackPacket);
+        try
+        {
+            connection.sendPacket(ackPacket);
+        }
+        catch (SmackException.NotConnectedException e) {
+            logger.fatal("Cannot ACK Jingle session: not connected");
+            System.exit(1);
+        }
     }
 
 

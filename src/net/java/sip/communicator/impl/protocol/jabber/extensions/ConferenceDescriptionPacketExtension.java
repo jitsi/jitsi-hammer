@@ -21,6 +21,7 @@ import org.jivesoftware.smack.provider.*;
 import org.jivesoftware.smack.util.*;
 import org.xmlpull.v1.*;
 
+import java.io.*;
 import java.util.*;
 
 /**
@@ -211,7 +212,7 @@ public class ConferenceDescriptionPacketExtension
     
     /**
      * Sets the value of the "available" attribute.
-     * @param available the value to set
+     * @param name the value to set
      */
     public void setName(String name)
     {
@@ -295,10 +296,12 @@ public class ConferenceDescriptionPacketExtension
          * an XML document.
          * @param parser the parser to use.
          * @return the created <tt>ConferenceDescriptionPacketExtension</tt>.
-         * @throws Exception
+         * @throws IOException on I/O problems
+         * @throws XmlPullParserException when encounters bad XML input
          */
         public PacketExtension parseExtension(XmlPullParser parser)
-                throws Exception
+            throws IOException,
+                XmlPullParserException
         {
             ConferenceDescriptionPacketExtension packetExtension
                     = new ConferenceDescriptionPacketExtension();

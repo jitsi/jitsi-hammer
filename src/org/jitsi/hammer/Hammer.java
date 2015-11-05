@@ -32,6 +32,7 @@ import org.jitsi.hammer.extension.*;
 import org.jitsi.hammer.utils.MediaDeviceChooser;
 import org.jitsi.util.Logger;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -164,7 +165,7 @@ public class Hammer
      *
      * @param host The information about the XMPP server to which all
      * virtual users will try to connect.
-     * @param mdc
+     * @param mdc The media device chooser instance
      * @param nickname The base of the nickname used by all the virtual users.
      * @param numberOfUser The number of virtual users this <tt>Hammer</tt>
      * will create and handle.
@@ -260,22 +261,21 @@ public class Hammer
         }
 
         logger.info("Add extension provider for :");
-        ProviderManager manager = ProviderManager.getInstance();
         logger.info("Element name : " + MediaProvider.ELEMENT_NAME
             + ", Namespace : " + MediaProvider.NAMESPACE);
-        manager.addExtensionProvider(
+        ProviderManager.addExtensionProvider(
             MediaProvider.ELEMENT_NAME,
             MediaProvider.NAMESPACE,
             new MediaProvider());
         logger.info("Element name : " + SsrcProvider.ELEMENT_NAME
             + ", Namespace : " + SsrcProvider.NAMESPACE);
-        manager.addExtensionProvider(
+        ProviderManager.addExtensionProvider(
             SsrcProvider.ELEMENT_NAME,
             SsrcProvider.NAMESPACE,
             new SsrcProvider());
         logger.info("Element name : " + JingleIQ.ELEMENT_NAME
             + ", Namespace : " + JingleIQ.NAMESPACE);
-        manager.addIQProvider(
+        ProviderManager.addIQProvider(
             JingleIQ.ELEMENT_NAME,
             JingleIQ.NAMESPACE,
             new JingleIQProvider());
@@ -367,9 +367,18 @@ public class Hammer
             e.printStackTrace();
             System.exit(1);
         }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
         catch (InterruptedException e)
         {
             e.printStackTrace();
+        }
+        catch (SmackException e)
+        {
+            e.printStackTrace();
+            System.exit(1);
         }
     }
 
@@ -399,9 +408,18 @@ public class Hammer
             e.printStackTrace();
             System.exit(1);
         }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
         catch (InterruptedException e)
         {
             e.printStackTrace();
+        }
+        catch (SmackException e)
+        {
+            e.printStackTrace();
+            System.exit(1);
         }
 
     }

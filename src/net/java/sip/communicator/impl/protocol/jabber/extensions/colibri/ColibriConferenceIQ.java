@@ -1011,7 +1011,8 @@ public class ColibriConferenceIQ
          * section 2.3 &quot;Mixers and Translators&quot;) used for this
          * <tt>Channel</tt>.
          *
-         * @param s the type of RTP-level relay used for this <tt>Channel</tt>
+         * @param rtpLevelRelayType the type of RTP-level relay
+         *                          used for this <tt>Channel</tt>
          */
         public void setRTPLevelRelayType(RTPLevelRelayType rtpLevelRelayType)
         {

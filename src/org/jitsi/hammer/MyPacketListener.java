@@ -70,6 +70,10 @@ public class MyPacketListener implements PacketListener
                 {
                     muc.sendMessage("C'est pas faux.");
                 }
+                catch (SmackException.NotConnectedException e)
+                {
+                    e.printStackTrace();
+                }
                 catch (XMPPException e)
                 {
                     e.printStackTrace();

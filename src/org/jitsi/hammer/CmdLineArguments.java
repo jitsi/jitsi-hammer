@@ -50,10 +50,10 @@ public class CmdLineArguments
     private String XMPPdomain;
 
     /**
-     * The hostname used to access the XMPP server.
+     * The hostname used to access the BOSH server.
      */
-    @Option(name="-XMPPhost",usage="The XMPP server hostname",required=true)
-    private String XMPPhost;
+    @Option(name="-BOSHhost",usage="The XMPP server hostname",required=true)
+    private String BOSHhost;
 
 
     /**
@@ -61,6 +61,17 @@ public class CmdLineArguments
      */
     @Option(name="-MUCdomain",usage="The MUC domain name",required=true)
     private String MUCdomain;
+
+
+    /**
+     * The URI where BOSH server is listening on
+     */
+    @Option(name="-BOSHuri",usage="The BOSH url")
+    private String BOSHuri = "/http-bind/";
+
+    @Option(name="-s", usage="Boolean flag identifying whether " +
+            "to use secure connection or not")
+    private boolean useHTTPS;
 
     /**
      * The name of the MUC room that we'll use.
@@ -71,8 +82,8 @@ public class CmdLineArguments
     /**
      * The port used by the XMPP server.
      */
-    @Option(name="-port",usage="The port of the XMPP server")
-    private int port = 5222;
+    @Option(name="-port",usage="The port of the BOSH server to use")
+    private int port = 80;
 
     /**
      * The number of fake users jitsi-hammer will create.
@@ -166,7 +177,14 @@ public class CmdLineArguments
      */
     public HostInfo getHostInfoFromArguments()
     {
-        return new HostInfo(XMPPdomain, XMPPhost, port,MUCdomain,roomName);
+        return new HostInfo(
+                XMPPdomain,
+                BOSHhost,
+                port,
+                MUCdomain,
+                roomName,
+                BOSHuri,
+                useHTTPS);
     }
 
     /**

@@ -37,14 +37,13 @@ public class ColibriIQProvider
     /** Initializes a new <tt>ColibriIQProvider</tt> instance. */
     public ColibriIQProvider()
     {
-        ProviderManager providerManager = ProviderManager.getInstance();
 
-        providerManager.addExtensionProvider(
+        ProviderManager.addExtensionProvider(
                 PayloadTypePacketExtension.ELEMENT_NAME,
                 ColibriConferenceIQ.NAMESPACE,
                 new DefaultPacketExtensionProvider<PayloadTypePacketExtension>(
                         PayloadTypePacketExtension.class));
-        providerManager.addExtensionProvider(
+        ProviderManager.addExtensionProvider(
                 SourcePacketExtension.ELEMENT_NAME,
                 SourcePacketExtension.NAMESPACE,
                 new DefaultPacketExtensionProvider<SourcePacketExtension>(
@@ -54,11 +53,11 @@ public class ColibriIQProvider
             = new DefaultPacketExtensionProvider<ParameterPacketExtension>(
                     ParameterPacketExtension.class);
 
-        providerManager.addExtensionProvider(
+        ProviderManager.addExtensionProvider(
                 ParameterPacketExtension.ELEMENT_NAME,
                 ColibriConferenceIQ.NAMESPACE,
                 parameterProvider);
-        providerManager.addExtensionProvider(
+        ProviderManager.addExtensionProvider(
                 ParameterPacketExtension.ELEMENT_NAME,
                 SourcePacketExtension.NAMESPACE,
                 parameterProvider);
@@ -116,7 +115,7 @@ public class ColibriIQProvider
     {
         PacketExtensionProvider extensionProvider
             = (PacketExtensionProvider)
-                ProviderManager.getInstance().getExtensionProvider(
+                ProviderManager.getExtensionProvider(
                         name,
                         namespace);
         PacketExtension extension;

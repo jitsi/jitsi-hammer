@@ -20,6 +20,7 @@ import java.security.*;
 import java.util.*;
 
 import org.jivesoftware.smack.packet.*;
+import org.jivesoftware.smack.util.XmlStringBuilder;
 
 /**
  * A straightforward extension of the IQ. A <tt>JingleIQ</tt> object is created
@@ -130,8 +131,8 @@ public class JingleIQ extends IQ
 
         bldr.append(" " + SID_ATTR_NAME
                             + "='" + getSID() + "'");
-
-        String extensionsXML = getExtensionsXML();
+        CharSequence stringBuilderSeq = getExtensionsXML();
+        String extensionsXML = stringBuilderSeq.toString();
 
         if ((contentList.size() == 0)
                 && (reason == null)

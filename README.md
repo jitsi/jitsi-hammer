@@ -18,7 +18,7 @@ The **MANDATORY_OPTIONS** are :
 
 ```
 -XMPPdomain <domain name used by the XMPP server>
--XMPPhost <hostname of the XMPP server>
+-BOSHhost <hostname of the BOSH server>
 -MUCdomain <domain name used for the MUC>
 ```
 
@@ -26,6 +26,7 @@ The **OPTIONAL_OPTIONS** are :
 
 ```
 -help <display the usage and help of the program>
+-s <use HTTPS instead of plain HTTP for BOSH communication>
 -room <name of the MUC room (default : TestHammer)>
 -port <port number of the XMPP server (default: 5222)>
 -users <number of fake users to create (default: 1)>

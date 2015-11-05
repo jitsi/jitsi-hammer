@@ -99,7 +99,7 @@ public class DefaultPacketExtensionProvider<C extends AbstractPacketExtension>
             if (eventType == XmlPullParser.START_TAG)
             {
                 PacketExtensionProvider provider
-                    = (PacketExtensionProvider)ProviderManager.getInstance()
+                    = (PacketExtensionProvider)ProviderManager
                         .getExtensionProvider( elementName, namespace );
 
                 if(provider == null)

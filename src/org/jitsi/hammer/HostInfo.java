@@ -30,11 +30,10 @@ public class HostInfo
     private String XMPPdomain;
     
     /**
-     * The hostname used to access the XMPP server.
+     * The hostname used to access the XMPP server via BOSH
      */
-    private String XMPPhost;
-    
-    
+    private String BOSHhost;
+
     /**
      * The hostname used by the XMPP server (used to access to the MUC).
      */
@@ -46,9 +45,19 @@ public class HostInfo
     private String roomName;
     
     /**
-     * The port used by the XMPP server.
+     * The port used by the BOSH server.
      */
     private int port;
+
+    /**
+     * The URI where BOSH server listening on
+     */
+    private String boshURI;
+
+    /**
+     * The boolean flag identifying whether to use HTTPS or not
+     */
+    private boolean useHTTPS;
 
     
     /**
@@ -58,7 +67,7 @@ public class HostInfo
     
     /**
      * @arg XMPPdomain the domain name of the XMPP server.
-     * @arg XMPPhost the hostname of the XMPP server
+     * @arg BOSHhost the hostname of the XMPP server
      * @arg port the port number of the XMPP server
      * @arg MUCdomain the domain of the MUC server
      * @arg roomName the room name used for the MUC
@@ -67,16 +76,21 @@ public class HostInfo
      */
     public HostInfo(
             String XMPPdomain,
-            String XMPPhost,
+            String BOSHhost,
             int port,
             String MUCdomain,
-            String roomName)
+            String roomName,
+            String boshURI,
+            boolean useHTTPS
+            )
     {
         this.XMPPdomain = XMPPdomain;
         this.port = port;
-        this.XMPPhost = XMPPhost;
+        this.BOSHhost = BOSHhost;
         this.MUCdomain = MUCdomain;
         this.roomName = roomName;
+        this.boshURI = boshURI;
+        this.useHTTPS = useHTTPS;
     }
     
     
@@ -105,9 +119,9 @@ public class HostInfo
      * (in lower case).
      * @return the hostname of the XMPP server (in lower case).
      */
-    public String getXMPPHostname()
+    public String getBOSHhostname()
     {
-        return this.XMPPhost.toLowerCase();
+        return this.BOSHhost.toLowerCase();
     }
 
     
@@ -128,5 +142,24 @@ public class HostInfo
     public int getPort()
     {
         return this.port;
+    }
+
+    /**
+     * Get the URI where BOSH server is listening
+     * @return the URI where BOSH server is listening
+     */
+    public String getBOSHuri()
+    {
+        return this.boshURI;
+    }
+
+    /**
+     * Get the boolean flag identifying whether to use HTTPS or just plain HTTP
+     * @return the boolean flag identifying whether to use HTTPS
+     *          or just plain HTTP
+     */
+    public boolean getUseHTTPS()
+    {
+        return this.useHTTPS;
     }
 }
