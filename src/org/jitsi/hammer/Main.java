@@ -16,16 +16,14 @@
 
 package org.jitsi.hammer;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
-import java.io.File;
+import java.awt.*;
+import java.io.*;
+import java.net.*;
 import java.util.List;
 
-import net.java.sip.communicator.launcher.ChangeJVMFrame;
-//import net.java.sip.communicator.util.ScStdOut;
-
-
-
+import net.java.sip.communicator.impl.protocol.jabber.*;
+import net.java.sip.communicator.launcher.*;
+import net.java.sip.communicator.service.protocol.jabber.*;
 
 import org.jitsi.hammer.utils.*;
 import org.kohsuke.args4j.*;
@@ -241,7 +239,7 @@ public class Main
             {
                 System.out.println("Required options of the program :");
 
-                System.out.println("-XMPPdomain , -XMPPhost , -MUCdomain\n");
+                System.out.println("-BOSHuri\n");
             }
             else
             {
@@ -254,51 +252,56 @@ public class Main
         if(infoCLI.getHelpOption())
         {
             System.out.println("Required options of the program :");
-            System.out.println("-XMPPdomain , -XMPPhost , -MUCDomain\n");
+            System.out.println("-BOSHUri\n");
             System.out.println("Jitsi-Hammer options usage :");
             parser.printUsage(System.out);
             System.exit(1);
         }
 
+        // Set Smack interoperation to support Smackv4
+        AbstractSmackInteroperabilityLayer
+                .setImplementationClass(SmackV4InteroperabilityLayer.class);
+        
         //We call initialize the Hammer (registering OSGi bundle for example)
         Hammer.init();
-
-        HostInfo hostInfo = infoCLI.getHostInfoFromArguments();
-        MediaDeviceChooser mdc = infoCLI.getMediaDeviceChooser();
-        ConferenceInfo conferenceInfo = 
-                infoCLI.getConferenceInfoFromArguments();
-
-        int numberOfFakeUsers = infoCLI.getNumberOfFakeUsers();
-        List<Credential> credentials = infoCLI.getCredentialsList();
-        if(credentials.size() > 0) numberOfFakeUsers = credentials.size();
-
-
-        final Hammer hammer = new Hammer(
-            hostInfo,
-            mdc,
-            "Jitsi-Hammer",
-            numberOfFakeUsers, 
-            conferenceInfo
-        );
-
-
-        //Cleanly stop the hammer when the program shutdown
-        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()
+        try
         {
-            public void run()
+            HostInfo hostInfo = infoCLI.getHostInfoFromArguments();
+            
+            MediaDeviceChooser mdc = infoCLI.getMediaDeviceChooser();
+
+            int numberOfFakeUsers = infoCLI.getNumberOfFakeUsers();
+            List<Credential> credentials = infoCLI.getCredentialsList();
+            if(credentials.size() > 0) numberOfFakeUsers = credentials.size();
+            ConferenceInfo conferenceInfo = 
+                    infoCLI.getConferenceInfoFromArguments();
+
+            final Hammer hammer = new Hammer(
+                hostInfo,
+                mdc,
+                "Jitsi-Hammer",
+                numberOfFakeUsers,
+                    conferenceInfo);
+
+
+            //Cleanly stop the hammer when the program shutdown
+            Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()
             {
-                System.out.println("Stopping Jitsi-Hammer...");
+                public void run()
+                {
+                        System.out.println("Stopping Jitsi-Hammer...");
 
-                hammer.stop();
+                        hammer.stop();
+    
+                        System.out.println("Exiting the program...");
+                        }
+                }));
 
-                System.out.println("Exiting the program...");
-            }
-        }));
 
-
-        //After the initialization we start the Hammer (all its users will
-        //connect to the XMPP server and try to setup media stream with it bridge
-        hammer.start(
+            //After the initialization we start the Hammer (all its users will
+            //connect to the XMPP server and try to setup media stream
+            // with it bridge
+            hammer.start(
                 infoCLI.getInterval(),
                 infoCLI.getDisableStats(),
                 (credentials.size() > 0) ? credentials : null,
@@ -306,7 +309,16 @@ public class Main
                 infoCLI.getAllStats(),
                 infoCLI.getSummaryStats(),
                 infoCLI.getStatsPolling());
-
+        }
+        catch (URISyntaxException e)
+        {
+            System.out.println("You provided an invalid URL to hammer" +
+                    ". Please review your cmdline option passing mechanism." +
+                    " Will now print an exception stack trace " +
+                    "caused by this issue and exit.");
+            e.printStackTrace();
+            System.exit(-1);
+        }
         if(infoCLI.getRunLength() > 0)
         {
             Thread.sleep(infoCLI.getRunLength() * 1000);

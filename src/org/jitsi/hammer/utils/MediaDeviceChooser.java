@@ -17,7 +17,6 @@
 package org.jitsi.hammer.utils;
 
 
-import org.jitsi.hammer.*;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.greyfading.*;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.ivffile.*;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.rtpdumpfile.*;

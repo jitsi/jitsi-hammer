@@ -19,6 +19,8 @@ package org.jitsi.hammer;
 
 
 import org.jitsi.hammer.stats.*;
+import org.jitsi.hammer.utils.Credential;
+import org.jitsi.hammer.utils.HostInfo;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.*;
 import org.osgi.framework.startlevel.*;
@@ -29,7 +31,7 @@ import net.java.sip.communicator.impl.osgi.framework.launch.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 
 import org.jitsi.hammer.extension.*;
-import org.jitsi.hammer.utils.MediaDeviceChooser;
+import org.jitsi.hammer.utils.*;
 import org.jitsi.util.Logger;
 
 import java.io.IOException;
@@ -117,7 +119,7 @@ public class Hammer
     {
 
         {
-            "net/java/sip/communicator/impl/libjitsi/LibJitsiActivator"
+            "net/java/sip/communicator/impl/libjitsi/LibJitsiActivator",
         }
         //These bundles are used in Jitsi-Videobridge from which I copied
         //some code, but these bundle doesn't seems necessary for the hammer

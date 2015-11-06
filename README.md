@@ -14,21 +14,21 @@ After that, you can run the program by using the **jitsi-hammer.sh** script:
 
 ```./jitsi-hammer.sh <MANDATORY_OPTIONS> [OPTIONAL_OPTIONS]```
 
-The **MANDATORY_OPTIONS** are :
+The only **MANDATORY_OPTION** for now is :
 
 ```
--XMPPdomain <domain name used by the XMPP server>
--BOSHhost <hostname of the BOSH server>
--MUCdomain <domain name used for the MUC>
+-BOSHuri - the full URI to use for BOSH connection
 ```
 
 The **OPTIONAL_OPTIONS** are :
 ```
+-XMPPdomain <domain name used by the XMPP server>
+-BOSHhost <hostname of the BOSH server>
+-MUCdomain <domain name used for the MUC>
 -help <display the usage and help of the program>
 -focusJID <JID of the focus user, by default this is 'focus.' + XMPPdomain>
--s <use HTTPS instead of plain HTTP for BOSH communication>
 -room <name of the MUC room (default : TestHammer)>
--port <port number of the XMPP server (default: 5222)>
+-port <port number of the BOSH server (default: 80)>
 -users <number of fake users to create (default: 1)>
 -length <length of the run in seconds (default: 0)>
 -ivf <path to an ivf file for the video streams>
@@ -49,6 +49,11 @@ The **OPTIONAL_OPTIONS** are :
 -startVideoMuted <"startVideoMuted" video conference property for initiated video conference>
 -simulcastMode <"simulcastMode" video conference property for initiated video conference>
 ```
+
+Options ```XMPPdomain``` , ```BOSHhost```, ```port``` and ```MUCDomain```, if specified, will override the ones retrieved from ```BOSHuri```.
+By default, the ```BOSHuri```'s hostname is used as both ```BOSHhost``` and ```XMPPdomain```, and ```MUCdomain``` is that hostname with ```conference.``` prefix, e.g. ```conference.meet.jit.si```
+will be used as ```MUCdomain``` when accessing a ```BOSHuri``` "https://meet.jit.si/http-bind/" .
+The ```port``` setting defaults for 80 for non-secure ```BOSHuri```, and respectively 443 will be used for HTTPS ones.
 
 When the option ```-credentials``` is used, instead of loging in anonymously to the XMPP server, Jitsi-Hammer will login with the credentials contained in the file.
 The file must be encoded in UTF-8, and should be a list of "username:password" (the password and username are separeted by a ":") separated by newlines.

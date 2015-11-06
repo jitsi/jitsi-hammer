@@ -21,7 +21,7 @@ import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.bosh.*;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.filter.*;
-import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
+import org.jivesoftware.smackx.disco.*;
 import org.jivesoftware.smackx.muc.*;
 import org.jivesoftware.smackx.nick.packet.*;
 import org.ice4j.ice.*;
@@ -270,7 +270,7 @@ public class FakeUser implements PacketListener
                 serverInfo.getUseHTTPS(),
                 serverInfo.getBOSHhostname(),
                 serverInfo.getPort(),
-                serverInfo.getBOSHuri(),
+                serverInfo.getBOSHpath(),
                 serverInfo.getXMPPDomain());
         config.setDebuggerEnabled(smackDebug);
 
@@ -339,9 +339,9 @@ public class FakeUser implements PacketListener
             XMPPException
     {
         logger.info(this.nickname + " : Login with username "
-            + username +" to the XMPP server.");
+                + username + " to the XMPP server.");
         connection.connect();
-        connection.login(username,password,"Jitsi-Hammer");
+        connection.login(username, password, "Jitsi-Hammer");
 
       //set the highest priority possible
         Presence presence = new Presence(Presence.Type.available);
@@ -514,12 +514,14 @@ public class FakeUser implements PacketListener
                 try
                 {
                     connection.sendPacket(
-                            JinglePacketFactory.createSessionTerminate(
-                                    sessionAccept.getFrom(),
-                                    sessionAccept.getTo(),
-                                    sessionAccept.getSID(),
-                                    Reason.GONE,
-                                    "Bye Bye"));
+                            Smack4AwareJinglePacketFactory
+                                    .createSessionTerminate(
+                                        sessionAccept.getFrom(),
+                                        sessionAccept.getTo(),
+                                        sessionAccept.getSID(),
+                                        Reason.GONE,
+                                        "Bye Bye")
+                    );
                     if(muc != null) muc.leave();
                     connection.disconnect();
                 }
@@ -573,12 +575,12 @@ public class FakeUser implements PacketListener
                 if(description == null)
                     continue;
 
-                listFormat = JingleUtils.extractFormats(
-                    description,
-                    ptRegistry);
-                remoteRtpExtension = JingleUtils.extractRTPExtensions(
-                    description,
-                    rtpExtRegistry);
+                listFormat = HammerJingleUtils.extractFormats(
+                        description,
+                        ptRegistry);
+                remoteRtpExtension = HammerJingleUtils.extractRTPExtensions(
+                        description,
+                        rtpExtRegistry);
                 supportedRtpExtension = getExtensionsForType(
                     MediaType.parseString(cpe.getName()));
                 listRtpExtension = intersectRTPExtensions(
@@ -599,14 +601,14 @@ public class FakeUser implements PacketListener
                     listRtpExtension);
 
 
-                content = JingleUtils.createDescription(
-                    CreatorEnum.responder,
-                    cpe.getName(),
-                    SendersEnum.both,
-                    listFormat,
-                    listRtpExtension,
-                    ptRegistry,
-                    rtpExtRegistry);
+                content = HammerJingleUtils.createDescription(
+                        CreatorEnum.responder,
+                        cpe.getName(),
+                        SendersEnum.both,
+                        listFormat,
+                        listRtpExtension,
+                        ptRegistry,
+                        rtpExtRegistry);
             }
 
             contentMap.put(cpe.getName(),content);
@@ -617,9 +619,11 @@ public class FakeUser implements PacketListener
          * FIXME
          */
         contentMap.remove("data");
-
+        
+        
 
         iceMediaStreamGenerator = IceMediaStreamGenerator.getInstance();
+        
         try
         {
             iceMediaStreamGenerator.generateIceMediaStream(
@@ -633,7 +637,7 @@ public class FakeUser implements PacketListener
             logger.fatal(this.nickname + " : Error during the generation"
                 + " of the IceMediaStream",e);
         }
-
+        
         //Add the remote candidate to my agent, and add my local candidate of
         //my stream to the content list of the future session-accept
         HammerUtils.addRemoteCandidateToAgent(
@@ -699,13 +703,12 @@ public class FakeUser implements PacketListener
             connection.sendPacket(presencePacketWithSSRC);
 
             //Creation of a session-accept message
-            sessionAccept = JinglePacketFactory.createSessionAccept(
+            sessionAccept = Smack4AwareJinglePacketFactory.createSessionAccept(
                 sessionInitiate.getTo(),
                 sessionInitiate.getFrom(),
                 sessionInitiate.getSID(),
                 contentMap.values());
             sessionAccept.setInitiator(sessionInitiate.getFrom());
-
 
             //Set the remote fingerprint on my streams and add the fingerprints
             //of my streams to the content list of the session-accept
