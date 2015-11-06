@@ -71,11 +71,18 @@ public class Hammer
     private final HostInfo serverInfo;
 
     /**
+     * The information about conference properties for the conference
+     * to be initiated.
+     * Its properties will be passed to the set iq sent 
+     * to conference focus component
+     */
+    private final ConferenceInfo conferenceInfo;
+
+    /**
      * The <tt>MediaDeviceChooser</tt> that will be used by all the
      * <tt>FakeUser</tt> to choose their <tt>MediaDevice</tt>
      */
     private final MediaDeviceChooser mediaDeviceChooser;
-
 
     /**
      * The <tt>org.osgi.framework.launch.Framework</tt> instance which
@@ -88,6 +95,18 @@ public class Hammer
      */
     private static final Object frameworkSyncRoot = new Object();
 
+    /**
+     * The <tt>Object</tt> that will be used 
+     * as synchronization root when initiating the conference
+     */
+    private final Object focusInvitationSyncRoot = new Object();
+
+    /**
+     * The boolean flag identifying whether focus has been invited
+     * to the conference targeted by this <tt>Hammer</tt> or not
+     */
+    private boolean focusInvited = false;
+    
     /**
      * The locations of the OSGi bundles (or rather of the path of the class
      * files of their <tt>BundleActivator</tt> implementations).
@@ -168,19 +187,28 @@ public class Hammer
      * @param mdc The media device chooser instance
      * @param nickname The base of the nickname used by all the virtual users.
      * @param numberOfUser The number of virtual users this <tt>Hammer</tt>
+     * @param conferenceInfo The information 
+     *                       regarding the conference properties 
+     *                       \for the video conference to be initiated
      * will create and handle.
      */
-    public Hammer(HostInfo host, MediaDeviceChooser mdc, String nickname, int numberOfUser)
+    public Hammer(
+            HostInfo host, 
+            MediaDeviceChooser mdc, 
+            String nickname, 
+            int numberOfUser, 
+            ConferenceInfo conferenceInfo)
     {
         this.nickname = nickname;
         this.serverInfo = host;
+        this.conferenceInfo = conferenceInfo;
         this.mediaDeviceChooser = mdc;
         fakeUsers = new FakeUser[numberOfUser];
 
         for(int i = 0; i<fakeUsers.length; i++)
         {
             fakeUsers[i] = new FakeUser(
-                this.serverInfo,
+                this,
                 this.mediaDeviceChooser,
                 this.nickname+"_"+i,
                 (hammerStats != null));
@@ -479,7 +507,8 @@ public class Hammer
          * Stop the thread of the HammerStats, without using the Thread
          * instance hammerStatsThread, to allow it to cleanly stop.
          */
-        logger.info("Stopping the HammerStats and waiting for its thread to return");
+        logger.info("Stopping the HammerStats " +
+                "and waiting for its thread to return");
         if (hammerStats != null)
             hammerStats.stop();
         try
@@ -495,5 +524,56 @@ public class Hammer
         this.started = false;
         logger.info("The Hammer has been correctly stopped");
     }
+
+    /**
+     * Get the focus invitation sync object belonging to this <tt>Hammer</tt>
+     * 
+     * @return the focus invitation sync object
+     */
+    public Object getFocusInvitationSyncRoot() 
+    {
+        return this.focusInvitationSyncRoot;
+    }
+
+    /**
+     * Get the boolean flag identifying whether this Focus has been invited 
+     * to the conference this <tt>Hammer</tt> targeting or not
+     * 
+     * @return the focus invitation boolean flag
+     */
+    public boolean getFocusInvited() 
+    {
+        return this.focusInvited;
+    }
+
+    /**
+     * Set the boolean flag identifying whether this Focus has been invited 
+     * to the conference this <tt>Hammer</tt> targeting or not
+     */
+    public void setFocusInvited(boolean focusInvited) 
+    {
+        this.focusInvited = focusInvited;
+    }
+
+    /**
+     * Get the XMPP server information object associated 
+     * with this <tt>Hammer</tt>
+     * 
+     * @return the XMPP server information object associated 
+     *          with this <tt>Hammer</tt>
+     */
+    public HostInfo getServerInfo() {
+        return this.serverInfo;
+    }
+
+    /**
+     * Get the conference information object associated
+     * with this <tt>Hammer</tt>
+     */
+    public ConferenceInfo getConferenceInfo() {
+        return this.conferenceInfo;
+    }
+    
+    
 }
 

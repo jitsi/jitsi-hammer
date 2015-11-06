@@ -265,6 +265,8 @@ public class Main
 
         HostInfo hostInfo = infoCLI.getHostInfoFromArguments();
         MediaDeviceChooser mdc = infoCLI.getMediaDeviceChooser();
+        ConferenceInfo conferenceInfo = 
+                infoCLI.getConferenceInfoFromArguments();
 
         int numberOfFakeUsers = infoCLI.getNumberOfFakeUsers();
         List<Credential> credentials = infoCLI.getCredentialsList();
@@ -275,7 +277,9 @@ public class Main
             hostInfo,
             mdc,
             "Jitsi-Hammer",
-            numberOfFakeUsers);
+            numberOfFakeUsers, 
+            conferenceInfo
+        );
 
 
         //Cleanly stop the hammer when the program shutdown

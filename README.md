@@ -2,9 +2,9 @@
 
 A traffic generator for Jitsi Videobridge.
 
-Jitsi-Hammer is a program that connects to a Jitsi-Meet conference, creates fake users, and generates RTP traffic for these fake users.  
-**This means that you need to run the program after using Jitsi-Meet : Jitsi-Hammer needs an initiator that will manage the video conference and Jingle protocol,
-because without one, Jitsi-Hammer will wait for Jingle session-initiate that will never come**
+Jitsi-Hammer is a program that connects to a Jitsi-Meet conference, 
+ initiates the video conference management by Focus,
+ creates fake users, and generates RTP traffic for these fake users.  
 
 ##How to use
 First you need to compile the project. You can do that using **ant** :  
@@ -23,9 +23,9 @@ The **MANDATORY_OPTIONS** are :
 ```
 
 The **OPTIONAL_OPTIONS** are :
-
 ```
 -help <display the usage and help of the program>
+-focusJID <JID of the focus user, by default this is 'focus.' + XMPPdomain>
 -s <use HTTPS instead of plain HTTP for BOSH communication>
 -room <name of the MUC room (default : TestHammer)>
 -port <port number of the XMPP server (default: 5222)>
@@ -41,6 +41,13 @@ The **OPTIONAL_OPTIONS** are :
 -credentials <filepath to a file containing users credentials>
 -interval <time in milliseconds between adding of users (default: 2sec)>
 -nostats <disable all stats (default: stats are enabled)>
+-channelLastN <"channelLastN" video conference property for initiated video conference>
+-adaptiveLastN <"adaptiveLastN" video conference property for initiated video conference>
+-adaptiveSimulcast <"adaptiveSimulcast" video conference property for initiated video conference>
+-openSctp <"openSctp" video conference property for initiated video conference>
+-startAudioMuted <"startAudioMuted" video conference property for initiated video conference>
+-startVideoMuted <"startVideoMuted" video conference property for initiated video conference>
+-simulcastMode <"simulcastMode" video conference property for initiated video conference>
 ```
 
 When the option ```-credentials``` is used, instead of loging in anonymously to the XMPP server, Jitsi-Hammer will login with the credentials contained in the file.

@@ -59,6 +59,11 @@ public class HostInfo
      */
     private boolean useHTTPS;
 
+    /**
+     * The XMPP address (JID) for the Focus component
+     */
+    private String focusJID;
+
     
     /**
      * Instantiates a new <tt>HostInfo</tt> instance with default attribut. 
@@ -81,7 +86,8 @@ public class HostInfo
             String MUCdomain,
             String roomName,
             String boshURI,
-            boolean useHTTPS
+            boolean useHTTPS,
+            String focusJID
             )
     {
         this.XMPPdomain = XMPPdomain;
@@ -91,6 +97,7 @@ public class HostInfo
         this.roomName = roomName;
         this.boshURI = boshURI;
         this.useHTTPS = useHTTPS;
+        this.focusJID = focusJID;
     }
     
     
@@ -162,4 +169,25 @@ public class HostInfo
     {
         return this.useHTTPS;
     }
+
+    /**
+     * Get the focus JID
+     */
+    public String getFocusJID() 
+    {
+        return this.focusJID;    
+    }
+
+    /**
+     * Construct the conference URL (JID) for the targeted conference 
+     * using the <tt>HostInfo</tt> associated with 
+     * the object
+     *
+     * @return URL for the corresponding conference
+     */
+    public String getRoomURL()
+    {
+        return this.roomName + "@" + this.MUCdomain;
+    }
+    
 }

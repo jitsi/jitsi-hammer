@@ -33,6 +33,7 @@ import org.jitsi.hammer.utils.*;
 import org.jitsi.hammer.extension.*;
 
 import net.java.sip.communicator.impl.protocol.jabber.jinglesdp.*;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
 import net.java.sip.communicator.service.protocol.media.*;
@@ -62,10 +63,22 @@ public class FakeUser implements PacketListener
         = Logger.getLogger(FakeUser.class);
 
     /**
+     * The <tt>Hammer</tt> instance to which this <tt>FakeUser</tt> corresponds
+     * This object layout exists in order to make conference initiation 
+     * synchronization bound to Hammer instance
+     */
+    private Hammer hammer;
+    
+    /**
      * The XMPP server info to which this <tt>FakeUser</tt> will
      * communicate
      */
     private HostInfo serverInfo;
+
+    /**
+     * The conference properties for the Focus invitation
+     */
+    private ConferenceInfo conferenceInfo;
 
     /**
      * The <tt>MediaDeviceChooser</tt> that will be used to choose the
@@ -171,26 +184,45 @@ public class FakeUser implements PacketListener
     private FakeUserStats fakeUserStats;
 
     /**
+     * Construct the conference focus JID 
+     * (or get one from the server info if provided)
+     *
+     * @return JID for the focus component
+     */
+    public String getFocusJID()
+    {
+        String focusJID;
+        if (this.serverInfo.getFocusJID() != null) {
+            focusJID = this.serverInfo.getFocusJID();
+        } else {
+            focusJID = "focus." + this.serverInfo.getXMPPDomain();
+        }
+        return focusJID;
+    }
+
+    /**
      * Instantiates a <tt>FakeUser</tt> with a default nickname that
      * will connect to the XMPP server contained in <tt>hostInfo</tt>.
      *
-     * @param hostInfo the XMPP server information needed for the connection.
+     * @param hammer the <tt>Hammer</tt> instance to which this 
+     *               <tt>FakeUser</tt> belongs
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
      * <tt>FakeUser</tt> to choose the <tt>MediaDevice</tt> for each of its
      * <tt>MediaStream</tt>s.
      */
     public FakeUser(
-        HostInfo hostInfo,
+        Hammer hammer,
         MediaDeviceChooser mdc)
     {
-        this(hostInfo, mdc, null, true);
+        this(hammer, mdc, null, true);
     }
 
     /**
      * Instantiates a <tt>FakeUser</tt> with a specified <tt>nickname</tt>
      * that will connect to the XMPP server contained in <tt>hostInfo</tt>.
      *
-     * @param hostInfo the XMPP server information needed for the connection.
+     * @param hammer the <tt>Hammer</tt> instance to which this 
+     *               <tt>FakeUser</tt> belongs
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
      * <tt>FakeUser</tt> to choose the <tt>MediaDevice</tt> for each of its
      * <tt>MediaStream</tt>s.
@@ -199,19 +231,20 @@ public class FakeUser implements PacketListener
      *
      */
     public FakeUser(
-        HostInfo hostInfo,
+        Hammer hammer,
         MediaDeviceChooser mdc,
         String nickname,
         boolean statisticsEnabled)
     {
-        this(hostInfo, mdc, nickname, false, statisticsEnabled);
+        this(hammer, mdc, nickname, false, statisticsEnabled);
     }
 
     /**
      * Instantiates a <tt>FakeUser</tt> with a specified <tt>nickname</tt>
      * that will connect to the XMPP server contained in <tt>hostInfo</tt>.
      *
-     * @param hostInfo the XMPP server information needed for the connection.
+     * @param hammer the <tt>Hammer</tt> instance to which this 
+     *               <tt>FakeUser</tt> belongs
      * @param mdc The <tt>MediaDeviceChooser</tt> that will be used by this
      * <tt>FakeUser</tt> to choose the <tt>MediaDevice</tt> for each of its
      * <tt>MediaStream</tt>s.
@@ -220,15 +253,17 @@ public class FakeUser implements PacketListener
      * @param smackDebug the boolean activating or not the debug screen of smack
      */
     public FakeUser(
-        HostInfo hostInfo,
+        Hammer hammer,
         MediaDeviceChooser mdc,
         String nickname,
         boolean smackDebug,
         boolean statisticsEnabled)
-    {
-        this.serverInfo = hostInfo;
+    {   
+        this.hammer = hammer;
+        this.serverInfo = hammer.getServerInfo();
         this.mediaDeviceChooser = mdc;
         this.nickname = (nickname == null) ? "Anonymous" : nickname;
+        this.conferenceInfo = hammer.getConferenceInfo();
         fakeUserStats = statisticsEnabled ? new FakeUserStats(nickname) : null;
 
         config = new BOSHConfiguration(
@@ -237,7 +272,7 @@ public class FakeUser implements PacketListener
                 serverInfo.getPort(),
                 serverInfo.getBOSHuri(),
                 serverInfo.getXMPPDomain());
-        config.setDebuggerEnabled(true);
+        config.setDebuggerEnabled(smackDebug);
 
         connection = new XMPPBOSHConnection(config);
         connection.addPacketListener(this,new PacketFilter()
@@ -317,6 +352,69 @@ public class FakeUser implements PacketListener
     }
 
     /**
+     * Invite the focus user to the <tt>MultiUserChat</tt> 
+     * which this <tt>FakeUser</tt> is targeting
+     * 
+     * @throws SmackException on connection errors
+     * @throws  XMPPException on XMPP protocol errors
+     * @throws  IOException on I/O errors
+     */
+    private void inviteFocus() 
+            throws SmackException, XMPPException, IOException 
+    {
+        ConferenceInitiationIQ conferenceInitiationIQ 
+                = new ConferenceInitiationIQ();
+        conferenceInitiationIQ.setTo(this.getFocusJID());
+        conferenceInitiationIQ.setType(IQ.Type.SET);
+        conferenceInitiationIQ.setServerInfo(serverInfo);
+        conferenceInitiationIQ.addConferenceProperty(
+                new ConferencePropertyPacketExtension(
+                        "channelLastN", this.conferenceInfo.getChannelLastN()));
+        conferenceInitiationIQ.addConferenceProperty(
+                new ConferencePropertyPacketExtension(
+                        "adaptiveLastN", 
+                        this.conferenceInfo.getAdaptiveLastN()));
+        conferenceInitiationIQ.addConferenceProperty(
+                new ConferencePropertyPacketExtension(
+                        "adaptiveSimulcast",
+                        this.conferenceInfo.getAdaptiveSimulcast()));
+        conferenceInitiationIQ.addConferenceProperty(
+                new ConferencePropertyPacketExtension("openSctp", 
+                        this.conferenceInfo.getOpenSctp()));
+        conferenceInitiationIQ.addConferenceProperty(
+                new ConferencePropertyPacketExtension(
+                        "startAudioMuted", 
+                        this.conferenceInfo.getStartAudioMuted()));
+        conferenceInitiationIQ.addConferenceProperty(
+                new ConferencePropertyPacketExtension(
+                        "startVideoMuted", 
+                        this.conferenceInfo.getStartVideoMuted()));
+        conferenceInitiationIQ.addConferenceProperty(
+                new ConferencePropertyPacketExtension(
+                        "simulcastMode", 
+                        this.conferenceInfo.getSimulcastMode()));
+        try 
+        {
+            this.connection.sendPacket(conferenceInitiationIQ);
+            this.hammer.setFocusInvited(true);
+            logger.info("Conference initiation IQ is sent to the focus user");
+        }
+        catch (SmackException.NotConnectedException e) {
+            /**
+             * Give up here, make an attempt to reconnect,
+             * and let the next <tt>FakeUser</tt> thread awake with
+             * focus user invitation
+             */
+            logger.warn("Cannot send the conference initiation IQ: not" +
+                    " connected, will retry with another FakeUser");
+            e.printStackTrace();
+            this.connection.connect();
+        }
+        
+        
+    }
+    
+    /**
      * Join the MUC, send a presence packet to display the current nickname
      * @throws XMPPException on XMPP protocol errors
      * @throws SmackException on connection-level errors (i.e. BOSH problems)
@@ -324,7 +422,7 @@ public class FakeUser implements PacketListener
      */
     private void connectMUC() throws SmackException, XMPPException, IOException
     {
-        String roomURL = serverInfo.getRoomName()+"@"+serverInfo.getMUCDomain();
+        String roomURL = serverInfo.getRoomURL();
         logger.info(this.nickname + " : Trying to connect to MUC " + roomURL);
         muc = new MultiUserChat(connection, roomURL);
         while(true)
@@ -343,6 +441,20 @@ public class FakeUser implements PacketListener
                 presencePacket.setTo(roomURL + "/" + nickname);
                 presencePacket.addExtension(new Nick(nickname));
                 connection.sendPacket(presencePacket);
+
+                /**
+                 * Make an attempt to send an IQ to Focus user 
+                 * in order to enable Jingle for the conference
+                 */
+            
+                synchronized (this.hammer.getFocusInvitationSyncRoot()) 
+                {
+                    
+                    if (!this.hammer.getFocusInvited()) {
+                        inviteFocus();
+                    }
+                    
+                }
             }
             catch (XMPPException.XMPPErrorException e)
             {

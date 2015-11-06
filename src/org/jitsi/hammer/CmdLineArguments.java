@@ -69,9 +69,18 @@ public class CmdLineArguments
     @Option(name="-BOSHuri",usage="The BOSH url")
     private String BOSHuri = "/http-bind/";
 
+    /**
+     * The option for preferring secure HTTP over non-secure
+     */
     @Option(name="-s", usage="Boolean flag identifying whether " +
             "to use secure connection or not")
     private boolean useHTTPS;
+
+    /**
+     * The focus JID for the server
+     */
+    @Option(name="-focusJID", usage="The focus component JID")
+    private String focusJID;
 
     /**
      * The name of the MUC room that we'll use.
@@ -88,7 +97,8 @@ public class CmdLineArguments
     /**
      * The number of fake users jitsi-hammer will create.
      */
-    @Option(name="-users",usage="The number of fake users the hammer will create")
+    @Option(name="-users",usage="The number of " +
+            "fake users the hammer will create")
     private int numberOfFakeUsers = 1;
 
     /**
@@ -172,6 +182,55 @@ public class CmdLineArguments
     private boolean disableStats = false;
 
     /**
+     * The "channelLastN" conference property
+     */
+    @Option(name="-channelLastN", usage="sets " +
+            "'channelLastN' conference parameter")
+    private String channelLastN = "-1";
+
+    /**
+     * The "adaptiveLastN" conference property
+     */
+    @Option(name="-adaptiveLastN", usage="sets " +
+            "'adaptiveLastN' conference parameter")
+    private String adaptiveLastN = "false";
+
+    /**
+     * The "adaptiveSimulcast" conference property
+     */
+    @Option(name="-adaptiveSimulcast", usage="sets " +
+            "'adaptiveSimulcast' conference parameter")
+    private String adaptiveSimulcast = "false";
+
+    /**
+     * The "openSctp" conference property
+     */
+    @Option(name="-openSctp", usage="sets " +
+            "'openSctp' conference parameter")
+    private String openSctp = "true";
+
+    /**
+     * The "startAudioMuted" conference property
+     */
+    @Option(name="-startAudioMuted", usage="sets " +
+            "'startAudioMuted' conference parameter")
+    private String startAudioMuted = "9";
+
+    /**
+     * The "startVideoMuted" conference property
+     */
+    @Option(name="-startVideoMuted", usage="sets " +
+            "'startVideoMuted' conference parameter")
+    private String startVideoMuted = "9";
+
+    /**
+     * The "simulcastMode" conference property
+     */
+    @Option(name="-simulcastMode", usage="sets " +
+            "'simulcastMode' conference parameter")
+    private String simulcastMode = "rewriting";
+
+    /**
      * Create a HostInfo from the CLI options
      * @return a HostInfo created from the CLI options
      */
@@ -184,7 +243,26 @@ public class CmdLineArguments
                 MUCdomain,
                 roomName,
                 BOSHuri,
-                useHTTPS);
+                useHTTPS,
+                focusJID);
+    }
+    
+
+    /**
+     * Create a <tt>ConferenceInfo</tt> from the CLI options
+     * 
+     * @return a <tt>ConferenceInfo</tt> instance
+     */
+    public ConferenceInfo getConferenceInfoFromArguments() {
+        return new ConferenceInfo(
+                channelLastN,
+                adaptiveLastN,
+                adaptiveSimulcast,
+                openSctp,
+                startAudioMuted,
+                startVideoMuted,
+                simulcastMode
+        );
     }
 
     /**
@@ -334,7 +412,8 @@ public class CmdLineArguments
         {
             String line = null;
             String[] credentials;
-            FileInputStream stream = new FileInputStream(this.credentialsFilepath);
+            FileInputStream stream = 
+                    new FileInputStream(this.credentialsFilepath);
             BufferedReader in = new BufferedReader(
                 new InputStreamReader(stream, "UTF-8"));
 
