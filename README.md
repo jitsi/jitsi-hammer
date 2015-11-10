@@ -101,6 +101,3 @@ The stats will be saved in JSON in a directory depending of your system :
 You can adjust the logging configuration of the JVM with the file ./lib/logging.properties .  
 
 For now it is set to only display at a WARNING level, but you can set "org.jitsi.hammer.level" to INFO if you want to print the INFO log of Jitsi-Hammer (but not libjitsi).
-
-##Various information
- - Because Jitsi-Hammer uses libjitsi, it depends on an audio driver (even though it will never use a sound card for the audio streams). If your GNU/Linux install doesn't have one already installed, you need to install the **alsa-core** package (alsa-core does the trick, but other audio driver like pulseaudio could also work), and start the service ALSA.
