@@ -35,7 +35,8 @@ classpath=$(JARS=($SCRIPT_DIR/jitsi-hammer.jar $SCRIPT_DIR/lib/*.jar); IFS=:; ec
 libs="$SCRIPT_DIR/lib/native/$architecture"
 logging_config="$SCRIPT_DIR/lib/logging.properties"
 
-LD_LIBRARY_PATH=$libs:$LD_LIBRARY_PATH java -Djava.library.path=$libs \
+LD_LIBRARY_PATH=$libs:$LD_LIBRARY_PATH java  \
+  -Djava.library.path=$libs \
   -Djava.util.logging.config.file=$logging_config \
   -Dnet.java.sip.communicator.SC_HOME_DIR_LOCATION=$SCRIPT_DIR \
   -Dnet.java.sip.communicator.SC_HOME_DIR_NAME=.jitsi-hammer \
