@@ -281,7 +281,8 @@ public class Main
                 mdc,
                 "Jitsi-Hammer",
                 numberOfFakeUsers,
-                    conferenceInfo);
+                    conferenceInfo,
+                    infoCLI.getDisableStats());
 
 
             //Cleanly stop the hammer when the program shutdown
@@ -303,7 +304,6 @@ public class Main
             // with it bridge
             hammer.start(
                 infoCLI.getInterval(),
-                infoCLI.getDisableStats(),
                 (credentials.size() > 0) ? credentials : null,
                 infoCLI.getOverallStats(),
                 infoCLI.getAllStats(),

@@ -414,6 +414,7 @@ public class HammerStats implements Runnable
         bldr.append("      \"video\":");
         bldr.append(videoSummaryStats.getAggregateMeanJSON() + '\n');
         bldr.append("  },\n");
+            
 
         bldr.append("  \"min\":\n");
         bldr.append("  {\n");
