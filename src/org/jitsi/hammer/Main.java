@@ -275,7 +275,8 @@ public class Main
             hostInfo,
             mdc,
             "Jitsi-Hammer",
-            numberOfFakeUsers);
+            numberOfFakeUsers,
+            infoCLI.getDisableStats());
 
 
         //Cleanly stop the hammer when the program shutdown
@@ -296,7 +297,6 @@ public class Main
         //connect to the XMPP server and try to setup media stream with it bridge
         hammer.start(
                 infoCLI.getInterval(),
-                infoCLI.getDisableStats(),
                 (credentials.size() > 0) ? credentials : null,
                 infoCLI.getOverallStats(),
                 infoCLI.getAllStats(),
