@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jitsi.hammer;
-
 
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.bosh.*;
@@ -462,10 +460,9 @@ public class FakeUser implements PacketListener
                  * IF the nickname is already taken in the MUC (code 409)
                  * then we append '_' to the nickname, and retry
                  */
-                if(
-                        (e.getXMPPError() != null) &&
-                        (e.getXMPPError().getCondition()
-                                .equals(XMPPError.Condition.conflict)))
+                if((e.getXMPPError() != null) &&
+                        (XMPPError.Condition.conflict.toString().equals(
+                            e.getXMPPError().getCondition())))
                 {
                     logger.warn(this.nickname + " nickname already used, "
                         + "changing to " + nickname + '_');

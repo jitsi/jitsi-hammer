@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jitsi.hammer;
-
-
 
 import org.jitsi.hammer.stats.*;
 import org.jitsi.hammer.utils.Credential;

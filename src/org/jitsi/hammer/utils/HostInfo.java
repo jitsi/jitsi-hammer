@@ -170,7 +170,7 @@ public class HostInfo
     }
 
     /**
-     * Get the focus JID
+     * Get JID of the focus component.
      */
     public String getFocusJID()
     {
