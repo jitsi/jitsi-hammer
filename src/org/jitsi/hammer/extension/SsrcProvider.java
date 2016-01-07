@@ -17,7 +17,7 @@
 package org.jitsi.hammer.extension;
 
 import org.jivesoftware.smack.packet.*;
-import org.jivesoftware.smack.provider.*;
+import org.jivesoftware.smack.provider.PacketExtensionProvider;
 import org.xmlpull.v1.*;
 
 import java.io.*;

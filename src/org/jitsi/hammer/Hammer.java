@@ -19,6 +19,8 @@ package org.jitsi.hammer;
 
 
 import org.jitsi.hammer.stats.*;
+import org.jitsi.hammer.utils.Credential;
+import org.jitsi.hammer.utils.HostInfo;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.*;
 import org.osgi.framework.startlevel.*;
@@ -29,9 +31,10 @@ import net.java.sip.communicator.impl.osgi.framework.launch.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 
 import org.jitsi.hammer.extension.*;
-import org.jitsi.hammer.utils.MediaDeviceChooser;
+import org.jitsi.hammer.utils.*;
 import org.jitsi.util.Logger;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -70,11 +73,18 @@ public class Hammer
     private final HostInfo serverInfo;
 
     /**
+     * The information about conference properties for the conference
+     * to be initiated.
+     * Its properties will be passed to the set iq sent 
+     * to conference focus component
+     */
+    private final ConferenceInfo conferenceInfo;
+
+    /**
      * The <tt>MediaDeviceChooser</tt> that will be used by all the
      * <tt>FakeUser</tt> to choose their <tt>MediaDevice</tt>
      */
     private final MediaDeviceChooser mediaDeviceChooser;
-
 
     /**
      * The <tt>org.osgi.framework.launch.Framework</tt> instance which
@@ -88,6 +98,18 @@ public class Hammer
     private static final Object frameworkSyncRoot = new Object();
 
     /**
+     * The <tt>Object</tt> that will be used 
+     * as synchronization root when initiating the conference
+     */
+    private final Object focusInvitationSyncRoot = new Object();
+
+    /**
+     * The boolean flag identifying whether focus has been invited
+     * to the conference targeted by this <tt>Hammer</tt> or not
+     */
+    private boolean focusInvited = false;
+    
+    /**
      * The locations of the OSGi bundles (or rather of the path of the class
      * files of their <tt>BundleActivator</tt> implementations).
      * An element of the <tt>BUNDLES</tt> array is an array of <tt>String</tt>s
@@ -97,7 +119,7 @@ public class Hammer
     {
 
         {
-            "net/java/sip/communicator/impl/libjitsi/LibJitsiActivator"
+            "net/java/sip/communicator/impl/libjitsi/LibJitsiActivator",
         }
         //These bundles are used in Jitsi-Videobridge from which I copied
         //some code, but these bundle doesn't seems necessary for the hammer
@@ -164,22 +186,31 @@ public class Hammer
      *
      * @param host The information about the XMPP server to which all
      * virtual users will try to connect.
-     * @param mdc
+     * @param mdc The media device chooser instance
      * @param nickname The base of the nickname used by all the virtual users.
      * @param numberOfUser The number of virtual users this <tt>Hammer</tt>
+     * @param conferenceInfo The information 
+     *                       regarding the conference properties 
+     *                       \for the video conference to be initiated
      * will create and handle.
      */
-    public Hammer(HostInfo host, MediaDeviceChooser mdc, String nickname, int numberOfUser)
+    public Hammer(
+            HostInfo host, 
+            MediaDeviceChooser mdc, 
+            String nickname, 
+            int numberOfUser, 
+            ConferenceInfo conferenceInfo)
     {
         this.nickname = nickname;
         this.serverInfo = host;
+        this.conferenceInfo = conferenceInfo;
         this.mediaDeviceChooser = mdc;
         fakeUsers = new FakeUser[numberOfUser];
 
         for(int i = 0; i<fakeUsers.length; i++)
         {
             fakeUsers[i] = new FakeUser(
-                this.serverInfo,
+                this,
                 this.mediaDeviceChooser,
                 this.nickname+"_"+i,
                 (hammerStats != null));
@@ -260,22 +291,21 @@ public class Hammer
         }
 
         logger.info("Add extension provider for :");
-        ProviderManager manager = ProviderManager.getInstance();
         logger.info("Element name : " + MediaProvider.ELEMENT_NAME
             + ", Namespace : " + MediaProvider.NAMESPACE);
-        manager.addExtensionProvider(
+        ProviderManager.addExtensionProvider(
             MediaProvider.ELEMENT_NAME,
             MediaProvider.NAMESPACE,
             new MediaProvider());
         logger.info("Element name : " + SsrcProvider.ELEMENT_NAME
             + ", Namespace : " + SsrcProvider.NAMESPACE);
-        manager.addExtensionProvider(
+        ProviderManager.addExtensionProvider(
             SsrcProvider.ELEMENT_NAME,
             SsrcProvider.NAMESPACE,
             new SsrcProvider());
         logger.info("Element name : " + JingleIQ.ELEMENT_NAME
             + ", Namespace : " + JingleIQ.NAMESPACE);
-        manager.addIQProvider(
+        ProviderManager.addIQProvider(
             JingleIQ.ELEMENT_NAME,
             JingleIQ.NAMESPACE,
             new JingleIQProvider());
@@ -367,9 +397,18 @@ public class Hammer
             e.printStackTrace();
             System.exit(1);
         }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
         catch (InterruptedException e)
         {
             e.printStackTrace();
+        }
+        catch (SmackException e)
+        {
+            e.printStackTrace();
+            System.exit(1);
         }
     }
 
@@ -399,9 +438,18 @@ public class Hammer
             e.printStackTrace();
             System.exit(1);
         }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
         catch (InterruptedException e)
         {
             e.printStackTrace();
+        }
+        catch (SmackException e)
+        {
+            e.printStackTrace();
+            System.exit(1);
         }
 
     }
@@ -461,7 +509,8 @@ public class Hammer
          * Stop the thread of the HammerStats, without using the Thread
          * instance hammerStatsThread, to allow it to cleanly stop.
          */
-        logger.info("Stopping the HammerStats and waiting for its thread to return");
+        logger.info("Stopping the HammerStats " +
+                "and waiting for its thread to return");
         if (hammerStats != null)
             hammerStats.stop();
         try
@@ -477,5 +526,56 @@ public class Hammer
         this.started = false;
         logger.info("The Hammer has been correctly stopped");
     }
+
+    /**
+     * Get the focus invitation sync object belonging to this <tt>Hammer</tt>
+     * 
+     * @return the focus invitation sync object
+     */
+    public Object getFocusInvitationSyncRoot() 
+    {
+        return this.focusInvitationSyncRoot;
+    }
+
+    /**
+     * Get the boolean flag identifying whether this Focus has been invited 
+     * to the conference this <tt>Hammer</tt> targeting or not
+     * 
+     * @return the focus invitation boolean flag
+     */
+    public boolean getFocusInvited() 
+    {
+        return this.focusInvited;
+    }
+
+    /**
+     * Set the boolean flag identifying whether this Focus has been invited 
+     * to the conference this <tt>Hammer</tt> targeting or not
+     */
+    public void setFocusInvited(boolean focusInvited) 
+    {
+        this.focusInvited = focusInvited;
+    }
+
+    /**
+     * Get the XMPP server information object associated 
+     * with this <tt>Hammer</tt>
+     * 
+     * @return the XMPP server information object associated 
+     *          with this <tt>Hammer</tt>
+     */
+    public HostInfo getServerInfo() {
+        return this.serverInfo;
+    }
+
+    /**
+     * Get the conference information object associated
+     * with this <tt>Hammer</tt>
+     */
+    public ConferenceInfo getConferenceInfo() {
+        return this.conferenceInfo;
+    }
+    
+    
 }
 

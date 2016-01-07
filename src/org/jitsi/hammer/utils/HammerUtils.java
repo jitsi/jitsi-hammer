@@ -695,7 +695,7 @@ public class HammerUtils
     /**
      * Create a relatively empty <tt>ContentPacketExtension</tt> for 'data'
      * (<tt>MediaType.DATA</tt>) rtp content type, because
-     * <tt>JingleUtils.createDescription</tt> doesn't handle this type for now.
+     * <tt>HammerJingleUtils.createDescription</tt> doesn't handle this type for now.
      *
      * @param creator indicates whether the person who originally created this
      * content was the initiator or the responder of the jingle session.
