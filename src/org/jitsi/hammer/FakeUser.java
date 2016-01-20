@@ -306,6 +306,8 @@ public class FakeUser implements PacketListener
         discoManager.addFeature("urn:xmpp:jingle:apps:rtp:audio");
         discoManager.addFeature("urn:xmpp:jingle:apps:rtp:video");
 
+        /** added to address bosh timeout issues causing early terminatin of the hammer **/
+        org.jivesoftware.smackx.ping.PingManager.getInstanceFor(connection).setPingInterval(15);
     }
 
     /**
