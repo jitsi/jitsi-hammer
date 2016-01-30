@@ -247,6 +247,19 @@ public class Hammer
             if (Hammer.framework != null)
                 return;
         }
+        Map<String,String> defaults = new HashMap<>();
+        String true_ = Boolean.toString(true);
+        //String false_ = Boolean.toString(false);
+
+        defaults.put(MediaServiceImpl.DISABLE_AUDIO_SUPPORT_PNAME, true_);
+        defaults.put(MediaServiceImpl.DISABLE_VIDEO_SUPPORT_PNAME, true_);
+        for (Map.Entry<String,String> e : defaults.entrySet())
+        {
+            String key = e.getKey();
+
+            if (System.getProperty(key) == null)
+                System.setProperty(key, e.getValue());
+        }
 
         logger.info("Start OSGi framework with the bundles : " + BUNDLES);
         FrameworkFactory frameworkFactory = new FrameworkFactoryImpl();
