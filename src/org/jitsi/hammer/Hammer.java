@@ -24,7 +24,8 @@ import org.osgi.framework.startlevel.*;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.provider.*;
 
-import net.java.sip.communicator.impl.osgi.framework.launch.*;
+import org.jitsi.impl.osgi.framework.launch.*;
+import org.jitsi.impl.neomedia.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 
 import org.jitsi.hammer.extension.*;
@@ -121,7 +122,7 @@ public class Hammer
     {
 
         {
-            "net/java/sip/communicator/impl/libjitsi/LibJitsiActivator",
+            "org/jitsi/service/libjitsi/LibJitsiActivator",
         }
         //These bundles are used in Jitsi-Videobridge from which I copied
         //some code, but these bundle doesn't seems necessary for the hammer
