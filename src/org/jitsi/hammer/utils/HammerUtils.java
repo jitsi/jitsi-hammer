@@ -389,8 +389,6 @@ public class HammerUtils
                 stream.addDynamicRTPPayloadType(
                     (byte) 116,
                     mediaService.getFormatFactory().createMediaFormat("red"));
-
-            mediaStreamMap.put(mediaName, stream);
         }
     }
 
