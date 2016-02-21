@@ -106,45 +106,6 @@ public class FakeUser implements PacketListener
      */
     private MultiUserChat muc;
 
-
-    /**
-     * The registry containing the dynamic payload types learned in the
-     * session-initiate (to use back in the session-accept)
-     */
-    DynamicPayloadTypeRegistry ptRegistry =
-        new DynamicPayloadTypeRegistry();
-
-    /**
-     * The registry containing the dynamic RTP extensions learned in the
-     * session-initiate
-     */
-    DynamicRTPExtensionsRegistry rtpExtRegistry =
-        new DynamicRTPExtensionsRegistry();
-
-    /**
-     * A Map mapping a media type (audio, video, data), with a list of format
-     * that can be handle by libjitsi
-     */
-    Map<String,List<MediaFormat>> possibleFormatMap =
-        new HashMap<String,List<MediaFormat>>();
-
-    /**
-     * A Map mapping a media type (audio, video, data), with a <tt>MediaFormat</tt>
-     * representing the selected format for the stream handling this media type.
-     *
-     * The MediaFormat in this Map has been chosen in <tt>possibleFormatMap</tt>
-     */
-    Map<String,MediaFormat> selectedFormat =
-        new HashMap<String,MediaFormat>();
-
-    /**
-     * A Map mapping a media type (audio, video, data), with a list of
-     * RTPExtension representing the selected RTP extensions for the format
-     * (and its corresponding <tt>MediaDevice</tt>)
-     */
-    Map<String,List<RTPExtension>> selectedRtpExtension =
-        new HashMap<String,List<RTPExtension>>();
-
     /**
      * The IQ message received by the XMPP server to initiate the Jingle session.
      *
@@ -555,6 +516,44 @@ public class FakeUser implements PacketListener
         Map<String,ContentPacketExtension> contentMap =
             new HashMap<String,ContentPacketExtension>();
 
+
+        /**
+         * A Map mapping a media type (audio, video, data), with a <tt>MediaFormat</tt>
+         * representing the selected format for the stream handling this media type.
+         *
+         * The MediaFormat in this Map has been chosen in <tt>possibleFormatMap</tt>
+         */
+        Map<String,MediaFormat> selectedFormat =
+                new HashMap<String,MediaFormat>();
+
+        /**
+         * A Map mapping a media type (audio, video, data), with a list of
+         * RTPExtension representing the selected RTP extensions for the format
+         * (and its corresponding <tt>MediaDevice</tt>)
+         */
+        Map<String,List<RTPExtension>> selectedRtpExtension =
+                new HashMap<String,List<RTPExtension>>();
+
+        /**
+         * The registry containing the dynamic payload types learned in the
+         * session-initiate (to use back in the session-accept)
+         */
+        DynamicPayloadTypeRegistry ptRegistry =
+                new DynamicPayloadTypeRegistry();
+
+        /**
+         * The registry containing the dynamic RTP extensions learned in the
+         * session-initiate
+         */
+        DynamicRTPExtensionsRegistry rtpExtRegistry =
+                new DynamicRTPExtensionsRegistry();
+
+        /**
+         * A Map mapping a media type (audio, video, data), with a list of format
+         * that can be handle by libjitsi
+         */
+        Map<String,List<MediaFormat>> possibleFormatMap =
+                new HashMap<String,List<MediaFormat>>();
 
         for(ContentPacketExtension cpe : sessionInitiate.getContentList())
         {
