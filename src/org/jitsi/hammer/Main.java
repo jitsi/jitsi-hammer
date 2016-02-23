@@ -246,6 +246,8 @@ public class Main
             
             MediaDeviceChooser mdc = infoCLI.getMediaDeviceChooser();
 
+            PcapChooser pcapChooser = infoCLI.getPcapChooser();
+
             int numberOfFakeUsers = infoCLI.getNumberOfFakeUsers();
             List<Credential> credentials = infoCLI.getCredentialsList();
             if(credentials.size() > 0) numberOfFakeUsers = credentials.size();
@@ -255,6 +257,7 @@ public class Main
             final Hammer hammer = new Hammer(
                 hostInfo,
                 mdc,
+                pcapChooser,
                 "Jitsi-Hammer",
                 numberOfFakeUsers,
                     conferenceInfo,
