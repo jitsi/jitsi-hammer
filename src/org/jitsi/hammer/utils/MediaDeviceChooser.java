@@ -146,8 +146,9 @@ public class MediaDeviceChooser
                     + " for the video stream\n";
                 videoMediaDevice = new IVFMediaDevice(cmdArg.getIVFFile());
             }
-            else
+            else if (cmdArg.getVideoPcapFile() == null)
             {
+                /* skip the MediaDevice if a pcap file is used */
                 str = str + "-with a fading from black to white to black..."
                     + " for the video stream\n";
                 videoMediaDevice = new VideoGreyFadingMediaDevice();

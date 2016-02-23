@@ -201,7 +201,8 @@ public class Hammer
      */
     public Hammer(
             HostInfo host, 
-            MediaDeviceChooser mdc, 
+            MediaDeviceChooser mdc,
+            PcapChooser pcapChooser,
             String nickname, 
             int numberOfUser, 
             ConferenceInfo conferenceInfo,
@@ -221,6 +222,7 @@ public class Hammer
             fakeUsers[i] = new FakeUser(
                 this,
                 this.mediaDeviceChooser,
+                pcapChooser,
                 this.nickname+"_"+i,
                 (hammerStats != null));
         }
