@@ -18,6 +18,7 @@ package org.jitsi.hammer;
 import org.jitsi.hammer.stats.*;
 import org.jitsi.hammer.utils.Credential;
 import org.jitsi.hammer.utils.HostInfo;
+import org.jitsi.impl.neomedia.transform.srtp.*;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.*;
 import org.osgi.framework.startlevel.*;
@@ -251,10 +252,10 @@ public class Hammer
         }
         Map<String,String> defaults = new HashMap<>();
         String true_ = Boolean.toString(true);
-        //String false_ = Boolean.toString(false);
 
         defaults.put(MediaServiceImpl.DISABLE_AUDIO_SUPPORT_PNAME, true_);
         defaults.put(MediaServiceImpl.DISABLE_VIDEO_SUPPORT_PNAME, true_);
+        defaults.put(SRTPCryptoContext.CHECK_REPLAY_PNAME, true_);
         for (Map.Entry<String,String> e : defaults.entrySet())
         {
             String key = e.getKey();
