@@ -21,17 +21,37 @@ import org.jitsi.util.*;
 import java.io.*;
 
 /**
+ * In the same spirit as the <tt>MediaDeviceChooser</tt>, this class is used to
+ * get the chosen Pcap file for Video and Audio (although audio is not
+ * currently supported).
+ *
  * @author George Politis
  */
 public class PcapChooser {
 
-    private Pcap videoPcap;
-
+    /**
+     * Holds the SSRCs of the RTP streams inside the Pcap file.
+     */
     private long[] ssrcs;
 
+    /**
+     * The <tt>CmdLineArguments</tt> containing the arguments/options of the
+     * program, on which the audio and video Pcap will be chosen.
+     */
+    private CmdLineArguments cmdLineArguments;
+
+    /**
+     * Ctor.
+     *
+     * @param cmdArgs the <tt>CmdLineArguments</tt> containing the
+     * arguments/options of the program, on which the audio and video Pcap will
+     * be chosen.
+     */
     public PcapChooser(CmdLineArguments cmdArgs)
     {
-        String videoPcapPathname = cmdArgs.getVideoPcapFile();
+        this.cmdLineArguments = cmdArgs;
+
+        String videoPcapPathname = cmdLineArguments.getVideoPcapFile();
         if (StringUtils.isNullOrEmpty(videoPcapPathname))
         {
             return;
@@ -39,20 +59,6 @@ public class PcapChooser {
 
         File videoPcapFile = new File(videoPcapPathname);
         if (!videoPcapFile.exists() || !videoPcapFile.isFile())
-        {
-            return;
-        }
-
-        try
-        {
-            videoPcap = Pcap.openStream(videoPcapFile);
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-
-        if (videoPcap == null)
         {
             return;
         }
@@ -90,18 +96,48 @@ public class PcapChooser {
         }
     }
 
-
+    /**
+     * Always returns null, audio is not supported right now.
+     */
     public Pcap getAudioPcap()
     {
         // We don't need to stream audio from a pcap atm.
         return null;
     }
 
+    /**
+     * Returns a _new_ Pcap file based on the command line arguments.
+     */
     public Pcap getVideoPcap()
     {
-        return videoPcap;
+        // XXX we want a new Pcap because we want multiple processes (fake
+        // users) to be able to loop through the same Pcap file independently.
+        String videoPcapPathname = cmdLineArguments.getVideoPcapFile();
+        if (StringUtils.isNullOrEmpty(videoPcapPathname))
+        {
+            return null;
+        }
+
+        File videoPcapFile = new File(videoPcapPathname);
+        if (!videoPcapFile.exists() || !videoPcapFile.isFile())
+        {
+            return null;
+        }
+
+        try
+        {
+            return Pcap.openStream(videoPcapFile);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            return null;
+        }
     }
 
+    /**
+     * Returns the SSRCs of the RTP streams inside the Pcap file.
+     */
     public long[] getVideoSsrcs()
     {
         return ssrcs;

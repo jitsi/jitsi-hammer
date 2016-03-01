@@ -63,6 +63,11 @@ public class FakeStream
     /**
      * The SSRCs in the PCAP file to stream, if any.
      */
+    private final Map<Long, Long> ssrcsMap;
+
+    /**
+     * The SSRCs in the PCAP file to stream, if any.
+     */
     private final long[] ssrcs;
 
     /**
@@ -118,6 +123,7 @@ public class FakeStream
         else
         {
             this.pcap = null;
+            this.ssrcsMap = null;
             this.ssrcs = null;
         }
     }
@@ -341,12 +347,12 @@ public class FakeStream
             String label = UUID.randomUUID().toString();
 
             List<SourcePacketExtension> sources = new ArrayList<>();
-            for (long ssrc : ssrcs)
+            for (int i = 0; i < ssrcs.length; i++)
             {
                 SourcePacketExtension sourcePacketExtension =
                         new SourcePacketExtension();
 
-                sourcePacketExtension.setSSRC(ssrc);
+                sourcePacketExtension.setSSRC(ssrcsMap.get(ssrcs[i]));
                 sourcePacketExtension.addChildExtension(
                         new ParameterPacketExtension("cname",
                                 mediaService.getRtpCname()));
@@ -399,6 +405,31 @@ public class FakeStream
                     (long) VideoMediaFormatImpl.DEFAULT_CLOCK_RATE);
         }
 
+        private RawPacket rewriteRTP(RawPacket rtpPacket)
+        {
+            long ssrc = ssrcsMap.get(rtpPacket.getSSRCAsLong());
+            if (logger.isDebugEnabled())
+            {
+                logger.debug("Injecting RTP ssrc=" + rtpPacket.getSSRCAsLong()
+                        + "->" + ssrc
+                        + ", seq=" + rtpPacket.getSequenceNumber()
+                        + ", ts=" + rtpPacket.getTimestamp());
+            }
+            rtpPacket.setSSRC((int) ssrc);
+
+            // XXX Eventually (and in order to support pcap looping) we'll have
+            // to rewrite sequence numbers and timestamps.
+
+            return rtpPacket;
+        }
+
+        private RawPacket rewriteRTCP(RawPacket rtcpPacket)
+        {
+            // TODO trigger RTCP generation upon RTCP reception.
+
+            return null;
+        }
+
         public void run()
         {
             while (true)
@@ -435,12 +466,13 @@ public class FakeStream
                 try
                 {
                     boolean data =  RTPPacketPredicate.INSTANCE.test(next);
-                    logger.debug(data
-                            ? "Injecting RTP ssrc=" + next.getSSRCAsLong()
-                            + ", seq=" + next.getSequenceNumber() +
-                            ", ts=" + next.getTimestamp()
-                            : "Injecting RTCP.");
-                    stream.injectPacket(next,data, null);
+
+                    next = data ? rewriteRTP(next) : rewriteRTCP(next);
+
+                    if (next != null)
+                    {
+                        stream.injectPacket(next, data, null);
+                    }
                 }
                 catch (TransmissionFailedException e)
                 {
@@ -479,67 +511,56 @@ public class FakeStream
 
         final Map<Long, PacketEmitter> emitterMap = new HashMap<>();
 
-        loopThread = new Thread(new Runnable()
-        {
-            @Override
-            public void run()
+        loopThread = new Thread(() -> {
+            try
             {
-                try
-                {
-                    pcap.loop(new PacketHandler()
+                pcap.loop(packet -> {
+
+                    if (closed)
                     {
-                        @Override
-                        public void nextPacket(io.pkts.packet.Packet packet)
-                                throws IOException
+                        for (PacketEmitter pem : emitterMap.values())
                         {
-
-                            if (closed)
-                            {
-                                for (PacketEmitter pem : emitterMap.values())
-                                {
-                                    pem.interrupt();
-                                    try
-                                    {
-                                        pem.join();
-                                    }
-                                    catch (InterruptedException e)
-                                    {
-                                    }
-                                }
-
-                                return;
-                            }
-
-                            byte[] buff = packet.getPacket(Protocol.UDP)
-                                    .getPayload().getArray();
-                            RawPacket next = new RawPacket(buff, 0, buff.length);
-
-                            long ssrc = RTPPacketPredicate.INSTANCE.test(next)
-                                    ? next.getSSRCAsLong()
-                                    : -1;
-
-                            if (!emitterMap.containsKey(ssrc))
-                            {
-                                PacketEmitter pem = new PacketEmitter();
-                                pem.start();
-                                emitterMap.put(ssrc, pem);
-                            }
-
-                            PacketEmitter pem = emitterMap.get(ssrc);
+                            pem.interrupt();
                             try
                             {
-                                pem.queue.put(next);
+                                pem.join();
                             }
                             catch (InterruptedException e)
                             {
                             }
                         }
-                    });
-                }
-                catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
+
+                        return;
+                    }
+
+                    byte[] buff = packet.getPacket(Protocol.UDP)
+                            .getPayload().getArray();
+                    RawPacket next = new RawPacket(buff, 0, buff.length);
+
+                    long ssrc = RTPPacketPredicate.INSTANCE.test(next)
+                            ? next.getSSRCAsLong()
+                            : -1;
+
+                    if (!emitterMap.containsKey(ssrc))
+                    {
+                        PacketEmitter pem = new PacketEmitter();
+                        pem.start();
+                        emitterMap.put(ssrc, pem);
+                    }
+
+                    PacketEmitter pem = emitterMap.get(ssrc);
+                    try
+                    {
+                        pem.queue.put(next);
+                    }
+                    catch (InterruptedException e)
+                    {
+                    }
+                });
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
             }
         });
 
@@ -591,7 +612,7 @@ public class FakeStream
             for (int i = 0; i < ssrcs.length; i++)
             {
                 mediaPacket.addSource(getFormat().getMediaType().toString(),
-                        String.valueOf(ssrcs[i]),
+                        String.valueOf(ssrcsMap.get(ssrcs[i])),
                         MediaDirection.SENDRECV.toString());
             }
         }
