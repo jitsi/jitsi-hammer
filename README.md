@@ -8,6 +8,8 @@ Jitsi-Hammer is a program that connects to a Jitsi-Meet conference,
 
 Note that the hammer requires Java 1.8 because of a dependency (see pom.xml for details).
 
+If you want to stream one of the Pcaps in the resources/ directory, you're going to need Git LFS support. You can download it from [here](https://git-lfs.github.com/).
+
 ## How to use
 You can run the program by using the **jitsi-hammer.sh** script:
 
