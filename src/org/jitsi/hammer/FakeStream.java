@@ -443,6 +443,12 @@ public class FakeStream
                     break;
                 }
 
+                boolean data =  RTPPacketPredicate.INSTANCE.test(next);
+
+                // We want to make the rewriting before the scheduling because
+                // the scheduling code takes into account the RTP timestamps.
+                next = data ? rewriteRTP(next) : rewriteRTCP(next);
+
                 try
                 {
                     rawPacketScheduler.schedule(next);
@@ -459,10 +465,6 @@ public class FakeStream
 
                 try
                 {
-                    boolean data =  RTPPacketPredicate.INSTANCE.test(next);
-
-                    next = data ? rewriteRTP(next) : rewriteRTCP(next);
-
                     if (next != null)
                     {
                         stream.injectPacket(next, data, null);
