@@ -14,12 +14,15 @@ fi
 
 # we can make this a script parameter at some point.
 REBUILD=true
+SC_HOME_DIR_LOCATION=$SCRIPT_DIR
 SC_HOME_DIR_NAME=.jitsi-hammer
-SC_HOME_DIR=~/$SC_HOME_DIR_NAME
-LOG_HOME=$SC_HOME_DIR/log
+LOG_HOME=$SCRIPT_DIR/$SC_HOME_DIR_NAME/log
 
 if $REBUILD ; then
   mvn clean compile
 fi
 
-exec mvn exec:java -Dexec.args="$*" -Djava.util.logging.config.file=$SCRIPT_DIR/lib/logging.properties -Dnet.java.sip.communicator.SC_HOME_DIR_NAME="$SC_HOME_DIR_NAME" 2>&1 | tee $LOG_HOME/output.log
+exec mvn exec:java -Dexec.args="$*" \
+  -Djava.util.logging.config.file=$SCRIPT_DIR/lib/logging.properties \
+  -Dnet.java.sip.communicator.SC_HOME_DIR_LOCATION=$SC_HOME_DIR_LOCATION \
+  -Dnet.java.sip.communicator.SC_HOME_DIR_NAME=$SC_HOME_DIR_NAME 2>&1 | tee $LOG_HOME/output.log
