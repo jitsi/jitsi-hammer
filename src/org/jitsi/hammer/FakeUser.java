@@ -15,6 +15,7 @@
  */
 package org.jitsi.hammer;
 
+import org.jitsi.service.neomedia.device.MediaDevice;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.bosh.*;
 import org.jivesoftware.smack.packet.*;
@@ -106,45 +107,6 @@ public class FakeUser implements PacketListener
      */
     private MultiUserChat muc;
 
-
-    /**
-     * The registry containing the dynamic payload types learned in the
-     * session-initiate (to use back in the session-accept)
-     */
-    DynamicPayloadTypeRegistry ptRegistry =
-        new DynamicPayloadTypeRegistry();
-
-    /**
-     * The registry containing the dynamic RTP extensions learned in the
-     * session-initiate
-     */
-    DynamicRTPExtensionsRegistry rtpExtRegistry =
-        new DynamicRTPExtensionsRegistry();
-
-    /**
-     * A Map mapping a media type (audio, video, data), with a list of format
-     * that can be handle by libjitsi
-     */
-    Map<String,List<MediaFormat>> possibleFormatMap =
-        new HashMap<String,List<MediaFormat>>();
-
-    /**
-     * A Map mapping a media type (audio, video, data), with a <tt>MediaFormat</tt>
-     * representing the selected format for the stream handling this media type.
-     *
-     * The MediaFormat in this Map has been chosen in <tt>possibleFormatMap</tt>
-     */
-    Map<String,MediaFormat> selectedFormat =
-        new HashMap<String,MediaFormat>();
-
-    /**
-     * A Map mapping a media type (audio, video, data), with a list of
-     * RTPExtension representing the selected RTP extensions for the format
-     * (and its corresponding <tt>MediaDevice</tt>)
-     */
-    Map<String,List<RTPExtension>> selectedRtpExtension =
-        new HashMap<String,List<RTPExtension>>();
-
     /**
      * The IQ message received by the XMPP server to initiate the Jingle session.
      *
@@ -168,7 +130,7 @@ public class FakeUser implements PacketListener
      * A Map of the different <tt>MediaStream</tt> this <tt>FakeUser</tt>
      * handles.
      */
-    private Map<String,MediaStream> mediaStreamMap;
+    private Map<String,FakeStream> mediaStreamMap;
 
     /**
      * The <tt>Agent</tt> handling the ICE protocol of the stream
@@ -210,9 +172,10 @@ public class FakeUser implements PacketListener
      */
     public FakeUser(
         Hammer hammer,
-        MediaDeviceChooser mdc)
+        MediaDeviceChooser mdc,
+        PcapChooser pcapChooser)
     {
-        this(hammer, mdc, null, true);
+        this(hammer, mdc, pcapChooser, null, true);
     }
 
     /**
@@ -231,10 +194,11 @@ public class FakeUser implements PacketListener
     public FakeUser(
         Hammer hammer,
         MediaDeviceChooser mdc,
+        PcapChooser pcapChooser,
         String nickname,
         boolean statisticsEnabled)
     {
-        this(hammer, mdc, nickname, false, statisticsEnabled);
+        this(hammer, mdc, pcapChooser, nickname, false, statisticsEnabled);
     }
 
     /**
@@ -253,6 +217,7 @@ public class FakeUser implements PacketListener
     public FakeUser(
         Hammer hammer,
         MediaDeviceChooser mdc,
+        PcapChooser pcapChooser,
         String nickname,
         boolean smackDebug,
         boolean statisticsEnabled)
@@ -285,7 +250,7 @@ public class FakeUser implements PacketListener
          * Creation in advance of the MediaStream that will be used later
          * so the HammerStats can register their MediaStreamStats now.
          */
-        mediaStreamMap = HammerUtils.createMediaStreams();
+        mediaStreamMap = HammerUtils.createMediaStreams(pcapChooser);
         if (fakeUserStats != null)
         {
             fakeUserStats.setMediaStreamStats(
@@ -502,7 +467,7 @@ public class FakeUser implements PacketListener
             + " and disconnecting from the XMPP server");
         if(agent != null)
             agent.free();
-        for(MediaStream stream : mediaStreamMap.values())
+        for(FakeStream stream : mediaStreamMap.values())
         {
             stream.close();
         }
@@ -555,6 +520,44 @@ public class FakeUser implements PacketListener
         Map<String,ContentPacketExtension> contentMap =
             new HashMap<String,ContentPacketExtension>();
 
+
+        /**
+         * A Map mapping a media type (audio, video, data), with a <tt>MediaFormat</tt>
+         * representing the selected format for the stream handling this media type.
+         *
+         * The MediaFormat in this Map has been chosen in <tt>possibleFormatMap</tt>
+         */
+        Map<String,MediaFormat> selectedFormat =
+                new HashMap<String,MediaFormat>();
+
+        /**
+         * A Map mapping a media type (audio, video, data), with a list of
+         * RTPExtension representing the selected RTP extensions for the format
+         * (and its corresponding <tt>MediaDevice</tt>)
+         */
+        Map<String,List<RTPExtension>> selectedRtpExtension =
+                new HashMap<String,List<RTPExtension>>();
+
+        /**
+         * The registry containing the dynamic payload types learned in the
+         * session-initiate (to use back in the session-accept)
+         */
+        DynamicPayloadTypeRegistry ptRegistry =
+                new DynamicPayloadTypeRegistry();
+
+        /**
+         * The registry containing the dynamic RTP extensions learned in the
+         * session-initiate
+         */
+        DynamicRTPExtensionsRegistry rtpExtRegistry =
+                new DynamicRTPExtensionsRegistry();
+
+        /**
+         * A Map mapping a media type (audio, video, data), with a list of format
+         * that can be handle by libjitsi
+         */
+        Map<String,List<MediaFormat>> possibleFormatMap =
+                new HashMap<String,List<MediaFormat>>();
 
         for(ContentPacketExtension cpe : sessionInitiate.getContentList())
         {
@@ -689,11 +692,8 @@ public class FakeUser implements PacketListener
         MediaPacketExtension mediaPacket = new MediaPacketExtension();
         for(String key : contentMap.keySet())
         {
-            String str = String.valueOf(mediaStreamMap.get(key).getLocalSourceID());
-            mediaPacket.addSource(
-                key,
-                str,
-                MediaDirection.SENDRECV.toString());
+            FakeStream stream = mediaStreamMap.get(key);
+            stream.updateMediaPacketExtension(mediaPacket);
         }
         presencePacketWithSSRC.addExtension(mediaPacket);
 
@@ -805,10 +805,11 @@ public class FakeUser implements PacketListener
                                            fakeUserStats == null);
 
 
-        //Start the encryption of the MediaStreams
+        //Start the encryption of the MediaStreams and then start the
+        // MediaStream.
         for(String key : contentMap.keySet())
         {
-            MediaStream stream = mediaStreamMap.get(key);
+            FakeStream stream = mediaStreamMap.get(key);
             SrtpControl control = stream.getSrtpControl();
             MediaType type = stream.getFormat().getMediaType();
             control.start(type);
@@ -817,7 +818,7 @@ public class FakeUser implements PacketListener
         //Start the MediaStream
         for(String key : contentMap.keySet())
         {
-            MediaStream stream = mediaStreamMap.get(key);
+            FakeStream stream = mediaStreamMap.get(key);
             stream.start();
         }
     }
@@ -896,7 +897,8 @@ public class FakeUser implements PacketListener
      */
     protected List<RTPExtension> getExtensionsForType(MediaType type)
     {
-        return mediaDeviceChooser.getMediaDevice(type).getSupportedExtensions();
+        MediaDevice mediaDevice = mediaDeviceChooser.getMediaDevice(type);
+        return mediaDevice == null ? null : mediaDevice.getSupportedExtensions();
     }
 
 

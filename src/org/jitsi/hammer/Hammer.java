@@ -18,13 +18,15 @@ package org.jitsi.hammer;
 import org.jitsi.hammer.stats.*;
 import org.jitsi.hammer.utils.Credential;
 import org.jitsi.hammer.utils.HostInfo;
+import org.jitsi.impl.neomedia.transform.srtp.*;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.*;
 import org.osgi.framework.startlevel.*;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.provider.*;
 
-import net.java.sip.communicator.impl.osgi.framework.launch.*;
+import org.jitsi.impl.osgi.framework.launch.*;
+import org.jitsi.impl.neomedia.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 
 import org.jitsi.hammer.extension.*;
@@ -121,7 +123,7 @@ public class Hammer
     {
 
         {
-            "net/java/sip/communicator/impl/libjitsi/LibJitsiActivator",
+            "org/jitsi/service/libjitsi/LibJitsiActivator",
         }
         //These bundles are used in Jitsi-Videobridge from which I copied
         //some code, but these bundle doesn't seems necessary for the hammer
@@ -199,7 +201,8 @@ public class Hammer
      */
     public Hammer(
             HostInfo host, 
-            MediaDeviceChooser mdc, 
+            MediaDeviceChooser mdc,
+            PcapChooser pcapChooser,
             String nickname, 
             int numberOfUser, 
             ConferenceInfo conferenceInfo,
@@ -219,6 +222,7 @@ public class Hammer
             fakeUsers[i] = new FakeUser(
                 this,
                 this.mediaDeviceChooser,
+                pcapChooser,
                 this.nickname+"_"+i,
                 (hammerStats != null));
         }
@@ -245,6 +249,19 @@ public class Hammer
         {
             if (Hammer.framework != null)
                 return;
+        }
+        Map<String,String> defaults = new HashMap<>();
+        String true_ = Boolean.toString(true);
+
+        defaults.put(MediaServiceImpl.DISABLE_AUDIO_SUPPORT_PNAME, true_);
+        defaults.put(MediaServiceImpl.DISABLE_VIDEO_SUPPORT_PNAME, true_);
+        defaults.put(SRTPCryptoContext.CHECK_REPLAY_PNAME, true_);
+        for (Map.Entry<String,String> e : defaults.entrySet())
+        {
+            String key = e.getKey();
+
+            if (System.getProperty(key) == null)
+                System.setProperty(key, e.getValue());
         }
 
         logger.info("Start OSGi framework with the bundles : " + BUNDLES);

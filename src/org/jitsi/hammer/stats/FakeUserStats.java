@@ -16,6 +16,7 @@
 
 package org.jitsi.hammer.stats;
 
+import org.jitsi.hammer.FakeStream;
 import org.jitsi.service.neomedia.*;
 
 /**
@@ -110,14 +111,14 @@ public class FakeUserStats
      * depending of the stream type.
      * @param mediaStream
      */
-    public void setMediaStreamStats(MediaStream mediaStream)
+    public void setMediaStreamStats(FakeStream mediaStream)
     {
         if(mediaStream == null)
         {
             throw new NullPointerException("MediaStream can't be null");
         }
 
-        if(mediaStream instanceof AudioMediaStream)
+        if(mediaStream.isAudio())
         {
             audioSSRC = mediaStream.getLocalSourceID();
             audioStats = mediaStream.getMediaStreamStats();

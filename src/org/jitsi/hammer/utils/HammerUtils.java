@@ -16,14 +16,13 @@
 
 package org.jitsi.hammer.utils;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.CandidateType;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
 import net.java.sip.communicator.service.protocol.media.*;
 
 import org.ice4j.socket.*;
-import org.jitsi.hammer.extension.*;
+import org.jitsi.hammer.*;
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.device.*;
@@ -272,10 +271,11 @@ public class HammerUtils
      * @return a Map of newly created <tt>MediaStream</tt>, indexed by
      * the String equivalent of their <tt>MediaType</tt>*
      */
-    public static Map<String,MediaStream> createMediaStreams()
+    public static Map<String,FakeStream> createMediaStreams(
+            PcapChooser pcapChooser)
     {
         MediaService mediaService = LibJitsi.getMediaService();
-        Map<String,MediaStream> mediaStreamMap = new HashMap<String,MediaStream>();
+        Map<String,FakeStream> mediaStreamMap = new HashMap<String,FakeStream>();
         MediaStream stream = null;
 
         /*
@@ -285,7 +285,8 @@ public class HammerUtils
             null,
             MediaType.AUDIO,
             mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
-        mediaStreamMap.put(MediaType.AUDIO.toString(), stream);
+        mediaStreamMap.put(MediaType.AUDIO.toString(),
+                new FakeStream(pcapChooser, stream));
 
         /*
          * VIDEO STREAM
@@ -294,7 +295,8 @@ public class HammerUtils
             null,
             MediaType.VIDEO,
             mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
-        mediaStreamMap.put(MediaType.VIDEO.toString(), stream);
+        mediaStreamMap.put(MediaType.VIDEO.toString(),
+                new FakeStream(pcapChooser, stream));
 
         return mediaStreamMap;
     }
@@ -322,14 +324,14 @@ public class HammerUtils
      * @param rtpExtRegistry
      */
     public static void configureMediaStream(
-        Map<String,MediaStream> mediaStreamMap,
+        Map<String,FakeStream> mediaStreamMap,
         Map<String,MediaFormat> mediaFormatMap,
         Map<String,List<RTPExtension>> rtpExtensionMap,
         MediaDeviceChooser mediaDeviceChooser,
         DynamicPayloadTypeRegistry ptRegistry,
         DynamicRTPExtensionsRegistry rtpExtRegistry)
     {
-        MediaStream stream = null;
+        FakeStream stream = null;
         MediaFormat format = null;
         MediaDevice device = null;
 
@@ -389,8 +391,6 @@ public class HammerUtils
                 stream.addDynamicRTPPayloadType(
                     (byte) 116,
                     mediaService.getFormatFactory().createMediaFormat("red"));
-
-            mediaStreamMap.put(mediaName, stream);
         }
     }
 
@@ -409,7 +409,7 @@ public class HammerUtils
      */
     public static void addSocketToMediaStream(
         Agent agent,
-        Map<String,MediaStream> mediaStreamMap,
+        Map<String,FakeStream> mediaStreamMap,
         boolean dropIncomingRtpPackets)
     {
         IceMediaStream iceMediaStream = null;
@@ -419,7 +419,7 @@ public class HammerUtils
         DatagramSocket rtcpSocket = null;
 
         StreamConnector connector = null;
-        MediaStream stream = null;
+        FakeStream stream = null;
 
         String str = "Transport candidates selected for RTP:\n";
         for(String mediaName : agent.getStreamNames())
@@ -486,11 +486,11 @@ public class HammerUtils
      * which we will get the remote fingerprints
      */
     public static void setDtlsEncryptionOnTransport(
-        Map<String,MediaStream> mediaStreamMap,
+        Map<String,FakeStream> mediaStreamMap,
         List<ContentPacketExtension> localContentList,
         List<ContentPacketExtension> remoteContentList)
     {
-        MediaStream stream = null;
+        FakeStream stream = null;
         IceUdpTransportPacketExtension transport = null;
         List<DtlsFingerprintPacketExtension> fingerprints = null;
         SrtpControl srtpControl = null;
@@ -621,75 +621,20 @@ public class HammerUtils
      */
     public static void addSSRCToContent(
         Map<String,ContentPacketExtension> contentMap,
-        Map<String,MediaStream> mediaStreamMap)
+        Map<String,FakeStream> mediaStreamMap)
     {
         ContentPacketExtension content = null;
-        RtpDescriptionPacketExtension description = null;
-        MediaStream mediaStream = null;
+        FakeStream mediaStream = null;
 
 
         for(String mediaName : contentMap.keySet())
         {
-            long ssrc;
-
             content = contentMap.get(mediaName);
             mediaStream = mediaStreamMap.get(mediaName);
             if((content == null) || (mediaStream == null)) continue;
 
-            ssrc = mediaStream.getLocalSourceID();
-
-            description = content.getFirstChildOfType(
-                RtpDescriptionPacketExtension.class);
-
-            description.setSsrc(String.valueOf(ssrc));
-            addSourceExtension(description, ssrc);
+            mediaStream.updateContentPacketExtension(content);
         }
-    }
-
-
-
-    /**
-     * Adds a <tt>SourcePacketExtension</tt> as a child element of
-     * <tt>description</tt>. See XEP-0339.
-     *
-     * @param description the <tt>RtpDescriptionPacketExtension</tt> to which
-     * a child element will be added.
-     * @param ssrc the SSRC for the <tt>SourcePacketExtension</tt> to use.
-     */
-    public static void addSourceExtension(
-        RtpDescriptionPacketExtension description,
-        long ssrc)
-    {
-        MediaService mediaService = LibJitsi.getMediaService();
-        String msLabel = UUID.randomUUID().toString();
-        String label = UUID.randomUUID().toString();
-
-        SourcePacketExtension sourcePacketExtension =
-            new SourcePacketExtension();
-        SsrcPacketExtension ssrcPacketExtension =
-            new SsrcPacketExtension();
-
-
-        sourcePacketExtension.setSSRC(ssrc);
-        sourcePacketExtension.addChildExtension(
-            new ParameterPacketExtension("cname",
-                mediaService.getRtpCname()));
-        sourcePacketExtension.addChildExtension(
-            new ParameterPacketExtension("msid", msLabel + " " + label));
-        sourcePacketExtension.addChildExtension(
-            new ParameterPacketExtension("mslabel", msLabel));
-        sourcePacketExtension.addChildExtension(
-            new ParameterPacketExtension("label", label));
-        description.addChildExtension(sourcePacketExtension);
-
-
-
-        ssrcPacketExtension.setSsrc(String.valueOf(ssrc));
-        ssrcPacketExtension.setCname(mediaService.getRtpCname());
-        ssrcPacketExtension.setMsid(msLabel + " " + label);
-        ssrcPacketExtension.setMslabel(msLabel);
-        ssrcPacketExtension.setLabel(label);
-        description.addChildExtension(ssrcPacketExtension);
     }
 
     /**

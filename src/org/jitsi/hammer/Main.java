@@ -22,7 +22,6 @@ import java.net.*;
 import java.util.List;
 
 import net.java.sip.communicator.impl.protocol.jabber.*;
-import net.java.sip.communicator.launcher.*;
 import net.java.sip.communicator.service.protocol.jabber.*;
 
 import org.jitsi.hammer.utils.*;
@@ -193,29 +192,6 @@ public class Main
                 "dns,dnsjava");
         }
 
-        if (version.startsWith("1.4") || vmVendor.startsWith("Gnu") ||
-            vmVendor.startsWith("Free"))
-        {
-            String os = "";
-
-            if (osName.startsWith("Mac"))
-                os = ChangeJVMFrame.MAC_OSX;
-            else if (osName.startsWith("Linux"))
-                os = ChangeJVMFrame.LINUX;
-            else if (osName.startsWith("Windows"))
-                os = ChangeJVMFrame.WINDOWS;
-
-            ChangeJVMFrame changeJVMFrame = new ChangeJVMFrame(os);
-            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-
-            changeJVMFrame.setLocation(
-                screenSize.width/2 - changeJVMFrame.getWidth()/2,
-                screenSize.height/2 - changeJVMFrame.getHeight()/2);
-            changeJVMFrame.setVisible(true);
-
-            return;
-        }
-
 
         /*
          ************************************************************
@@ -270,6 +246,8 @@ public class Main
             
             MediaDeviceChooser mdc = infoCLI.getMediaDeviceChooser();
 
+            PcapChooser pcapChooser = infoCLI.getPcapChooser();
+
             int numberOfFakeUsers = infoCLI.getNumberOfFakeUsers();
             List<Credential> credentials = infoCLI.getCredentialsList();
             if(credentials.size() > 0) numberOfFakeUsers = credentials.size();
@@ -279,6 +257,7 @@ public class Main
             final Hammer hammer = new Hammer(
                 hostInfo,
                 mdc,
+                pcapChooser,
                 "Jitsi-Hammer",
                 numberOfFakeUsers,
                     conferenceInfo,

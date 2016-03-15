@@ -41,7 +41,7 @@ public class CmdLineArguments
         + " to run the program")
     private boolean help = false;
 
-    @Option(name="-BOSHuri", 
+    @Option(name="-u", aliases="-BOSHuri", 
             usage="The BOSH URI to get host parameters from", required = true)
     private String BOSHuri;
     
@@ -118,6 +118,15 @@ public class CmdLineArguments
         + " containing recorded VP8 RTP packets"
         + " that will be read for the video stream")
     private String videoRtpdumpFile = null;
+
+    /**
+     * The path of a pcap file containing recorded VP8 RTP packets
+     * that will be read for the video stream
+     */
+    @Option(name="-videopcap",usage="The path of a pcap file"
+            + " containing recorded VP8 RTP packets"
+            + " that will be read for the video stream")
+    private String videoPcapFile = null;
 
     /**
      * The path of a rtpdump file containing recorded Opus RTP packets
@@ -224,7 +233,7 @@ public class CmdLineArguments
     @Option(name="-simulcastMode", usage="sets " +
             "'simulcastMode' conference parameter")
     private String simulcastMode = "rewriting";
-    
+
 
     /**
      * Create a <tt>ConferenceInfo</tt> from the CLI options
@@ -331,6 +340,15 @@ public class CmdLineArguments
     public String getVideoRtpdumpFile()
     {
         return videoRtpdumpFile;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public String getVideoPcapFile()
+    {
+        return videoPcapFile;
     }
 
     /**
@@ -458,5 +476,9 @@ public class CmdLineArguments
         }
 
         return list;
+    }
+
+    public PcapChooser getPcapChooser() {
+        return new PcapChooser(this);
     }
 }
