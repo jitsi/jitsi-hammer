@@ -41,7 +41,7 @@ public class CmdLineArguments
         + " to run the program")
     private boolean help = false;
 
-    @Option(name="-BOSHuri", 
+    @Option(name="-u", aliases="-BOSHuri",
             usage="The BOSH URI to get host parameters from", required = true)
     private String BOSHuri;
     
