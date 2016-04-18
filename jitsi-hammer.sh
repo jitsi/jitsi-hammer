@@ -2,27 +2,29 @@
 
 # NOTE bash is required.
 
-KEYSTORE_FILE=keystore.ks
 KEYSTORE_PWD=123456
 
-if [ ! -f "$KEYSTORE_FILE" ]
-then
-    while getopts ":u:" o; do
-      case "${o}" in
-        u) BOSH_URI=${OPTARG}
-	  ;;
-      esac
-    done
+while getopts ":u:" o; do
+  case "${o}" in
+    u) BOSH_URI=${OPTARG}
+      ;;
+  esac
+done
 
-    OLDIFS="$IFS"
-    IFS='/' read -r -a array <<< "$BOSH_URI"
-    IFS="$OLDIFS"
-    if [ ${array[0]} = "https:" ]
-    then
-      CERT=$(mktemp /tmp/temporary-file.XXXXXXXX)
-      openssl s_client -showcerts -connect ${array[2]}:443 </dev/null 2>/dev/null|openssl x509 -outform PEM > $CERT
-      keytool -import -alias ${array[2]} -file $CERT -keystore "$KEYSTORE_FILE" -storepass "$KEYSTORE_PWD"
-    fi
+OLDIFS="$IFS"
+IFS='/' read -r -a array <<< "$BOSH_URI"
+IFS="$OLDIFS"
+if [ ${array[0]} = "https:" ]
+then
+  BOSH_HOST=${array[2]}
+  KEYSTORE_FILE=$BOSH_HOST.ks
+  if [ ! -f $KEYSTORE_FILE ]
+  then
+    echo "Creating $KEYSTORE_FILE"
+    CERT=$(mktemp /tmp/temporary-file.XXXXXXXX)
+    openssl s_client -showcerts -connect $BOSH_HOST:443 </dev/null 2>/dev/null|openssl x509 -outform PEM > $CERT
+    keytool -import -alias $BOSH_HOST -file $CERT -keystore "$KEYSTORE_FILE" -storepass "$KEYSTORE_PWD"
+  fi
 fi
 
 if [ $# -lt 1 ] ; then #[ "$1" == "--help" ] || [ "$1" == "-help" ] || [ "$1" == "-h" ] || [ $# -lt 1 ] ; then
