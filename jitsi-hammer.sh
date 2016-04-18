@@ -23,7 +23,7 @@ then
     echo "Creating $KEYSTORE_FILE"
     CERT=$(mktemp /tmp/temporary-file.XXXXXXXX)
     openssl s_client -showcerts -connect $BOSH_HOST:443 </dev/null 2>/dev/null|openssl x509 -outform PEM > $CERT
-    keytool -import -alias $BOSH_HOST -file $CERT -keystore "$KEYSTORE_FILE" -storepass "$KEYSTORE_PWD"
+    echo 'yes' | keytool -import -alias $BOSH_HOST -file $CERT -keystore "$KEYSTORE_FILE" -storepass "$KEYSTORE_PWD"
   fi
 fi
 
