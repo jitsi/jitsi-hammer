@@ -20,13 +20,13 @@ package org.jitsi.hammer.utils;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.greyfading.*;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.ivffile.*;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.rtpdumpfile.*;
+import org.jitsi.hammer.*;
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.codec.*;
 import org.jitsi.service.neomedia.device.*;
-import org.jitsi.service.neomedia.format.MediaFormatFactory;
+import org.jitsi.service.neomedia.format.*;
 import org.jitsi.util.Logger;
-import org.jitsi.videobridge.*;
 
 import javax.media.*;
 import javax.media.format.*;
@@ -122,7 +122,7 @@ public class MediaDeviceChooser
             {
                 str = str
                     + "-with AudioSilenceMediaDevice for the audio stream.\n";
-                audioMediaDevice = new AudioSilenceMediaDevice();
+                audioMediaDevice = new HammerAudioSilenceMediaDevice();
             }
 
             /*
