@@ -80,7 +80,7 @@ public class CmdLineArguments
     /**
      * The name of the MUC room that we'll use.
      */
-    @Option(name="-room",usage="The MUC room name")
+    @Option(name="-r", aliases="--room",usage="The MUC room name")
     private String roomName = "TestHammer";
 
     /**
@@ -123,7 +123,7 @@ public class CmdLineArguments
      * The path of a pcap file containing recorded VP8 RTP packets
      * that will be read for the video stream
      */
-    @Option(name="-videopcap",usage="The path of a pcap file"
+    @Option(name = "-v", aliases="--videopcap",usage="The path of a pcap file"
             + " containing recorded VP8 RTP packets"
             + " that will be read for the video stream")
     private String videoPcapFile = null;

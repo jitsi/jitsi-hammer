@@ -30,7 +30,7 @@ import org.jitsi.service.neomedia.device.*;
 import org.jitsi.service.neomedia.format.*;
 import org.jitsi.util.*;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -45,7 +45,7 @@ import java.util.concurrent.*;
 public class FakeStream
 {
     /**
-     * The <tt>Logger</tt> used by <tt>RtpdumpStream</tt> and its instances
+     * The <tt>Logger</tt> used by <tt>FakeStream</tt> and its instances
      * for logging output.
      */
     private static final Logger logger = Logger.getLogger(FakeStream.class);
