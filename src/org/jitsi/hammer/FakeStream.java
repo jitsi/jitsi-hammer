@@ -24,7 +24,7 @@ import org.jitsi.hammer.extension.*;
 import org.jitsi.hammer.utils.*;
 import org.jitsi.impl.neomedia.*;
 import org.jitsi.impl.neomedia.codec.video.vp8.*;
-import org.jitsi.impl.neomedia.format.VideoMediaFormatImpl;
+import org.jitsi.impl.neomedia.format.*;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.rtpdumpfile.*;
 import org.jitsi.impl.neomedia.rtcp.*;
 import org.jitsi.impl.neomedia.rtp.*;
@@ -50,7 +50,7 @@ import java.util.concurrent.*;
 public class FakeStream
 {
     /**
-     * The <tt>Logger</tt> used by <tt>RtpdumpStream</tt> and its instances
+     * The <tt>Logger</tt> used by {@link FakeStream} and its instances
      * for logging output.
      */
     private static final Logger logger = Logger.getLogger(FakeStream.class);
@@ -78,7 +78,7 @@ public class FakeStream
      * FIXME This information should be included in the .txt that describes
      * the PCAP file.
      */
-    private static final byte RED_PT = 0x74;
+    private static final byte RED_PT = 116;
 
     /**
      * The VP8 payload type. This is required for the packet handler to be
@@ -87,7 +87,7 @@ public class FakeStream
      * FIXME This information should be included in the .txt that describes
      * the PCAP file.
      */
-    private static final byte VP8_PT = 0x64;
+    private static final byte VP8_PT = 100;
 
     /**
      * With simulcast we have mini bursts of key frames (because they're
@@ -101,7 +101,6 @@ public class FakeStream
      * <tt>PacketEmitter</tt>.
      */
     private static final int QUEUE_CAPACITY = 100;
-
 
     /**
      * Holds a value that represents an invalid timestamp.
@@ -120,14 +119,11 @@ public class FakeStream
     private final PcapChooser pcapChooser;
 
     /**
-     * The SSRCs in the PCAP file to stream, if any.
+     * Maps the SSRCs from the PCAP file to the SSRCs used by this instance
+     * (they are randomly generated per-instance to allow multiple instances to
+     * stream the same file).
      */
     private final Map<Long, Long> ssrcsMap;
-
-    /**
-     * The SSRCs in the PCAP file to stream, if any.
-     */
-    private final long[] ssrcs;
 
     /**
      * The indicator which determines whether {@link #close()} has been invoked
@@ -206,21 +202,22 @@ public class FakeStream
             // FIXME what if we're not in pcap streaming mode?
             this.stream.getMediaStreamStats().addNackListener(RTCPListener);
             this.pcapChooser = pcapChooser;
-            this.ssrcs = pcapChooser.getVideoSsrcs();
             this.packetHandler = new VideoPacketHandler();
             this.emitterMap = new HashMap<>();
+
+            long[] ssrcs = pcapChooser.getVideoSsrcs();
             this.ssrcsMap = new ConcurrentHashMap<>(ssrcs.length);
-            for (int i = 0; i < ssrcs.length; i++)
+            for (long ssrc : ssrcs)
             {
-                this.ssrcsMap.put(ssrcs[i],
-                        Math.abs(new Random().nextLong()) % Integer.MAX_VALUE);
+                this.ssrcsMap.put(ssrc,
+                                  Math.abs(
+                                      new Random().nextInt()) & 0xFFFFFFFFL);
             }
         }
         else
         {
             this.pcapChooser = null;
             this.ssrcsMap = null;
-            this.ssrcs = null;
             this.packetHandler = null;
             this.emitterMap = null;
         }
@@ -402,7 +399,8 @@ public class FakeStream
                 description = content.getFirstChildOfType(
                 RtpDescriptionPacketExtension.class);
 
-        if (ssrcs == null || ssrcs.length == 0)
+        Set<Long> ssrcs = ssrcsMap.keySet();
+        if (ssrcs.isEmpty())
         {
             long ssrc = stream.getLocalSourceID();
 
@@ -445,17 +443,18 @@ public class FakeStream
             String label = UUID.randomUUID().toString();
 
             List<SourcePacketExtension> sources = new ArrayList<>();
-            for (int i = 0; i < ssrcs.length; i++)
+            for (long ssrc : ssrcs)
             {
-                SourcePacketExtension sourcePacketExtension =
-                        new SourcePacketExtension();
+                SourcePacketExtension sourcePacketExtension
+                    = new SourcePacketExtension();
 
-                sourcePacketExtension.setSSRC(ssrcsMap.get(ssrcs[i]));
+                sourcePacketExtension.setSSRC(ssrcsMap.get(ssrc));
                 sourcePacketExtension.addChildExtension(
                         new ParameterPacketExtension("cname",
                                 mediaService.getRtpCname()));
                 sourcePacketExtension.addChildExtension(
-                        new ParameterPacketExtension("msid", msLabel + " " + label));
+                        new ParameterPacketExtension(
+                                "msid", msLabel + " " + label));
                 sourcePacketExtension.addChildExtension(
                         new ParameterPacketExtension("mslabel", msLabel));
                 sourcePacketExtension.addChildExtension(
@@ -464,7 +463,7 @@ public class FakeStream
                 description.addChildExtension(sourcePacketExtension);
             }
 
-            if (ssrcs.length > 1)
+            if (ssrcs.size() > 1)
             {
                 SourceGroupPacketExtension sourceGroupPacketExtension =
                         SourceGroupPacketExtension.createSimulcastGroup();
@@ -768,20 +767,22 @@ public class FakeStream
      */
     public void updateMediaPacketExtension(MediaPacketExtension mediaPacket)
     {
-        if (ssrcs == null || ssrcs.length == 0)
+        Set<Long> ssrcs = ssrcsMap.keySet();
+        if (ssrcs.isEmpty())
         {
             String str = String.valueOf(stream.getLocalSourceID());
             mediaPacket.addSource(
-                    getFormat().getMediaType().toString(), str,
+                    getFormat().getMediaType().toString(),
+                    str,
                     MediaDirection.SENDRECV.toString());
         }
         else
         {
-            for (int i = 0; i < ssrcs.length; i++)
+            for (long ssrc : ssrcs)
             {
                 mediaPacket.addSource(getFormat().getMediaType().toString(),
-                        String.valueOf(ssrcsMap.get(ssrcs[i])),
-                        MediaDirection.SENDRECV.toString());
+                                      String.valueOf(ssrcsMap.get(ssrc)),
+                                      MediaDirection.SENDRECV.toString());
             }
         }
     }
