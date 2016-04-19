@@ -16,21 +16,26 @@
 package org.jitsi.hammer;
 
 import io.pkts.*;
+import io.pkts.packet.*;
 import io.pkts.protocol.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import org.jitsi.hammer.extension.*;
 import org.jitsi.hammer.utils.*;
 import org.jitsi.impl.neomedia.*;
+import org.jitsi.impl.neomedia.codec.video.*;
 import org.jitsi.impl.neomedia.format.VideoMediaFormatImpl;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.rtpdumpfile.*;
+import org.jitsi.impl.neomedia.rtcp.*;
+import org.jitsi.impl.neomedia.rtp.*;
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.device.*;
 import org.jitsi.service.neomedia.format.*;
+import org.jitsi.service.neomedia.rtp.*;
 import org.jitsi.util.*;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -45,10 +50,63 @@ import java.util.concurrent.*;
 public class FakeStream
 {
     /**
-     * The <tt>Logger</tt> used by <tt>FakeStream</tt> and its instances
+     * The <tt>Logger</tt> used by <tt>RtpdumpStream</tt> and its instances
      * for logging output.
      */
     private static final Logger logger = Logger.getLogger(FakeStream.class);
+
+    /**
+     * The <tt>Random</tt> that generates initial sequence numbers. Instances of
+     * {@code java.util.Random} are thread-safe since Java 1.7.
+     */
+    private static final Random RANDOM = new Random();
+
+    /**
+     * Holds a value that represents an invalid index.
+     */
+    private static final long UNINITIALIZED_IDX = -1L;
+
+    /**
+     * Holds a value that represents an invalid SSRC.
+     */
+    private static final long INVALID_SSRC = -1L;
+
+    /**
+     * The RED payload type. This is required for the packet handler to be
+     * able to detect keyframes.
+     *
+     * FIXME This information should be included in the .txt that describes
+     * the PCAP file.
+     */
+    private static final byte RED_PT = 0x74;
+
+    /**
+     * The VP8 payload type. This is required for the packet handler to be
+     * able to detect keyframes.
+     *
+     * FIXME This information should be included in the .txt that describes
+     * the PCAP file.
+     */
+    private static final byte VP8_PT = 0x64;
+
+    /**
+     * With simulcast we have mini bursts of key frames (because they're
+     * always being emitted in groups, for all streams). We want to restart
+     * at the beginning of a burst, not the end.
+     */
+    private static final long KEYFRAME_MIN_DISTANCE = 20L;
+
+    /**
+     * Determines how big the queue size should be for this
+     * <tt>PacketEmitter</tt>.
+     */
+    private static final int QUEUE_CAPACITY = 100;
+
+
+    /**
+     * Holds a value that represents an invalid timestamp.
+     */
+    private static final long INVALID_TIMESTAMP = -1;
 
     /**
      * The <tt>MediaStream</tt> that this instance wraps.
@@ -56,9 +114,10 @@ public class FakeStream
     private final MediaStream stream;
 
     /**
-     * The PCAP file to stream, if any.
+     * The <tt>PcapChooser</tt> that is to be used to get the <tt>Pcap</tt>
+     * file.
      */
-    private final Pcap pcap;
+    private final PcapChooser pcapChooser;
 
     /**
      * The SSRCs in the PCAP file to stream, if any.
@@ -95,6 +154,45 @@ public class FakeStream
     private MediaFormat format;
 
     /**
+     * Maps SSRCs to <tt>PacketEmitter</tt>s.
+     */
+    private final Map<Long, PacketEmitter> emitterMap;
+
+    /**
+     * The <tt>PacketHandler</tt> instance that loops through the video PCAP.
+     *
+     * FIXME this should be generic for both audio and video.
+     */
+    private final VideoPacketHandler packetHandler;
+
+    private RTCPListener RTCPListener = new RTCPListenerAdapter()
+    {
+        @Override
+        public void firReceived(FIRPacket fir)
+        {
+            System.out.println("FIR Received.");
+            packetHandler.stop();
+        }
+
+        @Override
+        public void pliReceived(PLIPacket pli)
+        {
+            System.out.println("PLI Received.");
+
+            packetHandler.stop();
+
+        }
+
+        @Override
+        public void nackReceived(NACKPacket nack)
+        {
+            System.out.println("NACK Received.");
+
+            packetHandler.stop();
+        }
+    };
+
+    /**
      * Ctor.
      *
      * @param pcapChooser
@@ -105,14 +203,12 @@ public class FakeStream
         this.stream = stream;
         if (!isAudio())
         {
-            this.pcap = pcapChooser.getVideoPcap();
+            // FIXME what if we're not in pcap streaming mode?
+            this.stream.getMediaStreamStats().addNackListener(RTCPListener);
+            this.pcapChooser = pcapChooser;
             this.ssrcs = pcapChooser.getVideoSsrcs();
-            if (this.ssrcs == null || this.ssrcs.length == 0)
-            {
-                this.ssrcsMap = null;
-                return;
-            }
-
+            this.packetHandler = new VideoPacketHandler();
+            this.emitterMap = new HashMap<>();
             this.ssrcsMap = new ConcurrentHashMap<>(ssrcs.length);
             for (int i = 0; i < ssrcs.length; i++)
             {
@@ -122,9 +218,11 @@ public class FakeStream
         }
         else
         {
-            this.pcap = null;
+            this.pcapChooser = null;
             this.ssrcsMap = null;
             this.ssrcs = null;
+            this.packetHandler = null;
+            this.emitterMap = null;
         }
     }
 
@@ -387,42 +485,121 @@ public class FakeStream
     }
 
     /**
+     * Holds the value to be used to initialize the rewrite timestamp bases.
+     * We're starting with a value of 30000 to make pcap debugging easier and
+     * then it holds the last timestamp that has been emitted by any of the
+     * <tt>PacketEmitter</tt>s
+     */
+    private long rewriteTimestampBaseInit = 30000;
+
+    /**
      * The <tt>Thread</tt> responsible for emitting RTP packets for a specific
      * SSRC.
      */
     class PacketEmitter extends Thread
     {
-        private static final int QUEUE_SIZE = 100;
-
+        /**
+         * The <tt>RawPacketScheduler</tt> that schedules RTP packets for
+         * emission.
+         */
         private final RawPacketScheduler rawPacketScheduler;
 
+        /**
+         * The sequence number for the next packet to be emitted by this SSRC.
+         */
+        private int rewriteSeqNum = RANDOM.nextInt(0x10000);
+
+        /**
+         * The RTP timestamp base for the SSRC we rewrite into.
+         */
+        private long rewriteTimestampBase = INVALID_TIMESTAMP;
+
+        /**
+         * The RTP timestamp base for this SSRC.
+         */
+        private long timestampBase = INVALID_TIMESTAMP;
+
+        /**
+         *
+         */
+        private long lastTimestampDiff = 0L;
+
+        /**
+         * The queue of RTP packets waiting to be emitted.
+         */
         final BlockingQueue<RawPacket> queue;
 
-        public PacketEmitter()
+        /**
+         * Ctor.
+         */
+        public PacketEmitter(long ssrc)
         {
-            queue = new LinkedBlockingQueue<>(QUEUE_SIZE);
+            super("PacketEmitter-" + Long.toString(ssrc));
+            queue = new LinkedBlockingQueue<>(QUEUE_CAPACITY);
             rawPacketScheduler = new RawPacketScheduler(
                     (long) VideoMediaFormatImpl.DEFAULT_CLOCK_RATE);
         }
 
+        public void restart()
+        {
+            logger.info("Restarting this packet emitter.");
+            queue.clear();
+            rewriteTimestampBase += lastTimestampDiff;
+        }
+
+        /**
+         * Rewrites the SSRC, sequence number and timestamps.
+         *
+         * @param rtpPacket the <tt>RawPacket</tt> to rewrite.
+         * @return the rewritten <tt>RawPacket</tt> or null.
+         */
         private RawPacket rewriteRTP(RawPacket rtpPacket)
         {
-            long ssrc = ssrcsMap.get(rtpPacket.getSSRCAsLong());
-            if (logger.isDebugEnabled())
+            final long rtpPacketTimestamp = rtpPacket.getTimestamp();
+            if (timestampBase == INVALID_TIMESTAMP)
             {
-                logger.debug("Injecting RTP ssrc=" + rtpPacket.getSSRCAsLong()
+                timestampBase = rtpPacketTimestamp;
+            }
+
+            long ssrc = ssrcsMap.get(rtpPacket.getSSRCAsLong());
+
+            int sn = rewriteSeqNum++;
+
+            lastTimestampDiff
+                = TimeUtils.rtpDiff(rtpPacketTimestamp, timestampBase);
+
+            if (rewriteTimestampBase == INVALID_TIMESTAMP)
+            {
+                rewriteTimestampBase = rewriteTimestampBaseInit;
+            }
+
+            long ts = rewriteTimestampBase + lastTimestampDiff;
+
+            rewriteTimestampBaseInit = ts;
+
+            if (logger.isInfoEnabled())
+            {
+                logger.info("Injecting RTP ssrc=" + rtpPacket.getSSRCAsLong()
                         + "->" + ssrc
                         + ", seq=" + rtpPacket.getSequenceNumber()
-                        + ", ts=" + rtpPacket.getTimestamp());
+                        + "->" + sn
+                        + ", ts=" + rtpPacketTimestamp
+                        + "->" + ts);
             }
-            rtpPacket.setSSRC((int) ssrc);
 
-            // XXX Eventually (and in order to support pcap looping) we'll have
-            // to rewrite sequence numbers and timestamps.
+            rtpPacket.setSSRC((int) ssrc);
+            rtpPacket.setSequenceNumber(sn);
+            rtpPacket.setTimestamp(ts);
 
             return rtpPacket;
         }
 
+        /**
+         * Triggers RTCP report generation based on our own statistics.
+         *
+         * @param rtcpPacket the <tt>RawPacket</tt> to rewrite.
+         * @return the rewritten <tt>RawPacket</tt> or null.
+         */
         private RawPacket rewriteRTCP(RawPacket rtcpPacket)
         {
             // TODO trigger RTCP generation upon RTCP reception.
@@ -430,6 +607,9 @@ public class FakeStream
             return null;
         }
 
+        /**
+         *
+         */
         public void run()
         {
             while (true)
@@ -506,65 +686,51 @@ public class FakeStream
 
         stream.start();
 
-        if (pcap == null)
+        if (pcapChooser == null)
         {
             return;
         }
 
-        final Map<Long, PacketEmitter> emitterMap = new HashMap<>();
-
         loopThread = new Thread(() -> {
-            try
+
+            Pcap pcap = pcapChooser.getVideoPcap();
+            if (pcap == null)
             {
-                pcap.loop(packet -> {
-
-                    if (closed)
-                    {
-                        for (PacketEmitter pem : emitterMap.values())
-                        {
-                            pem.interrupt();
-                            try
-                            {
-                                pem.join();
-                            }
-                            catch (InterruptedException e)
-                            {
-                            }
-                        }
-
-                        return;
-                    }
-
-                    byte[] buff = packet.getPacket(Protocol.UDP)
-                            .getPayload().getArray();
-                    RawPacket next = new RawPacket(buff, 0, buff.length);
-
-                    long ssrc = RTPPacketPredicate.INSTANCE.test(next)
-                            ? next.getSSRCAsLong()
-                            : -1;
-
-                    if (!emitterMap.containsKey(ssrc))
-                    {
-                        PacketEmitter pem = new PacketEmitter();
-                        pem.start();
-                        emitterMap.put(ssrc, pem);
-                    }
-
-                    PacketEmitter pem = emitterMap.get(ssrc);
-                    try
-                    {
-                        pem.queue.put(next);
-                    }
-                    catch (InterruptedException e)
-                    {
-                    }
-                });
+                return;
             }
-            catch (IOException e)
+
+            while (!closed)
             {
-                e.printStackTrace();
+                // Make sure the packet handler is not stopped.
+                packetHandler.restart();
+
+                // Loop through the file while we're not closed.
+                try
+                {
+                    pcap.loop(packetHandler);
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+
+                // We need a new Pcap in order to loop again.
+                pcap = pcapChooser.getVideoPcap();
             }
-        });
+
+            for (PacketEmitter pem : emitterMap.values())
+            {
+                pem.interrupt();
+                try
+                {
+                    pem.join();
+                }
+                catch (InterruptedException e)
+                {
+                }
+            }
+
+        }, "loopThread");
 
         loopThread.start();
     }
@@ -630,5 +796,116 @@ public class FakeStream
     public MediaFormat getFormat()
     {
         return format;
+    }
+
+    /**
+     * The <tt>PacketHandler</tt> implementation that loops through the PCAP
+     * file. It keeps track of VP8 keyframe indexes in the pcap file and
+     * is able to restart streaming from that specific location.
+     */
+    class VideoPacketHandler implements PacketHandler
+    {
+        /**
+         * The index of the most recent keyframe.
+         */
+        private long idxKeyframe = UNINITIALIZED_IDX;
+
+        /**
+         * The index of the current packet being processed.
+         */
+        private long idxCurrentPacket = UNINITIALIZED_IDX;
+
+        /**
+         * The indicator which determines whether this packet handler should
+         * keep on looping or not.
+         */
+        private boolean stopped = false;
+
+        /**
+         * Re-initializes this <tt>VideoPacketHandler</tt>.
+         */
+        public synchronized void restart()
+        {
+            for (PacketEmitter pem : emitterMap.values())
+            {
+                pem.restart();
+            }
+
+            logger.info("Restarting this packet handler.");
+            stopped = false;
+            idxCurrentPacket = UNINITIALIZED_IDX;
+        }
+
+        public synchronized void stop()
+        {
+            logger.info("Stopping this packet handler.");
+            this.stopped = true;
+        }
+
+        @Override
+        public boolean nextPacket(Packet packet) throws IOException
+        {
+            synchronized (this)
+            {
+                if (stopped)
+                {
+                    // We've been instructed to stop -> skip all subsequent packets.
+                    return false;
+                }
+            }
+
+            idxCurrentPacket++;
+
+            if (idxCurrentPacket < idxKeyframe)
+            {
+                // We're not yet at the restart location.
+                return true;
+            }
+
+            byte[] sharedbuff = packet.getPacket(Protocol.UDP)
+                .getPayload().getArray();
+
+            byte[] buff = new byte[sharedbuff.length];
+
+            // We just want to avoid problems with shared buffers. Not sure
+            // if the underlying library supports that.
+            System.arraycopy(sharedbuff, 0, buff, 0, sharedbuff.length);
+            RawPacket next = new RawPacket(buff, 0, buff.length);
+
+            // Check if this is a keyframe and update the
+            // latestKeyFrameIdentification.
+
+            if (Utils.isKeyFrame(next, RED_PT, VP8_PT))
+            {
+                if (idxKeyframe == UNINITIALIZED_IDX
+                    || idxCurrentPacket - idxKeyframe > KEYFRAME_MIN_DISTANCE)
+                {
+                    logger.debug("New keyframe idx: " + idxKeyframe);
+                    idxKeyframe = idxCurrentPacket;
+                }
+            }
+
+            long ssrc = RTPPacketPredicate.INSTANCE.test(next)
+                ? next.getSSRCAsLong() : INVALID_SSRC;
+
+            if (!emitterMap.containsKey(ssrc))
+            {
+                logger.info("Creating a new PacketEmitter.");
+                PacketEmitter pem = new PacketEmitter(ssrc);
+                pem.start();
+                emitterMap.put(ssrc, pem);
+            }
+
+            PacketEmitter pem = emitterMap.get(ssrc);
+            try
+            {
+                pem.queue.put(next);
+            }
+            catch (InterruptedException e)
+            {
+            }
+
+            return true;
+        }
     }
 }

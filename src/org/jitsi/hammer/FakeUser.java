@@ -802,7 +802,7 @@ public class FakeUser implements PacketListener
         // to improve performance.
         HammerUtils.addSocketToMediaStream(agent,
                                            mediaStreamMap,
-                                           fakeUserStats == null);
+                                           false);
 
 
         //Start the encryption of the MediaStreams and then start the

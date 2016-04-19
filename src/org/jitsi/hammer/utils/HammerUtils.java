@@ -362,7 +362,7 @@ public class HammerUtils
              * return null for the Player, the bug is also avoided : maybe
              * libjitsi doesn't handle correctly a null player..
              */
-            stream.setDirection(MediaDirection.SENDONLY);
+            stream.setDirection(MediaDirection.SENDRECV);
 
             if(format.getRTPPayloadType()
                 ==  MediaFormat.RTP_PAYLOAD_TYPE_UNKNOWN)
