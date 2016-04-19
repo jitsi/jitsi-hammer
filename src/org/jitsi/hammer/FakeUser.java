@@ -238,13 +238,8 @@ public class FakeUser implements PacketListener
         config.setDebuggerEnabled(smackDebug);
 
         connection = new XMPPBOSHConnection(config);
-        connection.addPacketListener(this,new PacketFilter()
-        {
-            public boolean accept(Packet packet)
-            {
-                return (packet instanceof JingleIQ);
-            }
-        });
+        connection.addPacketListener(this,
+                                     packet -> (packet instanceof JingleIQ));
 
         /*
          * Creation in advance of the MediaStream that will be used later
@@ -467,10 +462,7 @@ public class FakeUser implements PacketListener
             + " and disconnecting from the XMPP server");
         if(agent != null)
             agent.free();
-        for(FakeStream stream : mediaStreamMap.values())
-        {
-            stream.close();
-        }
+        mediaStreamMap.values().forEach(FakeStream::close);
         if(connection !=null)
         {
             if(sessionAccept != null)
@@ -510,15 +502,14 @@ public class FakeUser implements PacketListener
      */
     private void acceptJingleSession()
     {
-        IceMediaStreamGenerator iceMediaStreamGenerator = null;
-        List<MediaFormat> listFormat = null;
-        List<RTPExtension> remoteRtpExtension = null;
-        List<RTPExtension> supportedRtpExtension = null;
-        List<RTPExtension> listRtpExtension = null;
-        ContentPacketExtension content = null;
-        RtpDescriptionPacketExtension description = null;
-        Map<String,ContentPacketExtension> contentMap =
-            new HashMap<String,ContentPacketExtension>();
+        IceMediaStreamGenerator iceMediaStreamGenerator;
+        List<MediaFormat> listFormat;
+        List<RTPExtension> remoteRtpExtension;
+        List<RTPExtension> supportedRtpExtension;
+        List<RTPExtension> listRtpExtension;
+        ContentPacketExtension content;
+        RtpDescriptionPacketExtension description;
+        Map<String,ContentPacketExtension> contentMap = new HashMap<>();
 
 
         /**
@@ -527,23 +518,20 @@ public class FakeUser implements PacketListener
          *
          * The MediaFormat in this Map has been chosen in <tt>possibleFormatMap</tt>
          */
-        Map<String,MediaFormat> selectedFormat =
-                new HashMap<String,MediaFormat>();
+        Map<String, MediaFormat> selectedFormat = new HashMap<>();
 
         /**
          * A Map mapping a media type (audio, video, data), with a list of
          * RTPExtension representing the selected RTP extensions for the format
          * (and its corresponding <tt>MediaDevice</tt>)
          */
-        Map<String,List<RTPExtension>> selectedRtpExtension =
-                new HashMap<String,List<RTPExtension>>();
+        Map<String, List<RTPExtension>> selectedRtpExtension = new HashMap<>();
 
         /**
          * The registry containing the dynamic payload types learned in the
          * session-initiate (to use back in the session-accept)
          */
-        DynamicPayloadTypeRegistry ptRegistry =
-                new DynamicPayloadTypeRegistry();
+        DynamicPayloadTypeRegistry ptRegistry = new DynamicPayloadTypeRegistry();
 
         /**
          * The registry containing the dynamic RTP extensions learned in the
@@ -556,8 +544,7 @@ public class FakeUser implements PacketListener
          * A Map mapping a media type (audio, video, data), with a list of format
          * that can be handle by libjitsi
          */
-        Map<String,List<MediaFormat>> possibleFormatMap =
-                new HashMap<String,List<MediaFormat>>();
+        Map<String,List<MediaFormat>> possibleFormatMap = new HashMap<>();
 
         for(ContentPacketExtension cpe : sessionInitiate.getContentList())
         {
@@ -677,7 +664,7 @@ public class FakeUser implements PacketListener
          * Also, without sending this packet, there are error logged
          *  in the javascript console of the Jitsi Meet initiator :
          * "No video type for ssrc: 13365845"
-         * It seems like Jitsi Meet can work arround this error,
+         * It seems like Jitsi Meet can work around this error,
          * but better safe than sorry.
          */
         Packet presencePacketWithSSRC = new Presence(Presence.Type.available);
@@ -690,11 +677,8 @@ public class FakeUser implements PacketListener
         presencePacketWithSSRC.setTo(recipient);
         presencePacketWithSSRC.addExtension(new Nick(this.nickname));
         MediaPacketExtension mediaPacket = new MediaPacketExtension();
-        for(String key : contentMap.keySet())
-        {
-            FakeStream stream = mediaStreamMap.get(key);
-            stream.updateMediaPacketExtension(mediaPacket);
-        }
+        mediaStreamMap.values().forEach(
+                stream -> stream.updateMediaPacketExtension(mediaPacket));
         presencePacketWithSSRC.addExtension(mediaPacket);
 
         try
@@ -807,23 +791,13 @@ public class FakeUser implements PacketListener
 
         //Start the encryption of the MediaStreams and then start the
         // MediaStream.
-        for(String key : contentMap.keySet())
-        {
-            FakeStream stream = mediaStreamMap.get(key);
-            SrtpControl control = stream.getSrtpControl();
-            MediaType type = stream.getFormat().getMediaType();
-            control.start(type);
-        }
+        mediaStreamMap.values().forEach(
+                stream -> stream.getSrtpControl().start(
+                        stream.getFormat().getMediaType()));
 
         //Start the MediaStream
-        for(String key : contentMap.keySet())
-        {
-            FakeStream stream = mediaStreamMap.get(key);
-            stream.start();
-        }
+        mediaStreamMap.values().forEach(FakeStream::start);
     }
-
-
 
     /**
      * Callback function used when a JingleIQ is received by the XMPP connector.
@@ -852,7 +826,7 @@ public class FakeUser implements PacketListener
             logger.info(this.nickname + " : Jingle addsource received");
             break;
         case REMOVESOURCE:
-            logger.info(this.nickname + " : Jingle addsource received");
+            logger.info(this.nickname + " : Jingle removesource received");
             break;
         default:
             logger.info(this.nickname + " : Unknown Jingle IQ received : "
@@ -932,9 +906,9 @@ public class FakeUser implements PacketListener
         List<RTPExtension> supportedExtensions)
         {
         if(remoteExtensions == null || supportedExtensions == null)
-            return new ArrayList<RTPExtension>();
+            return new ArrayList<>();
 
-        List<RTPExtension> intersection = new ArrayList<RTPExtension>(
+        List<RTPExtension> intersection = new ArrayList<>(
             Math.min(remoteExtensions.size(), supportedExtensions.size()));
 
         //loop through the list that the remote party sent
