@@ -23,7 +23,7 @@ import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import org.jitsi.hammer.extension.*;
 import org.jitsi.hammer.utils.*;
 import org.jitsi.impl.neomedia.*;
-import org.jitsi.impl.neomedia.codec.video.*;
+import org.jitsi.impl.neomedia.codec.video.vp8.*;
 import org.jitsi.impl.neomedia.format.VideoMediaFormatImpl;
 import org.jitsi.impl.neomedia.jmfext.media.protocol.rtpdumpfile.*;
 import org.jitsi.impl.neomedia.rtcp.*;
@@ -35,7 +35,7 @@ import org.jitsi.service.neomedia.format.*;
 import org.jitsi.service.neomedia.rtp.*;
 import org.jitsi.util.*;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
