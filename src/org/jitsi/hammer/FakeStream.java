@@ -183,7 +183,7 @@ public class FakeStream
     /**
      * The <tt>Thread</tt> the loops over the PCAP file.
      */
-    private Thread loopThread;
+    private Thread pcapLoopThread;
 
     /**
      * The <tt>MediaFormat</tt> of the wrapped <tt>MediaStream</tt>. We store it
@@ -211,9 +211,11 @@ public class FakeStream
         this.stream = stream;
         if (!isAudio())
         {
+            // Check if we're streaming from a Pcap file.
             long[] ssrcs = pcapChooser.getVideoSsrcs();
             if (ssrcs == null || ssrcs.length == 0)
             {
+                // Nope, we're not.
                 this.pcapChooser = null;
                 this.ssrcsMap = null;
                 this.packetHandler = null;
@@ -221,6 +223,7 @@ public class FakeStream
             }
             else
             {
+                // Yep, we are.
                 this.stream.getMediaStreamStats().addNackListener(rtcpListener);
                 this.pcapChooser = pcapChooser;
                 this.packetHandler = new VideoPacketHandler();
@@ -296,12 +299,12 @@ public class FakeStream
             closed = true;
         }
 
-        if (loopThread != null)
+        if (pcapLoopThread != null)
         {
-            loopThread.interrupt();
+            pcapLoopThread.interrupt();
             try
             {
-                loopThread.join();
+                pcapLoopThread.join();
             }
             catch (InterruptedException e)
             {
@@ -518,48 +521,10 @@ public class FakeStream
             return;
         }
 
-        loopThread = new Thread(() -> {
-
-            Pcap pcap = pcapChooser.getVideoPcap();
-            if (pcap == null)
-            {
-                return;
-            }
-
-            while (!closed)
-            {
-                // Make sure the packet handler is not stopped.
-                packetHandler.restart();
-
-                // Loop through the file while we're not closed.
-                try
-                {
-                    pcap.loop(packetHandler);
-                }
-                catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
-
-                // We need a new Pcap in order to loop again.
-                pcap = pcapChooser.getVideoPcap();
-            }
-
-            for (PacketInjector packetInjector : packetInjectors.values())
-            {
-                packetInjector.interrupt();
-                try
-                {
-                    packetInjector.join();
-                }
-                catch (InterruptedException e)
-                {
-                }
-            }
-
-        }, "loopThread");
-
-        loopThread.start();
+        // The loop thread makes sure we loop over and over again on the same
+        // pcap file, while the stream is not closed.
+        pcapLoopThread = new Thread(new PcapLoopRunnable(), "pcapLoopThread");
+        pcapLoopThread.start();
     }
 
     /**
@@ -638,6 +603,55 @@ public class FakeStream
     {
         this.format = format;
         stream.setFormat(format);
+    }
+
+    /**
+     * The <tt>Runnable</tt> that loops over and over again on the same pcap
+     * file, while the stream is not closed.
+     */
+    class PcapLoopRunnable
+        implements Runnable
+    {
+        @Override
+        public void run()
+        {
+            Pcap pcap = pcapChooser.getVideoPcap();
+            if (pcap == null)
+            {
+                return;
+            }
+
+            while (!closed)
+            {
+                // Make sure the packet handler is not stopped.
+                packetHandler.restart();
+
+                // Loop through the file while we're not closed.
+                try
+                {
+                    pcap.loop(packetHandler);
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+
+                // We need a new Pcap in order to loop again.
+                pcap = pcapChooser.getVideoPcap();
+            }
+
+            for (PacketInjector packetInjector : packetInjectors.values())
+            {
+                packetInjector.interrupt();
+                try
+                {
+                    packetInjector.join();
+                }
+                catch (InterruptedException e)
+                {
+                }
+            }
+        }
     }
 
     /**
