@@ -199,19 +199,28 @@ public class FakeStream
         this.stream = stream;
         if (!isAudio())
         {
-            // FIXME what if we're not in pcap streaming mode?
-            this.stream.getMediaStreamStats().addNackListener(RTCPListener);
-            this.pcapChooser = pcapChooser;
-            this.packetHandler = new VideoPacketHandler();
-            this.emitterMap = new HashMap<>();
-
             long[] ssrcs = pcapChooser.getVideoSsrcs();
-            this.ssrcsMap = new ConcurrentHashMap<>(ssrcs.length);
-            for (long ssrc : ssrcs)
+            if (ssrcs == null || ssrcs.length == 0)
             {
-                this.ssrcsMap.put(ssrc,
-                                  Math.abs(
-                                      new Random().nextInt()) & 0xFFFFFFFFL);
+                this.pcapChooser = null;
+                this.ssrcsMap = null;
+                this.packetHandler = null;
+                this.emitterMap = null;
+            }
+            else
+            {
+                this.stream.getMediaStreamStats().addNackListener(RTCPListener);
+                this.pcapChooser = pcapChooser;
+                this.packetHandler = new VideoPacketHandler();
+                this.emitterMap = new HashMap<>();
+
+                this.ssrcsMap = new ConcurrentHashMap<>(ssrcs.length);
+                for (long ssrc : ssrcs)
+                {
+                    this.ssrcsMap.put(ssrc,
+                        Math.abs(
+                            new Random().nextInt()) & 0xFFFFFFFFL);
+                }
             }
         }
         else
