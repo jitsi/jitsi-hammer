@@ -98,7 +98,7 @@ public class FakeStream
 
     /**
      * Determines how big the queue size should be for this
-     * <tt>PacketEmitter</tt>.
+     * <tt>PacketInjector</tt>.
      */
     private static final int QUEUE_CAPACITY = 100;
 
@@ -150,9 +150,9 @@ public class FakeStream
     private MediaFormat format;
 
     /**
-     * Maps SSRCs to <tt>PacketEmitter</tt>s.
+     * Maps SSRCs to <tt>PacketInjector</tt>s.
      */
-    private final Map<Long, PacketEmitter> emitterMap;
+    private final Map<Long, PacketInjector> packetInjectors;
 
     /**
      * The <tt>PacketHandler</tt> instance that loops through the video PCAP.
@@ -161,7 +161,11 @@ public class FakeStream
      */
     private final VideoPacketHandler packetHandler;
 
-    private RTCPListener RTCPListener = new RTCPListenerAdapter()
+    /**
+     * The <tt>RTCPListener</tt> of this instance whose purpose is to make the
+     * hammer react to NACKs/FIRs and PLIs.
+     */
+    private final RTCPListener rtcpListener = new RTCPListenerAdapter()
     {
         @Override
         public void firReceived(FIRPacket fir)
@@ -205,14 +209,14 @@ public class FakeStream
                 this.pcapChooser = null;
                 this.ssrcsMap = null;
                 this.packetHandler = null;
-                this.emitterMap = null;
+                this.packetInjectors = null;
             }
             else
             {
-                this.stream.getMediaStreamStats().addNackListener(RTCPListener);
+                this.stream.getMediaStreamStats().addNackListener(rtcpListener);
                 this.pcapChooser = pcapChooser;
                 this.packetHandler = new VideoPacketHandler();
-                this.emitterMap = new HashMap<>();
+                this.packetInjectors = new HashMap<>();
 
                 this.ssrcsMap = new ConcurrentHashMap<>(ssrcs.length);
                 for (long ssrc : ssrcs)
@@ -228,7 +232,7 @@ public class FakeStream
             this.pcapChooser = null;
             this.ssrcsMap = null;
             this.packetHandler = null;
-            this.emitterMap = null;
+            this.packetInjectors = null;
         }
     }
 
@@ -496,7 +500,7 @@ public class FakeStream
      * Holds the value to be used to initialize the rewrite timestamp bases.
      * We're starting with a value of 30000 to make pcap debugging easier and
      * then it holds the last timestamp that has been emitted by any of the
-     * <tt>PacketEmitter</tt>s
+     * <tt>PacketInjector</tt>s
      */
     private long rewriteTimestampBaseInit = 30000;
 
@@ -504,7 +508,8 @@ public class FakeStream
      * The <tt>Thread</tt> responsible for emitting RTP packets for a specific
      * SSRC.
      */
-    class PacketEmitter extends Thread
+    class PacketInjector
+        extends Thread
     {
         /**
          * The <tt>RawPacketScheduler</tt> that schedules RTP packets for
@@ -540,9 +545,9 @@ public class FakeStream
         /**
          * Ctor.
          */
-        public PacketEmitter(long ssrc)
+        public PacketInjector(long ssrc)
         {
-            super("PacketEmitter-" + Long.toString(ssrc));
+            super("PacketInjector-" + Long.toString(ssrc));
             queue = new LinkedBlockingQueue<>(QUEUE_CAPACITY);
             rawPacketScheduler = new RawPacketScheduler(
                     (long) VideoMediaFormatImpl.DEFAULT_CLOCK_RATE);
@@ -726,12 +731,12 @@ public class FakeStream
                 pcap = pcapChooser.getVideoPcap();
             }
 
-            for (PacketEmitter pem : emitterMap.values())
+            for (PacketInjector packetInjector : packetInjectors.values())
             {
-                pem.interrupt();
+                packetInjector.interrupt();
                 try
                 {
-                    pem.join();
+                    packetInjector.join();
                 }
                 catch (InterruptedException e)
                 {
@@ -836,9 +841,9 @@ public class FakeStream
          */
         public synchronized void restart()
         {
-            for (PacketEmitter pem : emitterMap.values())
+            for (PacketInjector packetInjector : packetInjectors.values())
             {
-                pem.restart();
+                packetInjector.restart();
             }
 
             logger.info("Restarting this packet handler.");
@@ -898,18 +903,18 @@ public class FakeStream
             long ssrc = RTPPacketPredicate.INSTANCE.test(next)
                 ? next.getSSRCAsLong() : INVALID_SSRC;
 
-            if (!emitterMap.containsKey(ssrc))
+            if (!packetInjectors.containsKey(ssrc))
             {
-                logger.info("Creating a new PacketEmitter.");
-                PacketEmitter pem = new PacketEmitter(ssrc);
-                pem.start();
-                emitterMap.put(ssrc, pem);
+                logger.info("Creating a new PacketInjector.");
+                PacketInjector packetInjector = new PacketInjector(ssrc);
+                packetInjector.start();
+                packetInjectors.put(ssrc, packetInjector);
             }
 
-            PacketEmitter pem = emitterMap.get(ssrc);
+            PacketInjector packetInjector = packetInjectors.get(ssrc);
             try
             {
-                pem.queue.put(next);
+                packetInjector.queue.put(next);
             }
             catch (InterruptedException e)
             {
