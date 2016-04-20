@@ -399,8 +399,8 @@ public class FakeStream
                 description = content.getFirstChildOfType(
                 RtpDescriptionPacketExtension.class);
 
-        Set<Long> ssrcs = ssrcsMap.keySet();
-        if (ssrcs.isEmpty())
+        Set<Long> ssrcs;
+        if (ssrcsMap == null || (ssrcs = ssrcsMap.keySet()).isEmpty())
         {
             long ssrc = stream.getLocalSourceID();
 
@@ -767,8 +767,8 @@ public class FakeStream
      */
     public void updateMediaPacketExtension(MediaPacketExtension mediaPacket)
     {
-        Set<Long> ssrcs = ssrcsMap.keySet();
-        if (ssrcs.isEmpty())
+        Set<Long> ssrcs;
+        if (ssrcsMap == null || (ssrcs = ssrcsMap.keySet()).isEmpty())
         {
             String str = String.valueOf(stream.getLocalSourceID());
             mediaPacket.addSource(
