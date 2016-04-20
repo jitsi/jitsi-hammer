@@ -16,16 +16,10 @@
 package org.jitsi.hammer;
 
 import io.pkts.*;
-import io.pkts.packet.*;
-import io.pkts.protocol.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import org.jitsi.hammer.extension.*;
 import org.jitsi.hammer.utils.*;
-import org.jitsi.impl.neomedia.*;
-import org.jitsi.impl.neomedia.codec.video.vp8.*;
-import org.jitsi.impl.neomedia.format.*;
-import org.jitsi.impl.neomedia.jmfext.media.protocol.rtpdumpfile.*;
 import org.jitsi.impl.neomedia.rtcp.*;
 import org.jitsi.impl.neomedia.rtp.*;
 import org.jitsi.service.libjitsi.*;
@@ -56,61 +50,9 @@ public class FakeStream
     private static final Logger logger = Logger.getLogger(FakeStream.class);
 
     /**
-     * The <tt>Random</tt> that generates initial sequence numbers. Instances of
-     * {@code java.util.Random} are thread-safe since Java 1.7.
-     */
-    private static final Random RANDOM = new Random();
-
-    /**
-     * Holds a value that represents an invalid index.
-     */
-    private static final long UNINITIALIZED_IDX = -1L;
-
-    /**
-     * Holds a value that represents an invalid SSRC.
-     */
-    private static final long INVALID_SSRC = -1L;
-
-    /**
-     * The RED payload type. This is required for the packet handler to be
-     * able to detect keyframes.
-     *
-     * FIXME This information should be included in the .txt that describes
-     * the PCAP file.
-     */
-    private static final byte RED_PT = 116;
-
-    /**
-     * The VP8 payload type. This is required for the packet handler to be
-     * able to detect keyframes.
-     *
-     * FIXME This information should be included in the .txt that describes
-     * the PCAP file.
-     */
-    private static final byte VP8_PT = 100;
-
-    /**
-     * With simulcast we have mini bursts of key frames (because they're
-     * always being emitted in groups, for all streams). We want to restart
-     * at the beginning of a burst, not the end.
-     */
-    private static final long KEYFRAME_MIN_DISTANCE = 20L;
-
-    /**
-     * Determines how big the queue size should be for this
-     * <tt>PacketInjector</tt>.
-     */
-    private static final int QUEUE_CAPACITY = 100;
-
-    /**
-     * Holds a value that represents an invalid timestamp.
-     */
-    private static final long INVALID_TIMESTAMP = -1;
-
-    /**
      * The <tt>MediaStream</tt> that this instance wraps.
      */
-    private final MediaStream stream;
+    final MediaStream stream;
 
     /**
      * The <tt>PcapChooser</tt> that is to be used to get the <tt>Pcap</tt>
@@ -123,12 +65,12 @@ public class FakeStream
      * (they are randomly generated per-instance to allow multiple instances to
      * stream the same file).
      */
-    private final Map<Long, Long> ssrcsMap;
+    final Map<Long, Long> ssrcsMap;
 
     /**
      * Maps SSRCs to <tt>PacketInjector</tt>s.
      */
-    private final Map<Long, PacketInjector> packetInjectors;
+    final Map<Long, PacketInjector> packetInjectors;
 
     /**
      * The <tt>PacketHandler</tt> instance that loops through the video PCAP.
@@ -146,15 +88,22 @@ public class FakeStream
         @Override
         public void firReceived(FIRPacket fir)
         {
-            System.out.println("FIR Received.");
+            logger.debug("FIR Received.");
+            // Instruct the packet handler to stop processing packets. The pcap
+            // looper will kick-in and it will restart the packet handler. The
+            // packet handler will restart streaming from the last known key
+            // frame location.
             packetHandler.stop();
         }
 
         @Override
         public void pliReceived(PLIPacket pli)
         {
-            System.out.println("PLI Received.");
-
+            logger.debug("PLI Received.");
+            // Instruct the packet handler to stop processing packets. The pcap
+            // looper will kick-in and it will restart the packet handler. The
+            // packet handler will restart streaming from the last known key
+            // frame location.
             packetHandler.stop();
 
         }
@@ -162,8 +111,11 @@ public class FakeStream
         @Override
         public void nackReceived(NACKPacket nack)
         {
-            System.out.println("NACK Received.");
-
+            logger.debug("NACK Received.");
+            // Instruct the packet handler to stop processing packets. The pcap
+            // looper will kick-in and it will restart the packet handler. The
+            // packet handler will restart streaming from the last known key
+            // frame location.
             packetHandler.stop();
         }
     };
@@ -172,7 +124,7 @@ public class FakeStream
      * The indicator which determines whether {@link #close()} has been invoked
      * on this <tt>FakeStream</tt>.
      */
-    private boolean closed = false;
+    boolean closed = false;
 
     /**
      * The indicator which determines whether {@link #start()} has been invoked
@@ -198,7 +150,7 @@ public class FakeStream
      * then it holds the last timestamp that has been emitted by any of the
      * <tt>PacketInjector</tt>s
      */
-    private long rewriteTimestampBaseInit = 30000;
+    long rewriteTimestampBaseInit = 30000;
 
     /**
      * Ctor.
@@ -226,7 +178,7 @@ public class FakeStream
                 // Yep, we are.
                 this.stream.getMediaStreamStats().addNackListener(rtcpListener);
                 this.pcapChooser = pcapChooser;
-                this.packetHandler = new VideoPacketHandler();
+                this.packetHandler = new VideoPacketHandler(this);
                 this.packetInjectors = new HashMap<>();
 
                 this.ssrcsMap = new ConcurrentHashMap<>(ssrcs.length);
@@ -655,288 +607,4 @@ public class FakeStream
         }
     }
 
-    /**
-     * The <tt>Thread</tt> responsible for emitting RTP packets for a specific
-     * SSRC.
-     */
-    class PacketInjector
-        extends Thread
-    {
-        /**
-         * The queue of RTP packets waiting to be emitted.
-         */
-        final BlockingQueue<RawPacket> queue;
-
-        /**
-         * The <tt>RawPacketScheduler</tt> that schedules RTP packets for
-         * emission.
-         */
-        private final RawPacketScheduler rawPacketScheduler;
-
-        /**
-         * The sequence number for the next packet to be emitted by this SSRC.
-         */
-        private int rewriteSeqNum = RANDOM.nextInt(0x10000);
-
-        /**
-         * The RTP timestamp base for the SSRC we rewrite into.
-         */
-        private long rewriteTimestampBase = INVALID_TIMESTAMP;
-
-        /**
-         * The RTP timestamp base for this SSRC.
-         */
-        private long timestampBase = INVALID_TIMESTAMP;
-
-        /**
-         *
-         */
-        private long lastTimestampDiff = 0L;
-
-        /**
-         * Ctor.
-         */
-        public PacketInjector(long ssrc)
-        {
-            super("PacketInjector-" + Long.toString(ssrc));
-            queue = new LinkedBlockingQueue<>(QUEUE_CAPACITY);
-            rawPacketScheduler = new RawPacketScheduler(
-                    (long) VideoMediaFormatImpl.DEFAULT_CLOCK_RATE);
-        }
-
-        public void restart()
-        {
-            logger.info("Restarting this packet emitter.");
-            queue.clear();
-            rewriteTimestampBase += lastTimestampDiff;
-        }
-
-        /**
-         * Rewrites the SSRC, sequence number and timestamps.
-         *
-         * @param rtpPacket the <tt>RawPacket</tt> to rewrite.
-         * @return the rewritten <tt>RawPacket</tt> or null.
-         */
-        private RawPacket rewriteRTP(RawPacket rtpPacket)
-        {
-            final long rtpPacketTimestamp = rtpPacket.getTimestamp();
-            if (timestampBase == INVALID_TIMESTAMP)
-            {
-                timestampBase = rtpPacketTimestamp;
-            }
-
-            long ssrc = ssrcsMap.get(rtpPacket.getSSRCAsLong());
-
-            int sn = rewriteSeqNum++;
-
-            lastTimestampDiff
-                = TimeUtils.rtpDiff(rtpPacketTimestamp, timestampBase);
-
-            if (rewriteTimestampBase == INVALID_TIMESTAMP)
-            {
-                rewriteTimestampBase = rewriteTimestampBaseInit;
-            }
-
-            long ts = rewriteTimestampBase + lastTimestampDiff;
-
-            rewriteTimestampBaseInit = ts;
-
-            if (logger.isInfoEnabled())
-            {
-                logger.info("Injecting RTP ssrc=" + rtpPacket.getSSRCAsLong()
-                        + "->" + ssrc
-                        + ", seq=" + rtpPacket.getSequenceNumber()
-                        + "->" + sn
-                        + ", ts=" + rtpPacketTimestamp
-                        + "->" + ts);
-            }
-
-            rtpPacket.setSSRC((int) ssrc);
-            rtpPacket.setSequenceNumber(sn);
-            rtpPacket.setTimestamp(ts);
-
-            return rtpPacket;
-        }
-
-        /**
-         * Triggers RTCP report generation based on our own statistics.
-         *
-         * @param rtcpPacket the <tt>RawPacket</tt> to rewrite.
-         * @return the rewritten <tt>RawPacket</tt> or null.
-         */
-        private RawPacket rewriteRTCP(RawPacket rtcpPacket)
-        {
-            // TODO trigger RTCP generation upon RTCP reception.
-
-            return null;
-        }
-
-        /**
-         *
-         */
-        public void run()
-        {
-            while (true)
-            {
-                RawPacket next = null;
-
-                try
-                {
-                    next = queue.take();
-                }
-                catch (InterruptedException e)
-                {
-                }
-
-                if (closed)
-                {
-                    break;
-                }
-
-                boolean data =  RTPPacketPredicate.INSTANCE.test(next);
-
-                // We want to make the rewriting before the scheduling because
-                // the scheduling code takes into account the RTP timestamps.
-                next = data ? rewriteRTP(next) : rewriteRTCP(next);
-
-                try
-                {
-                    rawPacketScheduler.schedule(next);
-                }
-                catch (InterruptedException e)
-                {
-
-                }
-
-                if (closed)
-                {
-                    break;
-                }
-
-                try
-                {
-                    if (next != null)
-                    {
-                        stream.injectPacket(next, data, null);
-                    }
-                }
-                catch (TransmissionFailedException e)
-                {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    /**
-     * The <tt>PacketHandler</tt> implementation that loops through the PCAP
-     * file. It keeps track of VP8 keyframe indexes in the pcap file and
-     * is able to restart streaming from that specific location.
-     */
-    class VideoPacketHandler implements PacketHandler
-    {
-        /**
-         * The index of the most recent keyframe.
-         */
-        private long idxKeyframe = UNINITIALIZED_IDX;
-
-        /**
-         * The index of the current packet being processed.
-         */
-        private long idxCurrentPacket = UNINITIALIZED_IDX;
-
-        /**
-         * The indicator which determines whether this packet handler should
-         * keep on looping or not.
-         */
-        private boolean stopped = false;
-
-        /**
-         * Re-initializes this <tt>VideoPacketHandler</tt>.
-         */
-        public synchronized void restart()
-        {
-            for (PacketInjector packetInjector : packetInjectors.values())
-            {
-                packetInjector.restart();
-            }
-
-            logger.info("Restarting this packet handler.");
-            stopped = false;
-            idxCurrentPacket = UNINITIALIZED_IDX;
-        }
-
-        public synchronized void stop()
-        {
-            logger.info("Stopping this packet handler.");
-            this.stopped = true;
-        }
-
-        @Override
-        public boolean nextPacket(Packet packet) throws IOException
-        {
-            synchronized (this)
-            {
-                if (stopped)
-                {
-                    // We've been instructed to stop -> skip all subsequent
-                    // packets.
-                    return false;
-                }
-            }
-
-            idxCurrentPacket++;
-
-            if (idxCurrentPacket < idxKeyframe)
-            {
-                // We're not yet at the restart location.
-                return true;
-            }
-
-            byte[] sharedbuff = packet.getPacket(Protocol.UDP)
-                .getPayload().getArray();
-
-            byte[] buff = new byte[sharedbuff.length];
-
-            // We just want to avoid problems with shared buffers. Not sure
-            // if the underlying library supports that.
-            System.arraycopy(sharedbuff, 0, buff, 0, sharedbuff.length);
-            RawPacket next = new RawPacket(buff, 0, buff.length);
-
-            // Check if this is a keyframe and update the
-            // latestKeyFrameIdentification.
-
-            if (Utils.isKeyFrame(next, RED_PT, VP8_PT))
-            {
-                if (idxKeyframe == UNINITIALIZED_IDX
-                    || idxCurrentPacket - idxKeyframe > KEYFRAME_MIN_DISTANCE)
-                {
-                    logger.debug("New keyframe idx: " + idxKeyframe);
-                    idxKeyframe = idxCurrentPacket;
-                }
-            }
-
-            long ssrc = RTPPacketPredicate.INSTANCE.test(next)
-                ? next.getSSRCAsLong() : INVALID_SSRC;
-
-            if (!packetInjectors.containsKey(ssrc))
-            {
-                logger.info("Creating a new PacketInjector.");
-                PacketInjector packetInjector = new PacketInjector(ssrc);
-                packetInjector.start();
-                packetInjectors.put(ssrc, packetInjector);
-            }
-
-            PacketInjector packetInjector = packetInjectors.get(ssrc);
-            try
-            {
-                packetInjector.queue.put(next);
-            }
-            catch (InterruptedException e)
-            {
-            }
-
-            return true;
-        }
-    }
 }
