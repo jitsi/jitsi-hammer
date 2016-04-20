@@ -126,30 +126,6 @@ public class FakeStream
     private final Map<Long, Long> ssrcsMap;
 
     /**
-     * The indicator which determines whether {@link #close()} has been invoked
-     * on this <tt>FakeStream</tt>.
-     */
-    private boolean closed = false;
-
-    /**
-     * The indicator which determines whether {@link #start()} has been invoked
-     * on this <tt>FakeStream</tt>.
-     */
-    private boolean started = false;
-
-    /**
-     * The <tt>Thread</tt> the loops over the PCAP file.
-     */
-    private Thread loopThread;
-
-    /**
-     * The <tt>MediaFormat</tt> of the wrapped <tt>MediaStream</tt>. We store it
-     * here because if we're streaming a PCAP there's no
-     * <tt>MediaDeviceSession</tt> and stream.getFormat() returns null.
-     */
-    private MediaFormat format;
-
-    /**
      * Maps SSRCs to <tt>PacketInjector</tt>s.
      */
     private final Map<Long, PacketInjector> packetInjectors;
@@ -191,6 +167,38 @@ public class FakeStream
             packetHandler.stop();
         }
     };
+
+    /**
+     * The indicator which determines whether {@link #close()} has been invoked
+     * on this <tt>FakeStream</tt>.
+     */
+    private boolean closed = false;
+
+    /**
+     * The indicator which determines whether {@link #start()} has been invoked
+     * on this <tt>FakeStream</tt>.
+     */
+    private boolean started = false;
+
+    /**
+     * The <tt>Thread</tt> the loops over the PCAP file.
+     */
+    private Thread loopThread;
+
+    /**
+     * The <tt>MediaFormat</tt> of the wrapped <tt>MediaStream</tt>. We store it
+     * here because if we're streaming a PCAP there's no
+     * <tt>MediaDeviceSession</tt> and stream.getFormat() returns null.
+     */
+    private MediaFormat format;
+
+    /**
+     * Holds the value to be used to initialize the rewrite timestamp bases.
+     * We're starting with a value of 30000 to make pcap debugging easier and
+     * then it holds the last timestamp that has been emitted by any of the
+     * <tt>PacketInjector</tt>s
+     */
+    private long rewriteTimestampBaseInit = 30000;
 
     /**
      * Ctor.
@@ -312,19 +320,6 @@ public class FakeStream
     public void setDevice(MediaDevice device)
     {
         stream.setDevice(device);
-    }
-
-    /**
-     * Sets the <tt>MediaFormat</tt> that this <tt>MediaStream</tt> should
-     * transmit in.
-     *
-     * @param format the <tt>MediaFormat</tt> that this <tt>MediaStream</tt>
-     * should transmit in.
-     */
-    public void setFormat(MediaFormat format)
-    {
-        this.format = format;
-        stream.setFormat(format);
     }
 
     /**
@@ -497,12 +492,153 @@ public class FakeStream
     }
 
     /**
-     * Holds the value to be used to initialize the rewrite timestamp bases.
-     * We're starting with a value of 30000 to make pcap debugging easier and
-     * then it holds the last timestamp that has been emitted by any of the
-     * <tt>PacketInjector</tt>s
+     * Starts capturing media from this stream's <tt>MediaDevice</tt> and then
+     * streaming it through the local <tt>StreamConnector</tt> toward the
+     * stream's target address and port. The method also puts the
+     * <tt>MediaStream</tt> in a listening state that would make it play all
+     * media received from the <tt>StreamConnector</tt> on the stream's
+     * <tt>MediaDevice</tt>.
      */
-    private long rewriteTimestampBaseInit = 30000;
+    public void start()
+    {
+        synchronized (this)
+        {
+            if (started)
+            {
+                return;
+            }
+
+            started = true;
+        }
+
+        stream.start();
+
+        if (pcapChooser == null)
+        {
+            return;
+        }
+
+        loopThread = new Thread(() -> {
+
+            Pcap pcap = pcapChooser.getVideoPcap();
+            if (pcap == null)
+            {
+                return;
+            }
+
+            while (!closed)
+            {
+                // Make sure the packet handler is not stopped.
+                packetHandler.restart();
+
+                // Loop through the file while we're not closed.
+                try
+                {
+                    pcap.loop(packetHandler);
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+
+                // We need a new Pcap in order to loop again.
+                pcap = pcapChooser.getVideoPcap();
+            }
+
+            for (PacketInjector packetInjector : packetInjectors.values())
+            {
+                packetInjector.interrupt();
+                try
+                {
+                    packetInjector.join();
+                }
+                catch (InterruptedException e)
+                {
+                }
+            }
+
+        }, "loopThread");
+
+        loopThread.start();
+    }
+
+    /**
+     * Sets the <tt>StreamConnector</tt> to be used by this <tt>MediaStream</tt>
+     * for sending and receiving media.
+     *
+     * @param connector the <tt>StreamConnector</tt> to be used by this
+     * <tt>MediaStream</tt> for sending and receiving media
+     */
+    public void setConnector(StreamConnector connector)
+    {
+        stream.setConnector(connector);
+    }
+
+    /**
+     * Sets the target of this <tt>MediaStream</tt> to which it is to send and
+     * from which it is to receive data (e.g. RTP) and control data (e.g. RTCP).
+     *
+     * @param target the <tt>MediaStreamTarget</tt> describing the data
+     * (e.g. RTP) and the control data (e.g. RTCP) locations to which this
+     * <tt>MediaStream</tt> is to send and from which it is to receive
+     */
+    public void setTarget(MediaStreamTarget target)
+    {
+        stream.setTarget(target);
+    }
+
+    /**
+     * Adds the SSRCs of the wrapped <tt>MediaStream</tt> to the mediaPacket
+     * passed in as a parameter.
+     *
+     * @param mediaPacket the <tt>MediaPacketExtension</tt> to add the SSRCs to.
+     */
+    public void updateMediaPacketExtension(MediaPacketExtension mediaPacket)
+    {
+        Set<Long> ssrcs;
+        if (ssrcsMap == null || (ssrcs = ssrcsMap.keySet()).isEmpty())
+        {
+            String str = String.valueOf(stream.getLocalSourceID());
+            mediaPacket.addSource(
+                    getFormat().getMediaType().toString(),
+                    str,
+                    MediaDirection.SENDRECV.toString());
+        }
+        else
+        {
+            for (long ssrc : ssrcs)
+            {
+                mediaPacket.addSource(getFormat().getMediaType().toString(),
+                                      String.valueOf(ssrcsMap.get(ssrc)),
+                                      MediaDirection.SENDRECV.toString());
+            }
+        }
+    }
+
+    /**
+     * Returns the <tt>MediaFormat</tt> that this stream is currently
+     * transmitting in.
+     *
+     * @return the <tt>MediaFormat</tt> that this stream is currently
+     * transmitting in.
+     */
+    public MediaFormat getFormat()
+    {
+        return format;
+    }
+
+    /**
+     * Sets the <tt>MediaFormat</tt> that this <tt>MediaStream</tt> should
+     * transmit in.
+     *
+     * @param format the <tt>MediaFormat</tt> that this <tt>MediaStream</tt>
+     * should transmit in.
+     */
+    public void setFormat(MediaFormat format)
+    {
+        this.format = format;
+        stream.setFormat(format);
+    }
 
     /**
      * The <tt>Thread</tt> responsible for emitting RTP packets for a specific
@@ -511,6 +647,11 @@ public class FakeStream
     class PacketInjector
         extends Thread
     {
+        /**
+         * The queue of RTP packets waiting to be emitted.
+         */
+        final BlockingQueue<RawPacket> queue;
+
         /**
          * The <tt>RawPacketScheduler</tt> that schedules RTP packets for
          * emission.
@@ -536,11 +677,6 @@ public class FakeStream
          *
          */
         private long lastTimestampDiff = 0L;
-
-        /**
-         * The queue of RTP packets waiting to be emitted.
-         */
-        final BlockingQueue<RawPacket> queue;
 
         /**
          * Ctor.
@@ -675,142 +811,6 @@ public class FakeStream
                 }
             }
         }
-    }
-
-    /**
-     * Starts capturing media from this stream's <tt>MediaDevice</tt> and then
-     * streaming it through the local <tt>StreamConnector</tt> toward the
-     * stream's target address and port. The method also puts the
-     * <tt>MediaStream</tt> in a listening state that would make it play all
-     * media received from the <tt>StreamConnector</tt> on the stream's
-     * <tt>MediaDevice</tt>.
-     */
-    public void start()
-    {
-        synchronized (this)
-        {
-            if (started)
-            {
-                return;
-            }
-
-            started = true;
-        }
-
-        stream.start();
-
-        if (pcapChooser == null)
-        {
-            return;
-        }
-
-        loopThread = new Thread(() -> {
-
-            Pcap pcap = pcapChooser.getVideoPcap();
-            if (pcap == null)
-            {
-                return;
-            }
-
-            while (!closed)
-            {
-                // Make sure the packet handler is not stopped.
-                packetHandler.restart();
-
-                // Loop through the file while we're not closed.
-                try
-                {
-                    pcap.loop(packetHandler);
-                }
-                catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
-
-                // We need a new Pcap in order to loop again.
-                pcap = pcapChooser.getVideoPcap();
-            }
-
-            for (PacketInjector packetInjector : packetInjectors.values())
-            {
-                packetInjector.interrupt();
-                try
-                {
-                    packetInjector.join();
-                }
-                catch (InterruptedException e)
-                {
-                }
-            }
-
-        }, "loopThread");
-
-        loopThread.start();
-    }
-
-    /**
-     * Sets the <tt>StreamConnector</tt> to be used by this <tt>MediaStream</tt>
-     * for sending and receiving media.
-     *
-     * @param connector the <tt>StreamConnector</tt> to be used by this
-     * <tt>MediaStream</tt> for sending and receiving media
-     */
-    public void setConnector(StreamConnector connector)
-    {
-        stream.setConnector(connector);
-    }
-
-    /**
-     * Sets the target of this <tt>MediaStream</tt> to which it is to send and
-     * from which it is to receive data (e.g. RTP) and control data (e.g. RTCP).
-     *
-     * @param target the <tt>MediaStreamTarget</tt> describing the data
-     * (e.g. RTP) and the control data (e.g. RTCP) locations to which this
-     * <tt>MediaStream</tt> is to send and from which it is to receive
-     */
-    public void setTarget(MediaStreamTarget target)
-    {
-        stream.setTarget(target);
-    }
-
-    /**
-     * Adds the SSRCs of the wrapped <tt>MediaStream</tt> to the mediaPacket
-     * passed in as a parameter.
-     *
-     * @param mediaPacket the <tt>MediaPacketExtension</tt> to add the SSRCs to.
-     */
-    public void updateMediaPacketExtension(MediaPacketExtension mediaPacket)
-    {
-        Set<Long> ssrcs;
-        if (ssrcsMap == null || (ssrcs = ssrcsMap.keySet()).isEmpty())
-        {
-            String str = String.valueOf(stream.getLocalSourceID());
-            mediaPacket.addSource(
-                    getFormat().getMediaType().toString(),
-                    str,
-                    MediaDirection.SENDRECV.toString());
-        }
-        else
-        {
-            for (long ssrc : ssrcs)
-            {
-                mediaPacket.addSource(getFormat().getMediaType().toString(),
-                                      String.valueOf(ssrcsMap.get(ssrc)),
-                                      MediaDirection.SENDRECV.toString());
-            }
-        }
-    }
-
-    /**
-     * Returns the <tt>MediaFormat</tt> that this stream is currently
-     * transmitting in.
-     *
-     * @return the <tt>MediaFormat</tt> that this stream is currently
-     * transmitting in.
-     */
-    public MediaFormat getFormat()
-    {
-        return format;
     }
 
     /**
