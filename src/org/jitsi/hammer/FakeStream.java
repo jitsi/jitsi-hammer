@@ -431,7 +431,8 @@ public class FakeStream
                     new ParameterPacketExtension("cname",
                             mediaService.getRtpCname()));
             sourcePacketExtension.addChildExtension(
-                    new ParameterPacketExtension("msid", msLabel + " " + label));
+                    new ParameterPacketExtension(
+                        "msid", msLabel + " " + label));
             sourcePacketExtension.addChildExtension(
                     new ParameterPacketExtension("mslabel", msLabel));
             sourcePacketExtension.addChildExtension(
@@ -878,7 +879,8 @@ public class FakeStream
             {
                 if (stopped)
                 {
-                    // We've been instructed to stop -> skip all subsequent packets.
+                    // We've been instructed to stop -> skip all subsequent
+                    // packets.
                     return false;
                 }
             }
