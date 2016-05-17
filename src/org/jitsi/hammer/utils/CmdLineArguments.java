@@ -121,7 +121,7 @@ public class CmdLineArguments
 
     /**
      * The path of a rtpdump file containing recorded Opus RTP packets
-     * that will be read for the video stream
+     * that will be read for the audio stream
      */
     @Option(name="-audiortpdump",usage="The path of a rtpdump file"
         + " containing recorded Opus RTP packets"
@@ -175,6 +175,12 @@ public class CmdLineArguments
      */
     @Option(name="-nostats", usage="Whether to disable all statistics.")
     private boolean disableStats = false;
+
+    /**
+     * Whether only audio stream should be used.
+     */
+    @Option(name="-onlyAudio", usage="Whether to disable sending video stream.")
+    private boolean onlyAudio = false;
 
     /**
      * The "channelLastN" conference property
@@ -423,6 +429,15 @@ public class CmdLineArguments
     public boolean getDisableStats()
     {
         return disableStats;
+    }
+
+    /**
+     * Get the flag which indicates whether only audio stream should be used.
+     * @return the flag which indicates whether only audio stream should be used.
+     */
+    public boolean getOnlyAudio()
+    {
+        return onlyAudio;
     }
 
     /**

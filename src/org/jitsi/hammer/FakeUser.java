@@ -90,6 +90,10 @@ public class FakeUser implements PacketListener
      */
     private String nickname;
 
+    /**
+     * The boolean flag indicating whether this <tt>FakeUser</tt> should use only audio stream.
+     */
+    private boolean onlyAudio;
 
     /**
      * The <tt>ConnectionConfiguration</tt> equivalent of <tt>serverInfo</tt>.
@@ -173,7 +177,7 @@ public class FakeUser implements PacketListener
         Hammer hammer,
         MediaDeviceChooser mdc)
     {
-        this(hammer, mdc, null, true);
+        this(hammer, mdc, null, true, false);
     }
 
     /**
@@ -193,9 +197,10 @@ public class FakeUser implements PacketListener
         Hammer hammer,
         MediaDeviceChooser mdc,
         String nickname,
-        boolean statisticsEnabled)
+        boolean statisticsEnabled,
+        boolean onlyAudio)
     {
-        this(hammer, mdc, nickname, false, statisticsEnabled);
+        this(hammer, mdc, nickname, false, statisticsEnabled, onlyAudio);
     }
 
     /**
@@ -216,11 +221,13 @@ public class FakeUser implements PacketListener
         MediaDeviceChooser mdc,
         String nickname,
         boolean smackDebug,
-        boolean statisticsEnabled)
+        boolean statisticsEnabled,
+        boolean onlyAudio)
     {   
         this.hammer = hammer;
         this.serverInfo = hammer.getServerInfo();
         this.mediaDeviceChooser = mdc;
+        this.onlyAudio = onlyAudio;
         this.nickname = (nickname == null) ? "Anonymous" : nickname;
         this.conferenceInfo = hammer.getConferenceInfo();
         fakeUserStats = statisticsEnabled ? new FakeUserStats(nickname) : null;
@@ -616,9 +623,9 @@ public class FakeUser implements PacketListener
          * for now by libjitsi)
          * FIXME
          */
-        contentMap.remove("data");
-        
-        
+        contentMap.remove(MediaType.DATA.toString());
+        if (this.onlyAudio)
+            contentMap.remove(MediaType.VIDEO.toString());
 
         iceMediaStreamGenerator = IceMediaStreamGenerator.getInstance();
         
