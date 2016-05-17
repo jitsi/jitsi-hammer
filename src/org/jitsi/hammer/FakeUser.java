@@ -15,6 +15,7 @@
  */
 package org.jitsi.hammer;
 
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingleinfo.RelayPacketExtension;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.bosh.*;
 import org.jivesoftware.smack.packet.*;
@@ -354,6 +355,10 @@ public class FakeUser implements PacketListener
                 new ConferencePropertyPacketExtension(
                         "simulcastMode", 
                         this.conferenceInfo.getSimulcastMode()));
+        conferenceInitiationIQ.addConferenceProperty(
+                new ConferencePropertyPacketExtension(
+                        "rtpLevelRelayType",
+                        this.conferenceInfo.getRtpLevelRelayType()));
         try 
         {
             this.connection.sendPacket(conferenceInitiationIQ);

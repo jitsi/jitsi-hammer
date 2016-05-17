@@ -59,6 +59,11 @@ public class ConferenceInfo {
     private String simulcastMode;
 
     /**
+     * The "rtpAudioRelayType" conference property
+     */
+    private String rtpLevelRelayType;
+
+    /**
      * Create new ConferenceInfo instance
      * 
      * @param channelLastN The "channelLastN" conference property
@@ -68,6 +73,7 @@ public class ConferenceInfo {
      * @param startAudioMuted The "startAudioMuted" conference property
      * @param startVideoMuted The "startVideoMuted" conference property
      * @param simulcastMode The "simulcastMode" conference property
+     * @param rtpLevelRelayType The "rtpAudioRelayType" conference property
      */
     public ConferenceInfo(
             String channelLastN,
@@ -76,7 +82,8 @@ public class ConferenceInfo {
             String openSctp,
             String startAudioMuted,
             String startVideoMuted,
-            String simulcastMode) 
+            String simulcastMode,
+            String rtpLevelRelayType)
     {
         this.channelLastN = channelLastN;
         this.adaptiveLastN = adaptiveLastN;
@@ -85,6 +92,7 @@ public class ConferenceInfo {
         this.startAudioMuted = startAudioMuted;
         this.startVideoMuted = startVideoMuted;
         this.simulcastMode = simulcastMode;
+        this.rtpLevelRelayType = rtpLevelRelayType;
     }
 
     /**
@@ -150,5 +158,11 @@ public class ConferenceInfo {
         return simulcastMode;
     }
     
-    
+    /**
+     * Get the "rtpAudioRelayType" conference property
+     *
+     * @return the "rtpAudioRelayType" conference property
+     */
+    public String getRtpLevelRelayType() { return rtpLevelRelayType; }
+
 }

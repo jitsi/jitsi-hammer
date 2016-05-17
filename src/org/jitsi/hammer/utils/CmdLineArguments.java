@@ -224,7 +224,13 @@ public class CmdLineArguments
     @Option(name="-simulcastMode", usage="sets " +
             "'simulcastMode' conference parameter")
     private String simulcastMode = "rewriting";
-    
+
+    /**
+     * The "rtpLevelRelayType" conference property
+     */
+    @Option(name="-rtpLevelRelayType", usage="sets " +
+            "'rtpLevelRelayType' conference parameter")
+    private String rtpLevelRelayType = "translator";
 
     /**
      * Create a <tt>ConferenceInfo</tt> from the CLI options
@@ -240,7 +246,8 @@ public class CmdLineArguments
                 openSctp,
                 startAudioMuted,
                 startVideoMuted,
-                simulcastMode
+                simulcastMode,
+                rtpLevelRelayType
         );
     }
 
