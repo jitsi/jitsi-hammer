@@ -24,9 +24,9 @@ package net.java.sip.communicator.impl.protocol.jabber.extensions;
 public class ConferencePropertyPacketExtension extends AbstractPacketExtension {
 
     /**
-     * The name of the "parameter" element.
+     * The name of the "property" element.
      */
-    public static final String ELEMENT_NAME = "parameter";
+    public static final String ELEMENT_NAME = "property";
     
     /**
      * The name of the attribute that contains the property name
