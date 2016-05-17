@@ -204,7 +204,8 @@ public class Hammer
             String nickname, 
             int numberOfUser, 
             ConferenceInfo conferenceInfo,
-            boolean disableStats)
+            boolean disableStats,
+            boolean onlyAudio)
     {
         this.disableStats = disableStats;
         this.nickname = nickname;
@@ -221,7 +222,8 @@ public class Hammer
                 this,
                 this.mediaDeviceChooser,
                 this.nickname+"_"+i,
-                (hammerStats != null));
+                (hammerStats != null),
+                    onlyAudio);
         }
         logger.info(String.format("Hammer created : %d fake users were created"
             + " with a base nickname %s", numberOfUser, nickname));
@@ -590,9 +592,9 @@ public class Hammer
      * Get the conference information object associated
      * with this <tt>Hammer</tt>
      */
-    public ConferenceInfo getConferenceInfo() {
-        return this.conferenceInfo;
-    }
+    public ConferenceInfo getConferenceInfo() {return this.conferenceInfo; }
+
+
     
     
 }

@@ -258,7 +258,8 @@ public class Main
                 "Jitsi-Hammer",
                 numberOfFakeUsers,
                     conferenceInfo,
-                    infoCLI.getDisableStats());
+                    infoCLI.getDisableStats(),
+                    infoCLI.getOnlyAudio());
 
 
             //Cleanly stop the hammer when the program shutdown
