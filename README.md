@@ -18,7 +18,7 @@ You can run the program by using the **jitsi-hammer.sh** script:
 The only **MANDATORY_OPTION** for now is :
 
 ```
--BOSHuri - the full URI to use for BOSH connection
+-u  (-BOSHuri - the full URI to use for BOSH connection)
 ```
 
 The **OPTIONAL_OPTIONS** are :
