@@ -50,6 +50,15 @@ public class HammerUtils
     private static final Logger logger
         = Logger.getLogger(HammerUtils.class);
 
+    private static DatagramPacketFilter filterAll = new DatagramPacketFilter()
+    {
+        @Override
+        public boolean accept(DatagramPacket datagramPacket)
+        {
+            return false;
+        }
+    };
+
     /**
      * Select the favorite <tt>MediaFormat</tt> of a list of <tt>MediaFormat</tt>
      *
@@ -127,26 +136,32 @@ public class HammerUtils
     {
         NewIceUdpTransportPacketExtension transports = null;
         List<NewCandidatePacketExtension> candidates = null;
-        String contentName = null;
         IceMediaStream stream = null;
         Component component = null;
 
         RemoteCandidate relatedCandidate = null;
         TransportAddress mainAddr = null, relatedAddr = null;
         RemoteCandidate remoteCandidate;
+        boolean setStreamInformation = false;
 
         for(NewContentPacketExtension content : contentList)
         {
-            contentName = content.getName();
-            stream = agent.getStream(contentName);
-            if(stream == null) continue;
-
             transports = content.getFirstChildOfType(NewIceUdpTransportPacketExtension.class);
             if(transports == null)
+            {
                 continue;
-
-            stream.setRemotePassword(transports.getPassword());
-            stream.setRemoteUfrag(transports.getUfrag());
+            }
+            if (!setStreamInformation)
+            {
+                stream = agent.getStream(IceMediaStreamGenerator.STREAM_NAME);
+                if(stream == null)
+                {
+                    logger.info("Unable to find ice stream");
+                }
+                stream.setRemotePassword(transports.getPassword());
+                stream.setRemoteUfrag(transports.getUfrag());
+                setStreamInformation = true;
+            }
 
             candidates = transports.getChildExtensionsOfType(NewCandidatePacketExtension.class);
             Collections.sort(candidates);
@@ -208,7 +223,7 @@ public class HammerUtils
         Agent agent,
         Collection<NewContentPacketExtension> contentList)
     {
-        IceMediaStream iceMediaStream = null;
+        IceMediaStream iceMediaStream = agent.getStream(IceMediaStreamGenerator.STREAM_NAME);
         NewIceUdpTransportPacketExtension transport = null;
         NewDtlsFingerprintPacketExtension fingerprint = null;
         NewCandidatePacketExtension candidate = null;
@@ -217,8 +232,6 @@ public class HammerUtils
         for(NewContentPacketExtension content : contentList)
         {
             transport = new NewIceUdpTransportPacketExtension();
-
-            iceMediaStream = agent.getStream(content.getName());
 
             transport.setPassword( agent.getLocalPassword() );
             transport.setUfrag( agent.getLocalUfrag() );
@@ -271,7 +284,7 @@ public class HammerUtils
      * @return a Map of newly created <tt>MediaStream</tt>, indexed by
      * the String equivalent of their <tt>MediaType</tt>*
      */
-    public static Map<String,MediaStream> createMediaStreams()
+    public static Map<String,MediaStream> createMediaStreams(DtlsControl dtlsControl)
     {
         MediaService mediaService = LibJitsi.getMediaService();
         Map<String,MediaStream> mediaStreamMap = new HashMap<String,MediaStream>();
@@ -283,7 +296,7 @@ public class HammerUtils
         stream = mediaService.createMediaStream(
             null,
             MediaType.AUDIO,
-            mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
+            dtlsControl);
         mediaStreamMap.put(MediaType.AUDIO.toString(), stream);
 
         /*
@@ -292,7 +305,7 @@ public class HammerUtils
         stream = mediaService.createMediaStream(
             null,
             MediaType.VIDEO,
-            mediaService.createSrtpControl(SrtpControlType.DTLS_SRTP));
+            dtlsControl);
         mediaStreamMap.put(MediaType.VIDEO.toString(), stream);
 
         return mediaStreamMap;
@@ -409,60 +422,54 @@ public class HammerUtils
         Map<String,MediaStream> mediaStreamMap,
         boolean dropIncomingRtpPackets)
     {
-        IceMediaStream iceMediaStream = null;
-        CandidatePair rtpPair = null;
-        CandidatePair rtcpPair = null;
-        DatagramSocket rtpSocket = null;
-        DatagramSocket rtcpSocket = null;
-
+        IceMediaStream iceMediaStream = agent.getStream(IceMediaStreamGenerator.STREAM_NAME);
+        CandidatePair pair = null;
         StreamConnector connector = null;
-        MediaStream stream = null;
 
-        String str = "Transport candidates selected for RTP:\n";
-        for(String mediaName : agent.getStreamNames())
+        pair = iceMediaStream.getComponent(Component.RTP).getSelectedPair();
+        DatagramSocket datagramSocket = pair.getIceSocketWrapper().getUDPSocket();
+
+        boolean first = true;
+        for (MediaStream ms : mediaStreamMap.values())
         {
-            iceMediaStream = agent.getStream(mediaName);
-            stream = mediaStreamMap.get(mediaName);
-
-            rtpPair = iceMediaStream.getComponent(Component.RTP)
-                .getSelectedPair();
-            rtcpPair = iceMediaStream.getComponent(Component.RTCP)
-                .getSelectedPair();
-
-            str = str + "-" + mediaName + " stream :\n" + rtpPair + "\n";
-
-            rtpSocket = rtpPair.getIceSocketWrapper().getUDPSocket();
-
-            if (dropIncomingRtpPackets &&
-                    rtpSocket instanceof MultiplexingDatagramSocket)
+            if (datagramSocket instanceof MultiplexingDatagramSocket)
             {
+                MultiplexingDatagramSocket multiplexingDatagramSocket =
+                        (MultiplexingDatagramSocket) datagramSocket;
                 try
                 {
-                    // We are not going to handle any incoming RTP packets
-                    // anyway, so we might as well drop them early and not
-                    // waste resources processing them further.
-                    // This sets up a filtered socket, which receives only
-                    // DTLS packets.
-                    rtpSocket
-                        = ((MultiplexingDatagramSocket) rtpSocket)
-                            .getSocket(new DTLSDatagramFilter());
+                    if (first)
+                    {
+                        connector = new DefaultStreamConnector(
+                                multiplexingDatagramSocket.getSocket(new DTLSDatagramFilter()),
+                                null,
+                                true);
+                        first = false;
+                    }
+                    else
+                    {
+                        connector = new DefaultStreamConnector(
+                                multiplexingDatagramSocket.getSocket(filterAll),
+                                null,
+                                true);
+                    }
                 }
-                catch (SocketException se)
+                catch (SocketException e)
                 {
-                    // Whatever, this is just an optimization, anyway.
+
                 }
+
             }
-            rtcpSocket = rtcpPair.getIceSocketWrapper().getUDPSocket();
-
-            connector = new DefaultStreamConnector(rtpSocket, rtcpSocket);
-            stream.setConnector(connector);
-
-            stream.setTarget(
-                new MediaStreamTarget(
-                    rtpPair.getRemoteCandidate().getTransportAddress(),
-                    rtcpPair.getRemoteCandidate().getTransportAddress()) );
+            logger.info("Adding connector of type" + connector.getClass().getName() + " to stream " +
+                ms.getFormat().getMediaType());
+            ms.setConnector(connector);
+            logger.info("Adding target of address " + pair.getRemoteCandidate().getTransportAddress() +
+                    " to stream " + ms.getFormat().getMediaType());
+            ms.setTarget(new MediaStreamTarget(
+                    pair.getRemoteCandidate().getTransportAddress(),
+                    pair.getRemoteCandidate().getTransportAddress()
+            ));
         }
-        logger.info(str);
     }
 
 
@@ -474,24 +481,19 @@ public class HammerUtils
      * Add the local fingerprint & hash function from the <tt>DtlsControl</tt> of
      * the <tt>MediaStream</tt> to the <tt>localContentList</tt>.
      *
-     * @param mediaStreamMap a Map containing the <tt>MediaStream</tt> to
-     * which will be added the remote fingerprints, from which we will get
-     * the local fingerprints.
-     * @param localContentList The list of <tt>NewContentPacketExtension</tt> to
+     * @param dtlsControl the dtls control to use
+     * @param localContentList The list of <tt>ContentPacketExtension</tt> to
      * which will be added the local fingerprints
      * @param remoteContentList The list of <tt>NewContentPacketExtension</tt> from
      * which we will get the remote fingerprints
      */
     public static void setDtlsEncryptionOnTransport(
-        Map<String, MediaStream> mediaStreamMap,
+        DtlsControl dtlsControl,
         List<NewContentPacketExtension> localContentList,
         List<NewContentPacketExtension> remoteContentList)
     {
-        MediaStream stream = null;
         NewIceUdpTransportPacketExtension transport = null;
         List<NewDtlsFingerprintPacketExtension> fingerprints = null;
-        SrtpControl srtpControl = null;
-        DtlsControl dtlsControl = null;
         DtlsControl.Setup dtlsSetup = null;
 
 
@@ -500,16 +502,8 @@ public class HammerUtils
             transport = remoteContent.getFirstChildOfType(NewIceUdpTransportPacketExtension.class);
             dtlsSetup = null;
 
-            stream = mediaStreamMap.get(remoteContent.getName());
-            if(stream == null) continue;
-            srtpControl = stream.getSrtpControl();
-            if(srtpControl == null) continue;
-
-
-            if( (srtpControl instanceof DtlsControl) && (transport != null) )
+            if (transport != null)
             {
-                dtlsControl = (DtlsControl)srtpControl;
-
                 fingerprints = transport.getChildExtensionsOfType(
                     NewDtlsFingerprintPacketExtension.class);
 
@@ -561,23 +555,17 @@ public class HammerUtils
         {
             transport = localContent.getFirstChildOfType(
                 NewIceUdpTransportPacketExtension.class);
-
-            stream = mediaStreamMap.get(localContent.getName());
-            if(stream == null) continue;
-            srtpControl = stream.getSrtpControl();
-
-            if( (srtpControl instanceof DtlsControl) && (transport != null))
+            if (transport != null)
             {
                 NewDtlsFingerprintPacketExtension fingerprint =
                     new NewDtlsFingerprintPacketExtension();
-                dtlsControl = (DtlsControl) srtpControl;
-
 
                 fingerprint.setHash(dtlsControl.getLocalFingerprintHashFunction());
                 fingerprint.setFingerprint(dtlsControl.getLocalFingerprint());
                 fingerprint.setAttribute("setup", dtlsSetup);
 
                 transport.addChildExtension(fingerprint);
+                break; //bundling
             }
         }
     }

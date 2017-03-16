@@ -23,6 +23,7 @@ import net.java.sip.communicator.service.protocol.media.DynamicPayloadTypeRegist
 import net.java.sip.communicator.service.protocol.media.DynamicRTPExtensionsRegistry;
 import org.jitsi.hammer.extension.MediaPacketExtension;
 import org.jitsi.service.neomedia.format.MediaFormat;
+import org.jitsi.impl.neomedia.transform.dtls.DtlsControlImpl;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.bosh.*;
 import org.jivesoftware.smack.iqrequest.AbstractIqRequestHandler;
@@ -158,6 +159,8 @@ public class FakeUser implements StanzaListener
      * this <tt>FakeUser</tt>
      */
     private FakeUserStats fakeUserStats;
+
+    private final DtlsControl dtlsControl = new DtlsControlImpl();
 
     /**
      * Construct the conference focus JID 
@@ -349,7 +352,7 @@ public class FakeUser implements StanzaListener
          * Creation in advance of the MediaStream that will be used later
          * so the HammerStats can register their MediaStreamStats now.
          */
-        mediaStreamMap = HammerUtils.createMediaStreams();
+        mediaStreamMap = HammerUtils.createMediaStreams(dtlsControl);
         if (fakeUserStats != null)
         {
             fakeUserStats.setMediaStreamStats(
@@ -369,6 +372,8 @@ public class FakeUser implements StanzaListener
         discoManager.addFeature(RTPHdrExtPacketExtension.NAMESPACE);
         discoManager.addFeature("urn:xmpp:jingle:apps:rtp:audio");
         discoManager.addFeature("urn:xmpp:jingle:apps:rtp:video");
+        discoManager.addFeature("urn:ietf:rfc:5761"); //rtcp-mux
+        discoManager.addFeature("urn:ietf:rfc:5888"); //bundle
 
         // added to address bosh timeout issues causing early termination of the hammer
         org.jivesoftware.smackx.ping.PingManager.getInstanceFor(connection).setPingInterval(15);
@@ -808,7 +813,7 @@ public class FakeUser implements StanzaListener
             // Set the remote fingerprint on my streams and add the fingerprints
             //  of my streams to the content list of the session-accept
             HammerUtils.setDtlsEncryptionOnTransport(
-                mediaStreamMap,
+                dtlsControl,
                 sessionAccept.getContentList(),
                 sessionInitiate.getContentList());
 
@@ -924,6 +929,9 @@ public class FakeUser implements StanzaListener
         for(String key : contentMap.keySet())
         {
             MediaStream stream = mediaStreamMap.get(key);
+            logger.info("Starting media stream " + stream.getFormat().getMediaType() +
+                " with direction " + stream.getDirection() + " and srtpcontrol: " +
+                    stream.getSrtpControl());
             stream.start();
         }
     }
