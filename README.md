@@ -10,7 +10,7 @@ Note that the hammer requires Java 1.8 because of a dependency (see pom.xml for 
 
 The project includes some sample video/audio files. These Pcaps are available in the ./jitsi-hammer/resources/ folder. The files are big and in order to download them correctly, you're going to need Git LFS support. You can download it from [here](https://git-lfs.github.com/).
 
-##How to install
+## How to install
 1. If you want to use sample input video/audio files then install git-lfs first (git or manual download will not work).
 1. Clone the project.
 1. When running the jitsi-hammer.sh script for the first time you will most likely get a Maven dependency issue. To mitigate this navigate to ./jitsi-hammer folder and run **mvn compile exec:java** before starting the script (this command will fail but will fetch the needed dependencies).
