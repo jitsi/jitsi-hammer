@@ -30,7 +30,7 @@ Running the **jitsi-hammer.sh** script:
 The only **MANDATORY_OPTION** for now is :
 
 ```
--u (alias -BOSHuri) - the full URI to use for BOSH connection. Note that you should use -u option for the jitsi-hammer.sh script to work!
+-u (alias -BOSHuri) - the full URI to use for BOSH connection. Note that you -u option should be used when running the jitsi-hammer.sh!
 ```
 
 The **OPTIONAL_OPTIONS** are :
