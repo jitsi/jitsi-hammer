@@ -19,8 +19,8 @@ The project includes some sample video/audio files. These Pcaps are available in
 1. Setup jitsi-meet server-side components.
 1. Using a web browser open the jitsi-meet app and create a “room”.
 1. Connect to the created room by running hammer script (see below for options). An exemplary command would be: **./jitsi-hammer.sh -u https://$MY_JITSI_WEB_SERVER/http-bind/ -room $MY_ROOM_NAME -length 120 -audiortpdump ./resources/badger-audio.rtpdump -videortpdump ./resources/badger-video.rtpdump -summarystats**
-1. Most likely you will see some WARNINGS about corrupted .pom files, org.jitsi.impl.neomedia.codec.FFmpeg problems etc. Ignore them - the hammer should work anyway. 
-1. Be patient - it takes some time (e.g. 30s) for the hammer to start sending vidoe/audio. The hammer participants should show-up in a browser-created room, and the sample audio/video file should begin playing. The video in the browser window however will not appear full-screen (this is normal behaviour). 
+1. Most likely you will see some WARNINGS about corrupted .pom files, org.jitsi.impl.neomedia.codec.FFmpeg problems etc. However the hammer should work anyway. 
+1. It takes some time for the hammer to start sending video/audio. The hammer participants should show-up in a browser-created room, and the sample audio/video file should begin playing. 
 1. After the specified amount of time (specified by -length option) the hammer will try to exit, however it may happen that you will need to kill the created processes forcefully.
 
 You can run the program by using the **jitsi-hammer.sh** script:
