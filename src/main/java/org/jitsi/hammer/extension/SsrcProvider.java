@@ -17,6 +17,7 @@
 package org.jitsi.hammer.extension;
 
 import org.jivesoftware.smack.packet.*;
+import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.provider.PacketExtensionProvider;
 import org.xmlpull.v1.*;
 
@@ -30,7 +31,7 @@ import java.io.*;
  * <tt>SsrcProvider</tt> is used to parse "ssrc" element in "description"
  * element of a Jingle IQ
  */
-public class SsrcProvider implements PacketExtensionProvider
+public class SsrcProvider extends ExtensionElementProvider
 {
     /**
      * The name of the "ssrc" element. 
@@ -54,7 +55,7 @@ public class SsrcProvider implements PacketExtensionProvider
      * @throws XmlPullParserException 
      * @throws IOException
      */
-    public PacketExtension parseExtension(XmlPullParser parser)
+    public ExtensionElement parse(XmlPullParser parser, int initialDepth)
         throws IOException, XmlPullParserException
     {
         

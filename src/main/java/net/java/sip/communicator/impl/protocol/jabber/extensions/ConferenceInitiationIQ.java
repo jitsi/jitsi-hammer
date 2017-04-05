@@ -71,6 +71,10 @@ public class ConferenceInitiationIQ extends IQ
     private List<ConferencePropertyPacketExtension> conferenceProperties 
             = new ArrayList<ConferencePropertyPacketExtension>();
 
+    public ConferenceInitiationIQ()
+    {
+        super(ELEMENT_NAME, NAMESPACE);
+    }
 
     /**
      * Add the <tt>ConferencePropertyPacketExtension</tt> to the list 
@@ -84,42 +88,66 @@ public class ConferenceInitiationIQ extends IQ
     {
         this.conferenceProperties.add(conferenceProperty);
     }
+
+    @Override
+    public IQ.IQChildElementXmlStringBuilder getIQChildElementBuilder(IQ.IQChildElementXmlStringBuilder xml)
+    {
+        xml.append(" " + ROOM_ATTR_NAME + "='" + serverInfo.getRoomURL() + "'");
+        xml.append(" " + MACHINE_UID_ATTR_NAME + "='" + machineUID + "'");
+        if (this.conferenceProperties.isEmpty())
+        {
+            xml.append(" />");
+        }
+        else
+        {
+            xml.append(" >");
+            for (ConferencePropertyPacketExtension cppe : conferenceProperties)
+            {
+                xml.append(cppe.toXML());
+            }
+            //TODO(brian): the parent class seems to add the closing element, so i'm a bit worried that the
+            // empty property case (above) may be broken (as it closes the initial element).  so need to verify
+            // what happens in that scenario and perhaps modify the above block
+            //xml.append("</" + ELEMENT_NAME + ">");
+        }
+        return xml;
+    }
     
     /**
      * Get the string builder for the child element XML
      * 
      * @return the child element section of the IQ XML
      */
-    public StringBuilder getChildElementXML() 
-    {
-
-        StringBuilder stringBuilder = new StringBuilder("<" + ELEMENT_NAME);
-
-        stringBuilder.append(" xmlns='" + NAMESPACE + "'");
-        stringBuilder.append(" " + ROOM_ATTR_NAME + 
-                "='" + serverInfo.getRoomURL() + "'");
-        stringBuilder.append(" " + MACHINE_UID_ATTR_NAME + 
-                "='" + machineUID + "'");
-        
-        if (this.conferenceProperties.size() == 0)
-        {
-            stringBuilder.append(" />");
-        }
-        else
-        {
-            stringBuilder.append(" >");
-            for (ConferencePropertyPacketExtension cppe: 
-                    conferenceProperties) {
-                
-                stringBuilder.append(cppe.toXML());
-                
-            }
-            stringBuilder.append("</" + ELEMENT_NAME + ">");
-        }
-        
-        return stringBuilder;
-        
-    }
+//    public StringBuilder getChildElementXML()
+//    {
+//
+//        StringBuilder stringBuilder = new StringBuilder("<" + ELEMENT_NAME);
+//
+//        stringBuilder.append(" xmlns='" + NAMESPACE + "'");
+//        stringBuilder.append(" " + ROOM_ATTR_NAME +
+//                "='" + serverInfo.getRoomURL() + "'");
+//        stringBuilder.append(" " + MACHINE_UID_ATTR_NAME +
+//                "='" + machineUID + "'");
+//
+//        if (this.conferenceProperties.size() == 0)
+//        {
+//            stringBuilder.append(" />");
+//        }
+//        else
+//        {
+//            stringBuilder.append(" >");
+//            for (ConferencePropertyPacketExtension cppe:
+//                    conferenceProperties) {
+//
+//                stringBuilder.append(cppe.toXML());
+//
+//            }
+//            stringBuilder.append("</" + ELEMENT_NAME + ">");
+//        }
+//
+//        return stringBuilder;
+//
+//    }
     
     /**
      * Set the <tt>HostInfo</tt> associated with this Hammer instance

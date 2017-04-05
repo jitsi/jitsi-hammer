@@ -23,6 +23,7 @@ import java.util.*;
  * 
  * @author Maksym Kulish
  */
+@Deprecated
 public class Smack4AwareJingleIQ extends JingleIQ {
 
     /**
@@ -34,10 +35,10 @@ public class Smack4AwareJingleIQ extends JingleIQ {
      * @return XML representation of <tt>Collection<PacketExtension></tt>
      *         belonging to this <tt>IQ</tt>
      */
-    public String getExtensionsXML() {
-        CharSequence xmlExtensionsRepresentation = super.getExtensionsXML();
-        return xmlExtensionsRepresentation.toString();
-    }
+//    public String getExtensionsXML() {
+//        CharSequence xmlExtensionsRepresentation = super.getExtensionsXML();
+//        return xmlExtensionsRepresentation.toString();
+//    }
 
     /**
      * This exists since Smack4 do not have <tt>getExtensionsXML</tt> method
@@ -45,68 +46,68 @@ public class Smack4AwareJingleIQ extends JingleIQ {
      * for its return type, causing <tt>JingleIQ</tt> to throw 
      * <tt>AbstractMethodError</tt> when serializing a packet
      */
-    @Override
-    public String getChildElementXML()
-    {
-        StringBuilder bldr = new StringBuilder("<" + ELEMENT_NAME);
-
-        bldr.append(" xmlns='" + NAMESPACE + "'");
-
-        bldr.append(" " + ACTION_ATTR_NAME + "='" + getAction() + "'");
-
-        if( getInitiator() != null)
-            bldr.append(" " + INITIATOR_ATTR_NAME
-                    + "='" + getInitiator() + "'");
-
-        if( getResponder() != null)
-            bldr.append(" " + RESPONDER_ATTR_NAME
-                    + "='" + getResponder() + "'");
-
-        bldr.append(" " + SID_ATTR_NAME
-                + "='" + getSID() + "'");
-
-        CharSequence extensionsXMLSeq = getExtensionsXML();
-        String extensionsXML = extensionsXMLSeq.toString();
-        List<ContentPacketExtension> contentList = getContentList();
-        ReasonPacketExtension reason = getReason();
-        SessionInfoPacketExtension sessionInfoPacketExtension = 
-                getSessionInfo();
-        
-        if ((contentList.size() == 0)
-                && (reason == null)
-                && (sessionInfoPacketExtension == null)
-                && ((extensionsXML == null) || (extensionsXML.length() == 0)))
-        {
-            bldr.append("/>");
-        }
-        else
-        {
-            bldr.append(">");//it is possible to have empty jingle elements
-
-            //content
-            for(ContentPacketExtension cpe : contentList)
-            {
-                bldr.append(cpe.toXML());
-            }
-
-            //reason
-            if (getReason() != null)
-                bldr.append(reason.toXML());
-
-            //session-info
-            //XXX: this is RTP specific so we should probably handle it in a
-            //subclass
-            if (sessionInfoPacketExtension != null)
-                bldr.append(sessionInfoPacketExtension.toXML());
-
-            // extensions
-            if ((extensionsXML != null) && (extensionsXML.length() != 0))
-                bldr.append(extensionsXML);
-
-            bldr.append("</" + ELEMENT_NAME + ">");
-        }
-
-        return bldr.toString();
-    }
+//    @Override
+//    public String getChildElementXML()
+//    {
+//        StringBuilder bldr = new StringBuilder("<" + ELEMENT_NAME);
+//
+//        bldr.append(" xmlns='" + NAMESPACE + "'");
+//
+//        bldr.append(" " + ACTION_ATTR_NAME + "='" + getAction() + "'");
+//
+//        if( getInitiator() != null)
+//            bldr.append(" " + INITIATOR_ATTR_NAME
+//                    + "='" + getInitiator() + "'");
+//
+//        if( getResponder() != null)
+//            bldr.append(" " + RESPONDER_ATTR_NAME
+//                    + "='" + getResponder() + "'");
+//
+//        bldr.append(" " + SID_ATTR_NAME
+//                + "='" + getSID() + "'");
+//
+//        CharSequence extensionsXMLSeq = getExtensionsXML();
+//        String extensionsXML = extensionsXMLSeq.toString();
+//        List<NewContentPacketExtension> contentList = getContentList();
+//        ReasonPacketExtension reason = getReason();
+//        SessionInfoPacketExtension sessionInfoPacketExtension =
+//                getSessionInfo();
+//
+//        if ((contentList.size() == 0)
+//                && (reason == null)
+//                && (sessionInfoPacketExtension == null)
+//                && ((extensionsXML == null) || (extensionsXML.length() == 0)))
+//        {
+//            bldr.append("/>");
+//        }
+//        else
+//        {
+//            bldr.append(">");//it is possible to have empty jingle elements
+//
+//            //content
+//            for(NewContentPacketExtension cpe : contentList)
+//            {
+//                bldr.append(cpe.toXML());
+//            }
+//
+//            //reason
+//            if (getReason() != null)
+//                bldr.append(reason.toXML());
+//
+//            //session-info
+//            //XXX: this is RTP specific so we should probably handle it in a
+//            //subclass
+//            if (sessionInfoPacketExtension != null)
+//                bldr.append(sessionInfoPacketExtension.toXML());
+//
+//            // extensions
+//            if ((extensionsXML != null) && (extensionsXML.length() != 0))
+//                bldr.append(extensionsXML);
+//
+//            bldr.append("</" + ELEMENT_NAME + ">");
+//        }
+//
+//        return bldr.toString();
+//    }
     
 }

@@ -53,7 +53,7 @@ public class Smack4AwareJinglePacketFactory extends JinglePacketFactory {
 
         terminate.setTo(to);
         terminate.setFrom(from);
-        terminate.setType(IQ.Type.SET);
+        terminate.setType(IQ.Type.set);
 
         terminate.setSID(sid);
         terminate.setAction(JingleAction.SESSION_TERMINATE);
@@ -93,7 +93,7 @@ public class Smack4AwareJinglePacketFactory extends JinglePacketFactory {
         sessionAccept.setTo(to);
         sessionAccept.setFrom(from);
         sessionAccept.setResponder(from);
-        sessionAccept.setType(IQ.Type.SET);
+        sessionAccept.setType(IQ.Type.set);
 
         sessionAccept.setSID(sid);
         sessionAccept.setAction(JingleAction.SESSION_ACCEPT);

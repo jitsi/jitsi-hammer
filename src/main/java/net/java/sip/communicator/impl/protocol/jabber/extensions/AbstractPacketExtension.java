@@ -38,6 +38,7 @@ import org.jivesoftware.smack.packet.*;
  * API
  * 
  */
+@Deprecated
 public abstract class AbstractPacketExtension
         implements PacketExtension
 {

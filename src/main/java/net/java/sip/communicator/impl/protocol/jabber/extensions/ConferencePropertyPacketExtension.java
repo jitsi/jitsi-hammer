@@ -21,6 +21,7 @@ package net.java.sip.communicator.impl.protocol.jabber.extensions;
  *
  * @author Maksym Kulish
  */
+@Deprecated
 public class ConferencePropertyPacketExtension extends AbstractPacketExtension {
 
     /**

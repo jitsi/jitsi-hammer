@@ -324,12 +324,12 @@ public class Hammer
             SsrcProvider.ELEMENT_NAME,
             SsrcProvider.NAMESPACE,
             new SsrcProvider());
-        logger.info("Element name : " + JingleIQ.ELEMENT_NAME
-            + ", Namespace : " + JingleIQ.NAMESPACE);
-        ProviderManager.addIQProvider(
-            JingleIQ.ELEMENT_NAME,
-            JingleIQ.NAMESPACE,
-            new JingleIQProvider());
+//        logger.info("Element name : " + JingleIQ.ELEMENT_NAME
+//            + ", Namespace : " + JingleIQ.NAMESPACE);
+//        ProviderManager.addIQProvider(
+//            JingleIQ.ELEMENT_NAME,
+//            JingleIQ.NAMESPACE,
+//            new JingleIQProvider());
     }
 
     /**

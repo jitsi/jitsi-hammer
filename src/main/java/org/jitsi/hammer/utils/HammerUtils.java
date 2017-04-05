@@ -114,12 +114,12 @@ public class HammerUtils
 
     /**
      * Add the remote transport candidates of each
-     * <tt>ContentPacketExtension</tt> in <tt>contentList</tt> to their
+     * <tt>NewContentPacketExtension</tt> in <tt>contentList</tt> to their
      * associated <tt>IceMediaStream</tt> inside <tt>agent</tt>.
      *
      * @param agent the <tt>Agent</tt> containing the IceMediaStream to which
      * will be added the remote transport candidates.
-     * @param contentList the list of <tt>ContentPacketExtension</tt> containing
+     * @param contentList the list of <tt>NewContentPacketExtension</tt> containing
      * the remote transport candidates to add to the <tt>Agent</tt>.
      */
     public static void addRemoteCandidateToAgent(
@@ -198,11 +198,11 @@ public class HammerUtils
     /**
      * Add the local transport candidates contained in <tt>agent</tt> to
      * their associated (by the stream/content name)
-     * <tt>ContentPacketExtension</tt>.
+     * <tt>NewContentPacketExtension</tt>.
      *
      * @param agent the <tt>Agent</tt> from which we will get the local
      * transport candidates.
-     * @param contentList the list of <tt>ContentPacketExtension</tt> to which
+     * @param contentList the list of <tt>NewContentPacketExtension</tt> to which
      * will be added the local transport candidates.
      */
     public static void addLocalCandidateToContentList(
@@ -478,9 +478,9 @@ public class HammerUtils
      * @param mediaStreamMap a Map containing the <tt>MediaStream</tt> to
      * which will be added the remote fingerprints, from which we will get
      * the local fingerprints.
-     * @param localContentList The list of <tt>ContentPacketExtension</tt> to
+     * @param localContentList The list of <tt>NewContentPacketExtension</tt> to
      * which will be added the local fingerprints
-     * @param remoteContentList The list of <tt>ContentPacketExtension</tt> from
+     * @param remoteContentList The list of <tt>NewContentPacketExtension</tt> from
      * which we will get the remote fingerprints
      */
     public static void setDtlsEncryptionOnTransport(
@@ -609,10 +609,10 @@ public class HammerUtils
 
     /**
      * Set the ssrc attribute of each <tt>MediaStream</tt> to their corresponding
-     * <tt>RtpDescriptionPacketExtension</tt>, and also add a 'source' element
+     * <tt>NewRtpDescriptionPacketExtension</tt>, and also add a 'source' element
      * to it, describing the msid,mslabel,label and cname of the stream.
      *
-     * @param contentMap the Map of <tt>ContentPacketExtension</tt> to which
+     * @param contentMap the Map of <tt>NewContentPacketExtension</tt> to which
      * will be set the ssrc and addec the "source" element.
      * @param mediaStreamMap the Map of <tt>MediaStream</tt> from which will be
      * gotten the ssrc and other informations.
@@ -650,7 +650,7 @@ public class HammerUtils
      * Adds a <tt>SourcePacketExtension</tt> as a child element of
      * <tt>description</tt>. See XEP-0339.
      *
-     * @param description the <tt>RtpDescriptionPacketExtension</tt> to which
+     * @param description the <tt>NewRtpDescriptionPacketExtension</tt> to which
      * a child element will be added.
      * @param ssrc the SSRC for the <tt>SourcePacketExtension</tt> to use.
      */
@@ -691,14 +691,14 @@ public class HammerUtils
     }
 
     /**
-     * Create a relatively empty <tt>ContentPacketExtension</tt> for 'data'
+     * Create a relatively empty <tt>NewContentPacketExtension</tt> for 'data'
      * (<tt>MediaType.DATA</tt>) rtp content type, because
      * <tt>HammerJingleUtils.createDescription</tt> doesn't handle this type for now.
      *
      * @param creator indicates whether the person who originally created this
      * content was the initiator or the responder of the jingle session.
      * @param senders indicates the direction of the media in this stream.
-     * @return a <tt>ContentPacketExtension</tt> for 'data' content.
+     * @return a <tt>NewContentPacketExtension</tt> for 'data' content.
      */
     public static ContentPacketExtension createDescriptionForDataContent(
         CreatorEnum                  creator,

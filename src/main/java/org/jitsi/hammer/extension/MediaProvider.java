@@ -17,10 +17,12 @@
 package org.jitsi.hammer.extension;
 
 import org.jivesoftware.smack.packet.*;
+import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.provider.PacketExtensionProvider;
 import org.xmlpull.v1.*;
 
 import java.io.*;
+import java.security.cert.Extension;
 
 
 /**
@@ -32,7 +34,7 @@ import java.io.*;
  * 
  * It especially correctly parses <source /> lines
  */
-public class MediaProvider implements PacketExtensionProvider
+public class MediaProvider extends ExtensionElementProvider
 {
     /**
      * The name of the "media" element. 
@@ -56,7 +58,7 @@ public class MediaProvider implements PacketExtensionProvider
      * @throws XmlPullParserException 
      * @throws IOException
      */
-    public PacketExtension parseExtension(XmlPullParser parser)
+    public ExtensionElement parse(XmlPullParser parser, int initialDepth)
         throws IOException, XmlPullParserException
     {
         
