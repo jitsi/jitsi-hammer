@@ -1,12 +1,11 @@
-package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.provider;
+package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.extension.NewContentPacketExtension;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.provider.NewAbstractExtensionElementProvider;
 import org.jivesoftware.smack.packet.Element;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.provider.IntrospectionProvider;
 import org.jivesoftware.smack.provider.ProviderManager;
+import org.xmlpull.mxp1.MXParser;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 

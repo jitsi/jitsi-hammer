@@ -1,9 +1,9 @@
-package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.extension;
+package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
 import org.jivesoftware.smack.packet.Element;
 import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.NamedElement;
-import org.jivesoftware.smack.util.StringUtils;
+import org.jivesoftware.smack.util.XmlStringBuilder;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,13 +23,22 @@ public abstract class NewAbstractExtensionElement
      * The name space of this packet extension. Should remain <tt>null</tt> if
      * there's no namespace associated with this element.
      */
-    private String namespace;
+    private final String elementName;
 
     /**
      * The name space of this packet extension. Should remain <tt>null</tt> if
      * there's no namespace associated with this element.
      */
-    private final String elementName;
+    private String namespace;
+
+    /**
+     * NOTE(brian): temporarily(?) doing this for now to handle elements
+     *  that dont actually have a unique namespace.  If this is 'true', then
+     *  the namespace will not be serialized when returning XML.  This allows
+     *  us to register a namespace-less element under multiple namespaces, but
+     *  not have the namespace actually serialize when creating the xml.
+     */
+    public boolean namespaceInherited;
 
     /**
      * A map of all attributes that this extension is currently using.
@@ -99,41 +108,46 @@ public abstract class NewAbstractExtensionElement
      */
     public CharSequence toXML()
     {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append("<").append(getElementName()).append(" ");
-
-        String namespace = getNamespace();
-        if (namespace != null)
+        XmlStringBuilder xmlBuilder;
+        if (namespaceInherited)
         {
-            stringBuilder.append("xmlns='").append(namespace).append("'");
+            xmlBuilder = new XmlStringBuilder((NamedElement)this);
+        }
+        else
+        {
+            xmlBuilder = new XmlStringBuilder(this);
+
         }
 
-        // Add any other attributes
         for (Map.Entry<String, Object> entry : attributes.entrySet())
         {
-            stringBuilder.append(" ").append(entry.getKey()).append("='")
-                    .append(entry.getValue()).append("'");
+            xmlBuilder.attribute(entry.getKey(), entry.getValue().toString());
         }
-
-        stringBuilder.append(">");
 
         List<Element> childElements = new ArrayList<>(getChildExtensions());
-        for (Element e : childElements)
-        {
-            stringBuilder.append(e.toXML());
-        }
-
-        // Text content, if any
         String text = getText();
-        if ((text != null) && (text.trim().length() > 0))
+
+        if (childElements.isEmpty() && text == null)
         {
-            stringBuilder.append(text);
+            xmlBuilder.closeEmptyElement();
+        }
+        else
+        {
+            xmlBuilder.rightAngleBracket();
+
+            // Child elements, if any
+            for (Element e : childElements)
+            {
+                xmlBuilder.element(e);
+            }
+
+            // Text, if non-null
+            xmlBuilder.optAppend(getText());
+
+            xmlBuilder.closeElement(this);
         }
 
-        stringBuilder.append("</").append(getElementName()).append(">");
-
-        return stringBuilder.toString();
+        return xmlBuilder.toString();
     }
 
     /**

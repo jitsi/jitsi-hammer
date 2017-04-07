@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.extension;
+package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
 
         import java.util.*;
@@ -131,26 +131,26 @@ public class NewSourcePacketExtension
     /**
      * Returns deep copy of this <tt>SourcePacketExtension</tt>.
      */
-    public NewSourcePacketExtension copy()
-    {
-        NewSourcePacketExtension copy
-                = NewAbstractExtensionElement.clone(this);
-
-        // COPY SSRC PARAMS
-        for (Element ppe : getChildExtensions())
-        {
-            if (ppe instanceof NewAbstractExtensionElement)
-            {
-                copy.addChildExtension(
-                        AbstractPacketExtension.clone(
-                                (AbstractPacketExtension) ppe));
-            }
-            else
-            {
-                logger.error("Failed to clone " + ppe);
-            }
-        }
-
-        return copy;
-    }
+//    public NewSourcePacketExtension copy()
+//    {
+//        NewSourcePacketExtension copy
+//                = NewAbstractExtensionElement.clone(this);
+//
+//        // COPY SSRC PARAMS
+//        for (Element ppe : getChildExtensions())
+//        {
+//            if (ppe instanceof NewAbstractExtensionElement)
+//            {
+//                copy.addChildExtension(
+//                        AbstractPacketExtension.clone(
+//                                (AbstractPacketExtension) ppe));
+//            }
+//            else
+//            {
+//                logger.error("Failed to clone " + ppe);
+//            }
+//        }
+//
+//        return copy;
+//    }
 }

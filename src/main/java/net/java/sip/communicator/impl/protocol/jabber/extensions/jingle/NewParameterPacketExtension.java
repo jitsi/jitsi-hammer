@@ -1,4 +1,4 @@
-package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.extension;
+package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
 /**
  * Represents the <tt>parameter</tt> elements described in XEP-0167.
@@ -41,6 +41,7 @@ public class NewParameterPacketExtension
     public NewParameterPacketExtension(String name, String value)
     {
         super(ELEMENT_NAME, NAMESPACE);
+        namespaceInherited = true;
         setName(name);
         setValue(value);
     }
@@ -91,5 +92,15 @@ public class NewParameterPacketExtension
         return super.getAttributeAsString(VALUE_ATTR_NAME);
     }
 
-
+    @Override
+    public boolean equals(Object other)
+    {
+        if (other instanceof NewParameterPacketExtension)
+        {
+            NewParameterPacketExtension otherPpe = (NewParameterPacketExtension)other;
+            return getName().equalsIgnoreCase(otherPpe.getName()) &&
+                    getValue().equalsIgnoreCase(otherPpe.getValue());
+        }
+        return false;
+    }
 }

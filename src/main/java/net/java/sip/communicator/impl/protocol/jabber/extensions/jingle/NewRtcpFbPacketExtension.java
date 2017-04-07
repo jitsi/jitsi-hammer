@@ -15,10 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.extension;
-
-import net.java.sip.communicator.impl.protocol.jabber.extensions.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.extension.NewAbstractExtensionElement;
+package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
 /**
  * Packet extension that holds RTCP feedback types of the
@@ -97,5 +94,17 @@ public class NewRtcpFbPacketExtension
     public String getFeedbackSubtype()
     {
         return getAttributeAsString(SUBTYPE_ATTR_NAME);
+    }
+
+    @Override
+    public boolean equals(Object other)
+    {
+        if (other instanceof NewRtcpFbPacketExtension)
+        {
+            NewRtcpFbPacketExtension otherFpe = (NewRtcpFbPacketExtension)other;
+            return getFeedbackSubtype().equalsIgnoreCase(otherFpe.getFeedbackSubtype()) &&
+                    getFeedbackType().equalsIgnoreCase(otherFpe.getFeedbackType());
+        }
+        return false;
     }
 }

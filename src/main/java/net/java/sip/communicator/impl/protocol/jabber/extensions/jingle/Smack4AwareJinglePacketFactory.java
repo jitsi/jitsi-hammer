@@ -15,6 +15,8 @@
  */
 package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.Smack4AwareJingleIQ;
 import org.jivesoftware.smack.packet.*;
 
 
@@ -25,7 +27,9 @@ import org.jivesoftware.smack.packet.*;
  * @author MaksymKulish
  *
  */
-public class Smack4AwareJinglePacketFactory extends JinglePacketFactory {
+@Deprecated
+public class Smack4AwareJinglePacketFactory extends JinglePacketFactory
+{
 
     /**
      * Creates a {@link JingleIQ} <tt>session-terminate</tt> packet with the
@@ -44,10 +48,10 @@ public class Smack4AwareJinglePacketFactory extends JinglePacketFactory {
      * .
      */
     public static Smack4AwareJingleIQ createSessionTerminate(String from,
-                                                  String to,
-                                                  String sid,
-                                                  Reason reason,
-                                                  String reasonText)
+                                                             String to,
+                                                             String sid,
+                                                             Reason reason,
+                                                             String reasonText)
     {
         Smack4AwareJingleIQ terminate = new Smack4AwareJingleIQ();
 

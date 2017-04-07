@@ -1,4 +1,4 @@
-package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.extension;
+package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
 /**
  * This mimics jitsi-protocol-jabber/net/java/sip/communicator/impl/protocol/jabber/extensions/jingle/CandidateType.class.

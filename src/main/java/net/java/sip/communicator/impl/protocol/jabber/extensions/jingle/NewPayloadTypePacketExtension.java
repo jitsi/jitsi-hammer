@@ -15,20 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.extension;
+package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
 import java.util.*;
-import java.util.stream.Collectors;
-
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ParameterPacketExtension;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.RtcpFbPacketExtension;
 
 /**
  * Represents the <tt>payload-type</tt> elements described in XEP-0167.
  *
  * @author Emil Ivov
  */
-public class NewPayloadTypePacketExtension extends NewAbstractExtensionElement
+public class NewPayloadTypePacketExtension
+        extends NewAbstractExtensionElement
 {
     /**
      * The name of the "payload-type" element.
@@ -76,6 +73,7 @@ public class NewPayloadTypePacketExtension extends NewAbstractExtensionElement
     public NewPayloadTypePacketExtension()
     {
         super(ELEMENT_NAME, NAMESPACE);
+        namespaceInherited = true;
     }
 
     /**
@@ -217,7 +215,7 @@ public class NewPayloadTypePacketExtension extends NewAbstractExtensionElement
      *
      * @param parameter an SDP parameter for this encoding.
      */
-    public void addParameter(ParameterPacketExtension parameter)
+    public void addParameter(NewParameterPacketExtension parameter)
     {
         //parameters are the only extensions we can have so let's use
         //super's list.
@@ -242,7 +240,7 @@ public class NewPayloadTypePacketExtension extends NewAbstractExtensionElement
      *
      * @param rtcpFbPacketExtension RTCP feedback type for this encoding.
      */
-    public void addRtcpFeedbackType(RtcpFbPacketExtension rtcpFbPacketExtension)
+    public void addRtcpFeedbackType(NewRtcpFbPacketExtension rtcpFbPacketExtension)
     {
         addChildExtension(rtcpFbPacketExtension);
     }
@@ -258,4 +256,40 @@ public class NewPayloadTypePacketExtension extends NewAbstractExtensionElement
     {
         return getChildExtensionsOfType(NewRtcpFbPacketExtension.class);
     }
+
+    @Override
+    public boolean equals(Object other)
+    {
+        if (other instanceof NewPayloadTypePacketExtension)
+        {
+            NewPayloadTypePacketExtension otherPte = (NewPayloadTypePacketExtension)other;
+            if (getChannels() == otherPte.getChannels() &&
+                    getClockrate() == otherPte.getClockrate() &&
+                    getID() == otherPte.getID() &&
+                    getMaxptime() == otherPte.getMaxptime() &&
+                    getPtime() == otherPte.getPtime() &&
+                    getName().equalsIgnoreCase(otherPte.getName()) &&
+                    getParameters().size() == otherPte.getParameters().size() &&
+                    getRtcpFeedbackTypeList().size() == otherPte.getRtcpFeedbackTypeList().size())
+            {
+                for (NewParameterPacketExtension ppe : getParameters())
+                {
+                    if (!otherPte.getParameters().contains(ppe))
+                    {
+                        return false;
+                    }
+                }
+                for (NewRtcpFbPacketExtension fbe : getRtcpFeedbackTypeList())
+                {
+                    if (!otherPte.getRtcpFeedbackTypeList().contains(fbe))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

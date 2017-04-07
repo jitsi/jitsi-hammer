@@ -1,10 +1,7 @@
 package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.extension.NewContentPacketExtension;
-import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.IQ;
 
-import javax.swing.text.AbstractDocument;
 import java.util.ArrayList;
 import java.util.List;
 

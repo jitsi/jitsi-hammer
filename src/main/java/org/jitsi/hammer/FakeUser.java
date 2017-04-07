@@ -15,35 +15,28 @@
  */
 package org.jitsi.hammer;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.extension.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.provider.JingleProvider;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.provider.NewAbstractExtensionElementProvider;
+import net.java.sip.communicator.impl.protocol.jabber.NamespaceOptionalProviderManager;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.JingleProvider;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.NewAbstractExtensionElementProvider;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.bosh.*;
 import org.jivesoftware.smack.packet.*;
-import org.jivesoftware.smack.provider.Provider;
 import org.jivesoftware.smack.provider.ProviderManager;
 import org.jivesoftware.smackx.disco.*;
 import org.jivesoftware.smackx.muc.*;
 import org.jivesoftware.smackx.nick.packet.*;
 import org.ice4j.ice.*;
 import org.jitsi.service.neomedia.*;
-import org.jitsi.service.neomedia.format.*;
 import org.jitsi.util.Logger;
 import org.jitsi.hammer.stats.*;
 import org.jitsi.hammer.utils.*;
-import org.jitsi.hammer.extension.*;
 
-import net.java.sip.communicator.impl.protocol.jabber.jinglesdp.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
-import net.java.sip.communicator.service.protocol.media.*;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
-import java.beans.*;
 import java.io.*;
 import java.util.*;
 
@@ -267,8 +260,16 @@ public class FakeUser implements StanzaListener
                 new NewAbstractExtensionElementProvider<>(NewPayloadTypePacketExtension.class));
         ProviderManager.addExtensionProvider(
                 NewParameterPacketExtension.ELEMENT_NAME,
-                NewParameterPacketExtension.NAMESPACE,
+                "urn:xmpp:jingle:apps:rtp:1",
                 new NewAbstractExtensionElementProvider<>(NewParameterPacketExtension.class));
+        ProviderManager.addExtensionProvider(
+                NewParameterPacketExtension.ELEMENT_NAME,
+                "urn:xmpp:jingle:apps:rtp:ssma:0",
+                new NewAbstractExtensionElementProvider<>(NewParameterPacketExtension.class));
+        ProviderManager.addExtensionProvider(
+                NewRtcpFbPacketExtension.ELEMENT_NAME,
+                NewRtcpFbPacketExtension.NAMESPACE,
+                new NewAbstractExtensionElementProvider<>(NewRtcpFbPacketExtension.class));
         ProviderManager.addExtensionProvider(
                 NewRTPHdrExtPacketExtension.ELEMENT_NAME,
                 NewRTPHdrExtPacketExtension.NAMESPACE,

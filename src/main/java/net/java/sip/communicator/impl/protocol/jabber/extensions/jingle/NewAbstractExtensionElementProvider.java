@@ -15,13 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.provider;
+package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
 import java.util.logging.*;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.extension.NewAbstractExtensionElement;
+import net.java.sip.communicator.impl.protocol.jabber.NamespaceOptionalProviderManager;
+import net.java.sip.communicator.impl.protocol.jabber.ProviderManagerExt;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.provider.*;
+import org.jivesoftware.smack.util.StringUtils;
 import org.xmlpull.v1.*;
 
 /**
@@ -110,28 +112,27 @@ public class NewAbstractExtensionElementProvider<C extends NewAbstractExtensionE
 
             if (eventType == XmlPullParser.START_TAG)
             {
-                ExtensionElementProvider provider = ProviderManager.getExtensionProvider(elementName, namespace);
+                ExtensionElementProvider provider;
+//                if (StringUtils.isNullOrEmpty(namespace))
+//                {
+//                    provider = NamespaceOptionalProviderManager.getExtensionProvider(elementName);
+//                }
+//                else
+//                {
+                    provider = ProviderManager.getExtensionProvider(elementName, namespace);
+                //}
+
+                ProviderManager.getExtensionProviders();
 
                 if (provider == null)
                 {
-                    logger.fine("Could not find a provider for element "
+                    logger.info("Could not find a provider for element "
                             + elementName + " from namespace " + namespace);
                 }
                 else
                 {
                     Element childExtension = provider.parse(parser);
                     packetExtension.addChildExtension(childExtension);
-
-//                    if (namespace != null)
-//                    {
-//                        if (childExtension instanceof NewAbstractExtensionElement)
-//                        {
-//                            NewAbstractExtensionElement abstractExtensionElement = (NewAbstractExtensionElement)childExtension;
-//                            abstractExtensionElement.setNamespace(namespace);
-//
-//                        }
-//                    }
-//                    //packetExtension.addChildExtension(childExtension);
                 }
             }
             if (eventType == XmlPullParser.END_TAG)

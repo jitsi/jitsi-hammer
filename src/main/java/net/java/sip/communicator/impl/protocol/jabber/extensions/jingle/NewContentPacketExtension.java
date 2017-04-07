@@ -15,9 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.extension;
-
-import net.java.sip.communicator.impl.protocol.jabber.extensions.*;
+package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
 
 /**
@@ -110,7 +108,21 @@ public class NewContentPacketExtension
      */
     public NewContentPacketExtension()
     {
-        super(ELEMENT_NAME, NAMESPACE);
+        this(null, null);
+    }
+
+    /**
+     * Creates a new <tt>NewContentPacketExtension</tt> instance with the specified
+     * parameters.
+     *
+     * @param creator indicates which party originally generated the content
+     * type
+     * interpreted by the recipient
+     * @param name the content type according to the creator
+     */
+    public NewContentPacketExtension(CreatorEnum creator, String name)
+    {
+        this(creator, null, name, null);
     }
 
     /**
@@ -134,22 +146,7 @@ public class NewContentPacketExtension
         super.setAttribute(DISPOSITION_ATTR_NAME, disposition);
         super.setAttribute(NAME_ATTR_NAME, name);
         super.setAttribute(SENDERS_ATTR_NAME, senders);
-    }
-
-    /**
-     * Creates a new <tt>NewContentPacketExtension</tt> instance with the specified
-     * parameters.
-     *
-     * @param creator indicates which party originally generated the content
-     * type
-     * interpreted by the recipient
-     * @param name the content type according to the creator
-     */
-    public NewContentPacketExtension(CreatorEnum creator, String name)
-    {
-        super(ELEMENT_NAME, NAMESPACE);
-        super.setAttribute(CREATOR_ATTR_NAME, creator);
-        super.setAttribute(NAME_ATTR_NAME, name);
+        namespaceInherited = true;
     }
 
     /**
