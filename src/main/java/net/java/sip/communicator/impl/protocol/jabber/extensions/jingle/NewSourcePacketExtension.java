@@ -65,6 +65,14 @@ public class NewSourcePacketExtension
         super(ELEMENT_NAME, NAMESPACE);
     }
 
+    public NewSourcePacketExtension(String type, String ssrc, String direction)
+    {
+        super(ELEMENT_NAME, NAMESPACE);
+        setAttribute("type", type);
+        setSSRC(ssrc);
+        setAttribute("direction", direction);
+    }
+
     /**
      * Adds a specific parameter (as defined by Source-Specific Media Attributes
      * in Jingle) to this source.
@@ -122,35 +130,15 @@ public class NewSourcePacketExtension
      */
     public void setSSRC(long ssrc)
     {
-        if (ssrc == -1)
-            removeAttribute(SSRC_ATTR_NAME);
-        else
-            setAttribute(SSRC_ATTR_NAME, Long.toString(0xffffffffL & ssrc));
+        setSSRC(ssrc == -1 ? null : Long.toString(0xffffffffL & ssrc));
     }
 
-    /**
-     * Returns deep copy of this <tt>SourcePacketExtension</tt>.
-     */
-//    public NewSourcePacketExtension copy()
-//    {
-//        NewSourcePacketExtension copy
-//                = NewAbstractExtensionElement.clone(this);
-//
-//        // COPY SSRC PARAMS
-//        for (Element ppe : getChildExtensions())
-//        {
-//            if (ppe instanceof NewAbstractExtensionElement)
-//            {
-//                copy.addChildExtension(
-//                        AbstractPacketExtension.clone(
-//                                (AbstractPacketExtension) ppe));
-//            }
-//            else
-//            {
-//                logger.error("Failed to clone " + ppe);
-//            }
-//        }
-//
-//        return copy;
-//    }
+    public void setSSRC(String ssrc)
+    {
+        if (ssrc == null)
+            removeAttribute(SSRC_ATTR_NAME);
+        else
+            setAttribute(SSRC_ATTR_NAME, ssrc);
+
+    }
 }

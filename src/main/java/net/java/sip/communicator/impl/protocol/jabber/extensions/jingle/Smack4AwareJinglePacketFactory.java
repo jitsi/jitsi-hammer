@@ -15,8 +15,6 @@
  */
 package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.Smack4AwareJingleIQ;
 import org.jivesoftware.smack.packet.*;
 
 

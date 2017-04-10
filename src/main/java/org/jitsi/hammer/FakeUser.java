@@ -15,10 +15,14 @@
  */
 package org.jitsi.hammer;
 
-import net.java.sip.communicator.impl.protocol.jabber.NamespaceOptionalProviderManager;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.JingleProvider;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.NewAbstractExtensionElementProvider;
+import net.java.sip.communicator.impl.protocol.jabber.jinglesdp.HammerJingleUtils;
+import net.java.sip.communicator.service.protocol.media.DynamicPayloadTypeRegistry;
+import net.java.sip.communicator.service.protocol.media.DynamicRTPExtensionsRegistry;
+import org.jitsi.hammer.extension.MediaPacketExtension;
+import org.jitsi.service.neomedia.format.MediaFormat;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.bosh.*;
 import org.jivesoftware.smack.packet.*;
@@ -33,10 +37,13 @@ import org.jitsi.hammer.stats.*;
 import org.jitsi.hammer.utils.*;
 
 import net.java.sip.communicator.impl.protocol.jabber.extensions.*;
+import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.util.*;
 
@@ -125,7 +132,7 @@ public class FakeUser implements StanzaListener
      * the media and format, with their corresponding transport information,
      * that this <tt>FakeUser</tt> accept to receive and send.
      */
-    private JingleIQ sessionAccept;
+    private NewJingleIQ sessionAccept;
 
     /**
      * A Map of the different <tt>MediaStream</tt> this <tt>FakeUser</tt>
@@ -246,6 +253,13 @@ public class FakeUser implements StanzaListener
         }
 
         ProviderManager.addIQProvider(NewJingleIQ.ELEMENT_NAME, NewJingleIQ.NAMESPACE, new JingleProvider());
+        // Note(brian): i don't think the old hammer even parsed the conference iq, and i don't think it's needed,
+        //  but if i leave it unparsed smack seems to choke on it for some reason.  it has a bunch of escaped
+        //  values in the xml and seems to have duplicate </conference> tags, not sure where that's going wrong
+        ProviderManager.addIQProvider(
+                ConferenceInitiationIQ.ELEMENT_NAME,
+                ConferenceInitiationIQ.NAMESPACE,
+                new ConferenceInitiationIQProvider());
         ProviderManager.addExtensionProvider(
                 NewContentPacketExtension.ELEMENT_NAME,
                 NewContentPacketExtension.NAMESPACE,
@@ -298,8 +312,10 @@ public class FakeUser implements StanzaListener
                 NewCandidatePacketExtension.ELEMENT_NAME,
                 "urn:xmpp:jingle:transports:raw-udp:1",
                 new NewAbstractExtensionElementProvider<>(NewCandidatePacketExtension.class));
-
-
+        ProviderManager.addExtensionProvider(
+                NewSourceGroupPacketExtension.ELEMENT_NAME,
+                NewSourceGroupPacketExtension.NAMESPACE,
+                new NewAbstractExtensionElementProvider<>(NewSourceGroupPacketExtension.class));
 
         connection = new XMPPBOSHConnection(config);
 
@@ -590,324 +606,303 @@ public class FakeUser implements StanzaListener
      */
     private void acceptJingleSession()
     {
-//        IceMediaStreamGenerator iceMediaStreamGenerator = null;
-//        List<MediaFormat> listFormat = null;
-//        List<RTPExtension> remoteRtpExtension = null;
-//        List<RTPExtension> supportedRtpExtension = null;
-//        List<RTPExtension> listRtpExtension = null;
-//        NewContentPacketExtension content = null;
-//        NewRtpDescriptionPacketExtension description = null;
-//        Map<String,NewContentPacketExtension> contentMap =
-//            new HashMap<String,ContentPacketExtension>();
-//
-//
-//        /*
-//         * A Map mapping a media type (audio, video, data), with a <tt>MediaFormat</tt>
-//         * representing the selected format for the stream handling this media type.
-//         *
-//         * The MediaFormat in this Map has been chosen in <tt>possibleFormatMap</tt>
-//         */
-//        Map<String,MediaFormat> selectedFormat =
-//                new HashMap<String,MediaFormat>();
-//
-//        /*
-//         * A Map mapping a media type (audio, video, data), with a list of
-//         * RTPExtension representing the selected RTP extensions for the format
-//         * (and its corresponding <tt>MediaDevice</tt>)
-//         */
-//        Map<String,List<RTPExtension>> selectedRtpExtension =
-//                new HashMap<String,List<RTPExtension>>();
-//
-//        /*
-//         * The registry containing the dynamic payload types learned in the
-//         * session-initiate (to use back in the session-accept)
-//         */
-//        DynamicPayloadTypeRegistry ptRegistry =
-//                new DynamicPayloadTypeRegistry();
-//
-//        /*
-//         * The registry containing the dynamic RTP extensions learned in the
-//         * session-initiate
-//         */
-//        DynamicRTPExtensionsRegistry rtpExtRegistry =
-//                new DynamicRTPExtensionsRegistry();
-//
-//        /*
-//         * A Map mapping a media type (audio, video, data), with a list of format
-//         * that can be handle by libjitsi
-//         */
-//        Map<String,List<MediaFormat>> possibleFormatMap =
-//                new HashMap<String,List<MediaFormat>>();
-//
-//        for(NewContentPacketExtension cpe : sessionInitiate.getContentList())
-//        {
-//            //data isn't correctly handle by libjitsi for now, so we handle it
-//            //differently than the other MediaType
-//            if(cpe.getName().equalsIgnoreCase("data"))
-//            {
-//                content = HammerUtils.createDescriptionForDataContent(
-//                    CreatorEnum.responder,
-//                    SendersEnum.both);
-//            }
-//            else
-//            {
-//                description = cpe.getFirstChildOfType(
-//                    NewRtpDescriptionPacketExtension.class);
-//
-//                if(description == null)
-//                    continue;
-//
-//                listFormat = HammerJingleUtils.extractFormats(
-//                        description,
-//                        ptRegistry);
-//                remoteRtpExtension = HammerJingleUtils.extractRTPExtensions(
-//                        description,
-//                        rtpExtRegistry);
-//                supportedRtpExtension = getExtensionsForType(
-//                    MediaType.parseString(cpe.getName()));
-//                listRtpExtension = intersectRTPExtensions(
-//                    remoteRtpExtension,
-//                    supportedRtpExtension);
-//
-//
-//                possibleFormatMap.put(
-//                    cpe.getName(),
-//                    listFormat);
-//
-//                selectedFormat.put(
-//                    cpe.getName(),
-//                    HammerUtils.selectFormat(cpe.getName(),listFormat));
-//
-//                selectedRtpExtension.put(
-//                    cpe.getName(),
-//                    listRtpExtension);
-//
-//
-//                content = HammerJingleUtils.createDescription(
-//                        CreatorEnum.responder,
-//                        cpe.getName(),
-//                        SendersEnum.both,
-//                        listFormat,
-//                        listRtpExtension,
-//                        ptRegistry,
-//                        rtpExtRegistry);
-//            }
-//
-//            contentMap.put(cpe.getName(),content);
-//        }
-//        /*
-//         * We remove the content for the data (because data is not handle
-//         * for now by libjitsi)
-//         * FIXME
-//         */
-//        contentMap.remove("data");
-//
-//
-//
-//        iceMediaStreamGenerator = IceMediaStreamGenerator.getInstance();
-//
-//        try
-//        {
-//            iceMediaStreamGenerator.generateIceMediaStream(
-//                agent,
-//                contentMap.keySet(),
-//                null,
-//                null);
-//        }
-//        catch (IOException e)
-//        {
-//            logger.fatal(this.nickname + " : Error during the generation"
-//                + " of the IceMediaStream",e);
-//        }
-//
-//        //Add the remote candidate to my agent, and add my local candidate of
-//        //my stream to the content list of the future session-accept
-//        HammerUtils.addRemoteCandidateToAgent(
-//            agent,
-//            sessionInitiate.getContentList());
-//        HammerUtils.addLocalCandidateToContentList(
-//            agent,
-//            contentMap.values());
-//
-//
-//
-//
-//        /*
-//         * configure the MediaStream created in the constructor with the
-//         * selected MediaFormat, and with the selected MediaDevice (through the
-//         * MediaDeviceChooser.
-//         */
-//        HammerUtils.configureMediaStream(
-//            mediaStreamMap,
-//            selectedFormat,
-//            selectedRtpExtension,
-//            mediaDeviceChooser,
-//            ptRegistry,
-//            rtpExtRegistry);
-//
-//        //Now that the MediaStream are created, I can add their SSRC to the
-//        //content list of the future session-accept
-//        HammerUtils.addSSRCToContent(contentMap, mediaStreamMap);
-//
-//
-//        /*
-//         * Send the SSRC of the different media in a "media" tag
-//         * It's not necessary but its a copy of Jitsi Meet behavior
-//         *
-//         * Also, without sending this packet, there are error logged
-//         *  in the javascript console of the Jitsi Meet initiator :
-//         * "No video type for ssrc: 13365845"
-//         * It seems like Jitsi Meet can work arround this error,
-//         * but better safe than sorry.
-//         */
-//        Stanza presencePacketWithSSRC = new Presence(Presence.Type.available);
-//        String recipient =
-//            serverInfo.getRoomName()
-//            +"@"
-//            +serverInfo.getMUCDomain()
-//            + "/"
-//            + nickname;
-//        presencePacketWithSSRC.setTo(recipient);
-//        presencePacketWithSSRC.addExtension(new Nick(this.nickname));
-//        MediaPacketExtension mediaPacket = new MediaPacketExtension();
-//        for(String key : contentMap.keySet())
-//        {
-//            String str = String.valueOf(mediaStreamMap.get(key).getLocalSourceID());
-//            mediaPacket.addSource(
-//                key,
-//                str,
-//                MediaDirection.SENDRECV.toString());
-//        }
-//        presencePacketWithSSRC.addExtension(mediaPacket);
-//
-//        try
-//        {
-//            connection.sendStanza(presencePacketWithSSRC);
-//
-//            //Creation of a session-accept message
-//            sessionAccept = Smack4AwareJinglePacketFactory.createSessionAccept(
-//                sessionInitiate.getTo().toString(),
-//                sessionInitiate.getFrom().toString(),
-//                sessionInitiate.getSID(),
-//                contentMap.values());
-//            sessionAccept.setInitiator(sessionInitiate.getFrom().toString());
-//
-//            //Set the remote fingerprint on my streams and add the fingerprints
-//            //of my streams to the content list of the session-accept
-//            HammerUtils.setDtlsEncryptionOnTransport(
-//                mediaStreamMap,
-//                sessionAccept.getContentList(),
-//                sessionInitiate.getContentList());
-//
-//            //Send the session-accept IQ
-//            connection.sendStanza(sessionAccept);
-//            logger.info(
-//                    this.nickname + " : Jingle accept-session message sent");
-//        }
-//        catch (SmackException.NotConnectedException e)
-//        {
-//            logger.fatal("Cannot accept Jingle session: not connected");
-//            System.exit(1);
-//        }
-//        catch (InterruptedException e)
-//        {
-//            logger.fatal("Interrupted while sending session accept: " + e.toString());
-//            System.exit(1);
-//        }
-//
-//
-//        // A listener to wake us up when the Agent enters a final state.
-//        final Object syncRoot = new Object();
-//        PropertyChangeListener propertyChangeListener
-//                = new PropertyChangeListener()
-//        {
-//            @Override
-//            public void propertyChange(PropertyChangeEvent ev)
-//            {
-//                Object newValue = ev.getNewValue();
-//
-//                if (IceProcessingState.COMPLETED.equals(newValue)
-//                        || IceProcessingState.FAILED.equals(newValue)
-//                        || IceProcessingState.TERMINATED.equals(newValue))
-//                {
-//                    Agent iceAgent = (Agent) ev.getSource();
-//
-//                    iceAgent.removeStateChangeListener(this);
-//                    if (iceAgent == FakeUser.this.agent)
-//                    {
-//                        synchronized (syncRoot)
-//                        {
-//                            syncRoot.notify();
-//                        }
-//                    }
-//                }
-//            }
-//        };
-//
-//        agent.addStateChangeListener(propertyChangeListener);
-//        agent.startConnectivityEstablishment();
-//
-//        synchronized (syncRoot)
-//        {
-//            long startWait = System.currentTimeMillis();
-//            do
-//            {
-//                IceProcessingState iceState = agent.getState();
-//                if (IceProcessingState.COMPLETED.equals(iceState)
-//                        || IceProcessingState.TERMINATED.equals(iceState)
-//                        || IceProcessingState.FAILED.equals(iceState))
-//                    break;
-//
-//                if (System.currentTimeMillis() - startWait > 10000)
-//                    break; // Don't run for more than 10 seconds
-//
-//                try
-//                {
-//                    syncRoot.wait(1000);
-//                }
-//                catch (InterruptedException ie)
-//                {
-//                    logger.fatal("Interrupted: " + ie);
-//                    break;
-//                }
-//            }
-//            while (true);
-//        }
-//
-//        agent.removeStateChangeListener(propertyChangeListener);
-//
-//        IceProcessingState iceState = agent.getState();
-//        if (!IceProcessingState.COMPLETED.equals(iceState)
-//                && !IceProcessingState.TERMINATED.equals(iceState))
-//        {
-//            logger.fatal("ICE failed for user " + nickname + ". Agent state: "
-//                                 + iceState);
-//            return;
-//        }
-//
-//        // Add socket created by ice4j to their associated MediaStreams
-//        // We drop incoming RTP packets when statistics are disabled in order
-//        // to improve performance.
-//        HammerUtils.addSocketToMediaStream(agent,
-//                                           mediaStreamMap,
-//                                           fakeUserStats == null);
-//
-//
-//        //Start the encryption of the MediaStreams
-//        for(String key : contentMap.keySet())
-//        {
-//            MediaStream stream = mediaStreamMap.get(key);
-//            SrtpControl control = stream.getSrtpControl();
-//            MediaType type = stream.getFormat().getMediaType();
-//            control.start(type);
-//        }
-//
-//        //Start the MediaStream
-//        for(String key : contentMap.keySet())
-//        {
-//            MediaStream stream = mediaStreamMap.get(key);
-//            stream.start();
-//        }
+        Map<String, NewContentPacketExtension> contentMap = new HashMap<>();
+        /*
+         * A Map mapping of media type (audio, video, data), to a <tt>MediaFormat</tt>
+         * representing the selected format for the stream handling this media type.
+         */
+        Map<String,MediaFormat> selectedFormats =
+                new HashMap<String, MediaFormat>();
+
+        /*
+         * A Map mapping a media type (audio, video, data), with a list of
+         * RTPExtension representing the selected RTP extensions for the format
+         * (and its corresponding <tt>MediaDevice</tt>)
+         */
+        Map<String,List<RTPExtension>> selectedRtpExtensions =
+                new HashMap<String,List<RTPExtension>>();
+
+        /*
+         * The registry containing the dynamic payload types learned in the
+         * session-initiate (to use back in the session-accept)
+         */
+        DynamicPayloadTypeRegistry ptRegistry =
+                new DynamicPayloadTypeRegistry();
+
+        /*
+         * The registry containing the dynamic RTP extensions learned in the
+         * session-initiate
+         */
+        DynamicRTPExtensionsRegistry rtpExtRegistry =
+                new DynamicRTPExtensionsRegistry();
+
+        for (NewContentPacketExtension cpe : sessionInitiate.getContentList())
+        {
+            NewContentPacketExtension localContent;
+            //TODO(brian): do we still need this special treatment for data?
+            if (cpe.getName().equalsIgnoreCase("data"))
+            {
+                 localContent = HammerUtils.createDescriptionForDataContent(
+                         NewContentPacketExtension.CreatorEnum.responder,
+                         NewContentPacketExtension.SendersEnum.both);
+            }
+            else
+            {
+                NewRtpDescriptionPacketExtension description =
+                        cpe.getFirstChildOfType(NewRtpDescriptionPacketExtension.class);
+                if (description == null)
+                {
+                    continue;
+                }
+                List<MediaFormat> mediaFormats = HammerJingleUtils.extractFormats(description, ptRegistry);
+                List<RTPExtension> remoteRtpExtensions =
+                        HammerJingleUtils.extractRTPExtensions(description, rtpExtRegistry);
+                List<RTPExtension> supportedRtpExtension = getExtensionsForType(MediaType.parseString(cpe.getName()));
+                List<RTPExtension> rtpExtensionIntersection =
+                        intersectRTPExtensions(remoteRtpExtensions, supportedRtpExtension);
+
+                selectedRtpExtensions.put(cpe.getName(), rtpExtensionIntersection);
+
+                localContent = HammerJingleUtils.createDescription(
+                        NewContentPacketExtension.CreatorEnum.responder,
+                        cpe.getName(),
+                        NewContentPacketExtension.SendersEnum.both,
+                        mediaFormats,
+                        rtpExtensionIntersection,
+                        ptRegistry,
+                        rtpExtRegistry);
+            }
+
+            contentMap.put(cpe.getName(), localContent);
+        }
+        /*
+         * We remove the content for the data (because data is not handle
+         * for now by libjitsi)
+         * FIXME
+         * TODO(brian): do we still need to do this?
+         */
+        contentMap.remove("data");
+
+
+        IceMediaStreamGenerator iceMediaStreamGenerator = IceMediaStreamGenerator.getInstance();
+
+        try
+        {
+            iceMediaStreamGenerator.generateIceMediaStream(
+                agent,
+                contentMap.keySet(),
+                null,
+                null);
+        }
+        catch (IOException e)
+        {
+            logger.fatal(this.nickname + " : Error during the generation"
+                + " of the IceMediaStream",e);
+        }
+
+        /*
+         * Add the remote candidate to the agent, and add the local candidate of
+         *  the stream to the content list of the future session-accept
+         */
+        HammerUtils.addRemoteCandidateToAgent(
+            agent,
+            sessionInitiate.getContentList());
+        HammerUtils.addLocalCandidateToContentList(
+            agent,
+            contentMap.values());
+
+        /*
+         * Configure the MediaStreams with the selected MediaFormats and with
+         *  the selected MediaDevice (via the MediaDeviceChooser)
+         */
+        HammerUtils.configureMediaStream(
+            mediaStreamMap,
+            selectedFormats,
+            selectedRtpExtensions,
+            mediaDeviceChooser,
+            ptRegistry,
+            rtpExtRegistry);
+
+        /*
+         * Now that the MediaStreams are configured, add their SSRCs to the
+         *   content list of the future session-accept
+         */
+        HammerUtils.addSSRCToContent(contentMap, mediaStreamMap);
+
+        /*
+         * Send the SSRC of the different media in a "media" tag
+         * It's not necessary but its a copy of Jitsi Meet behavior
+         *
+         * Also, without sending this packet, there are error logged
+         *  in the javascript console of the Jitsi Meet initiator :
+         * "No video type for ssrc: 13365845"
+         * It seems like Jitsi Meet can work arround this error,
+         * but better safe than sorry.
+         */
+        Stanza presencePacketWithSSRC = new Presence(Presence.Type.available);
+        Jid recipient = null;
+        try
+        {
+            recipient = JidCreate.entityFullFrom(serverInfo.getRoomName()
+                    +"@"
+                    +serverInfo.getMUCDomain()
+                    + "/"
+                    + nickname);
+
+        }
+        catch (XmppStringprepException e)
+        {
+            logger.error("Error creating to field for presence packet: " + e.toString());
+        }
+
+        presencePacketWithSSRC.setTo(recipient);
+        presencePacketWithSSRC.addExtension(new Nick(this.nickname));
+        MediaPacketExtension mediaPacket = new MediaPacketExtension();
+        for(String key : contentMap.keySet())
+        {
+            String str = String.valueOf(mediaStreamMap.get(key).getLocalSourceID());
+            mediaPacket.addSource(
+                key,
+                str,
+                MediaDirection.SENDRECV.toString());
+        }
+        presencePacketWithSSRC.addExtension(mediaPacket);
+
+        try
+        {
+            System.out.println("Sending presence packet with ssrc: " + presencePacketWithSSRC.toXML());
+            connection.sendStanza(presencePacketWithSSRC);
+            // Create the session-accept
+            sessionAccept = new NewJingleIQ();
+            sessionAccept.setTo(sessionInitiate.getFrom());
+            sessionAccept.setFrom(sessionInitiate.getTo());
+            sessionAccept.setResponder(sessionInitiate.getTo().toString());
+            sessionAccept.setType(IQ.Type.set);
+            sessionAccept.setSID(sessionInitiate.getSID());
+            sessionAccept.setAction(NewJingleAction.SESSION_ACCEPT);
+
+            for (NewContentPacketExtension cpe : contentMap.values())
+            {
+                sessionAccept.addContent(cpe);
+            }
+            sessionAccept.setInitiator(sessionInitiate.getFrom().toString());
+
+            // Set the remote fingerprint on my streams and add the fingerprints
+            //  of my streams to the content list of the session-accept
+            HammerUtils.setDtlsEncryptionOnTransport(
+                mediaStreamMap,
+                sessionAccept.getContentList(),
+                sessionInitiate.getContentList());
+
+            System.out.println("Sending session accept: " + sessionAccept);
+            // Send the session-accept IQ
+            connection.sendStanza(sessionAccept);
+            logger.info(
+                    this.nickname + " : Jingle accept-session message sent");
+        }
+        catch (SmackException.NotConnectedException e)
+        {
+            logger.fatal("Cannot accept Jingle session: not connected");
+            System.exit(1);
+        }
+        catch (InterruptedException e)
+        {
+            logger.fatal("Interrupted while sending session accept: " + e.toString());
+            System.exit(1);
+        }
+
+        // A listener to wake us up when the Agent enters a final state.
+        final Object syncRoot = new Object();
+        PropertyChangeListener propertyChangeListener
+                = new PropertyChangeListener()
+        {
+            @Override
+            public void propertyChange(PropertyChangeEvent ev)
+            {
+                Object newValue = ev.getNewValue();
+
+                if (IceProcessingState.COMPLETED.equals(newValue)
+                        || IceProcessingState.FAILED.equals(newValue)
+                        || IceProcessingState.TERMINATED.equals(newValue))
+                {
+                    Agent iceAgent = (Agent) ev.getSource();
+
+                    iceAgent.removeStateChangeListener(this);
+                    if (iceAgent == FakeUser.this.agent)
+                    {
+                        synchronized (syncRoot)
+                        {
+                            syncRoot.notify();
+                        }
+                    }
+                }
+            }
+        };
+
+        agent.addStateChangeListener(propertyChangeListener);
+        agent.startConnectivityEstablishment();
+
+        synchronized (syncRoot)
+        {
+            long startWait = System.currentTimeMillis();
+            do
+            {
+                IceProcessingState iceState = agent.getState();
+                if (IceProcessingState.COMPLETED.equals(iceState)
+                        || IceProcessingState.TERMINATED.equals(iceState)
+                        || IceProcessingState.FAILED.equals(iceState))
+                    break;
+
+                if (System.currentTimeMillis() - startWait > 10000)
+                    break; // Don't run for more than 10 seconds
+
+                try
+                {
+                    syncRoot.wait(1000);
+                }
+                catch (InterruptedException ie)
+                {
+                    logger.fatal("Interrupted: " + ie);
+                    break;
+                }
+            }
+            while (true);
+        }
+
+        agent.removeStateChangeListener(propertyChangeListener);
+
+        IceProcessingState iceState = agent.getState();
+        if (!IceProcessingState.COMPLETED.equals(iceState)
+                && !IceProcessingState.TERMINATED.equals(iceState))
+        {
+            logger.fatal("ICE failed for user " + nickname + ". Agent state: "
+                                 + iceState);
+            return;
+        }
+
+        // Add socket created by ice4j to their associated MediaStreams
+        // We drop incoming RTP packets when statistics are disabled in order
+        // to improve performance.
+        HammerUtils.addSocketToMediaStream(agent,
+                                           mediaStreamMap,
+                                           fakeUserStats == null);
+
+
+        //Start the encryption of the MediaStreams
+        for(String key : contentMap.keySet())
+        {
+            MediaStream stream = mediaStreamMap.get(key);
+            SrtpControl control = stream.getSrtpControl();
+            MediaType type = stream.getFormat().getMediaType();
+            control.start(type);
+        }
+
+        //Start the MediaStream
+        for(String key : contentMap.keySet())
+        {
+            MediaStream stream = mediaStreamMap.get(key);
+            stream.start();
+        }
     }
 
 

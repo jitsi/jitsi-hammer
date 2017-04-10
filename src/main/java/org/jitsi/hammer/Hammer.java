@@ -26,7 +26,6 @@ import org.jivesoftware.smack.provider.*;
 
 import org.jitsi.impl.osgi.framework.launch.*;
 import org.jitsi.impl.neomedia.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 
 import org.jitsi.hammer.extension.*;
 import org.jitsi.hammer.utils.*;

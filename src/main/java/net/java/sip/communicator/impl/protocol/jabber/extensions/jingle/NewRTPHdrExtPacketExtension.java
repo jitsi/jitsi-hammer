@@ -20,7 +20,7 @@ package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
 import java.net.*;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.SendersEnum;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.NewContentPacketExtension.SendersEnum;
 
 import org.jivesoftware.smack.packet.*;
 

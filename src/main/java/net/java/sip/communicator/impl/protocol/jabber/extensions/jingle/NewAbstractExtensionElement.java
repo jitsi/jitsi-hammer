@@ -348,11 +348,14 @@ public abstract class NewAbstractExtensionElement
     public <T extends NewAbstractExtensionElement> List<T> getChildExtensionsOfType(
             Class<T> type)
     {
-        return getChildExtensions()
-                .stream()
-                .filter(element -> type.isInstance(element))
-                .map(element -> (T)element)
-                .collect(Collectors.toList());
+        synchronized (childExtensions)
+        {
+            return getChildExtensions()
+                    .stream()
+                    .filter(element -> type.isInstance(element))
+                    .map(element -> (T) element)
+                    .collect(Collectors.toList());
+        }
     }
 
     /**
@@ -368,22 +371,15 @@ public abstract class NewAbstractExtensionElement
      */
     public <T extends NewAbstractExtensionElement> T getFirstChildOfType(Class<T> type)
     {
-        List<? extends Element> childExtensions = getChildExtensions();
-
         synchronized (childExtensions)
         {
-            for(Element extension : childExtensions)
-            {
-                if(type.isInstance(extension))
-                {
-                    @SuppressWarnings("unchecked")
-                    T extensionAsType = (T) extension;
-
-                    return extensionAsType;
-                }
-            }
+            return getChildExtensions()
+                    .stream()
+                    .filter(element -> type.isInstance(element))
+                    .map(element -> (T) element)
+                    .findFirst()
+                    .get();
         }
-        return null;
     }
 
     /**

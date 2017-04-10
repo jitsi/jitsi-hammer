@@ -15,7 +15,15 @@
  */
 package net.java.sip.communicator.impl.protocol.jabber.jinglesdp;
 
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.NewPayloadTypePacketExtension;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.NewRtpDescriptionPacketExtension;
+import net.java.sip.communicator.service.protocol.media.DynamicPayloadTypeRegistry;
 import net.java.sip.communicator.util.Logger;
+import org.jitsi.service.libjitsi.LibJitsi;
+import org.jitsi.service.neomedia.format.MediaFormat;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The class contains a number of utility methods that are meant to facilitate
@@ -25,11 +33,11 @@ import net.java.sip.communicator.util.Logger;
  * @author Emil Ivov
  * @author Lyubomir Marinov
  */
-public class HammerJingleUtils extends JingleUtils
+public class HammerJingleUtils extends NewJingleUtils
 {
 
     /**
-     * The <tt>Logger</tt> used by the <tt>JingleUtils</tt> class and its
+     * The <tt>Logger</tt> used by the <tt>NewJingleUtils</tt> class and its
      * instances for logging output.
      */
     private static final Logger logger = 
@@ -56,55 +64,55 @@ public class HammerJingleUtils extends JingleUtils
      * in the <tt>description</tt> and supported by our <tt>MediaService</tt>
      * implementation.
      */
-//    public static List<MediaFormat> extractFormats(
-//                                     NewRtpDescriptionPacketExtension description,
-//                                     DynamicPayloadTypeRegistry ptRegistry)
-//    {
-//        List<MediaFormat> mediaFmts = new ArrayList<MediaFormat>();
-//        List<NewPayloadTypePacketExtension> payloadTypes
-//                                            = description.getPayloadTypes();
-//
-//        for(NewPayloadTypePacketExtension ptExt : payloadTypes)
-//        {
-//            MediaFormat format = payloadTypeToMediaFormat(ptExt, ptRegistry);
-//
-//            //continue if our media service does not know this format
-//            if(format == null)
-//            {
-//                if(logger.isTraceEnabled())
-//                    logger.trace("Unsupported remote format: " + ptExt.toXML());
-//            }
-//            else
-//                mediaFmts.add(format);
-//        }
-//
-//        return mediaFmts;
-//    }
-//
-//    /**
-//     * Returns the {@link MediaFormat} described in the <tt>payloadType</tt>
-//     * extension or <tt>null</tt> if we don't recognize the format.
-//     * This method uses <tt>LibJitsi</tt> instead of <tt>JabberActivator</tt>
-//     *
-//     * @param payloadType the {@link NewPayloadTypePacketExtension} which is to be
-//     * parsed into a {@link MediaFormat}.
-//     * @param ptRegistry the {@link DynamicPayloadTypeRegistry} that we would
-//     * use for the registration of possible dynamic payload types or
-//     * <tt>null</tt> the returned <tt>MediaFormat</tt> is to not be registered
-//     * into a <tt>DynamicPayloadTypeRegistry</tt>.
-//     *
-//     * @return the {@link MediaFormat} described in the <tt>payloadType</tt>
-//     * extension or <tt>null</tt> if we don't recognize the format.
-//     */
-//    public static MediaFormat payloadTypeToMediaFormat(
-//            NewPayloadTypePacketExtension payloadType,
-//            DynamicPayloadTypeRegistry ptRegistry)
-//    {
-//        return
-//                payloadTypeToMediaFormat(
-//                        payloadType,
-//                        LibJitsi.getMediaService(),
-//                        ptRegistry);
-//    }
+    public static List<MediaFormat> extractFormats(
+                                     NewRtpDescriptionPacketExtension description,
+                                     DynamicPayloadTypeRegistry ptRegistry)
+    {
+        List<MediaFormat> mediaFmts = new ArrayList<MediaFormat>();
+        List<NewPayloadTypePacketExtension> payloadTypes
+                                            = description.getPayloadTypes();
+
+        for(NewPayloadTypePacketExtension ptExt : payloadTypes)
+        {
+            MediaFormat format = payloadTypeToMediaFormat(ptExt, ptRegistry);
+
+            //continue if our media service does not know this format
+            if(format == null)
+            {
+                if(logger.isTraceEnabled())
+                    logger.trace("Unsupported remote format: " + ptExt.toXML());
+            }
+            else
+                mediaFmts.add(format);
+        }
+
+        return mediaFmts;
+    }
+
+    /**
+     * Returns the {@link MediaFormat} described in the <tt>payloadType</tt>
+     * extension or <tt>null</tt> if we don't recognize the format.
+     * This method uses <tt>LibJitsi</tt> instead of <tt>JabberActivator</tt>
+     *
+     * @param payloadType the {@link NewPayloadTypePacketExtension} which is to be
+     * parsed into a {@link MediaFormat}.
+     * @param ptRegistry the {@link DynamicPayloadTypeRegistry} that we would
+     * use for the registration of possible dynamic payload types or
+     * <tt>null</tt> the returned <tt>MediaFormat</tt> is to not be registered
+     * into a <tt>DynamicPayloadTypeRegistry</tt>.
+     *
+     * @return the {@link MediaFormat} described in the <tt>payloadType</tt>
+     * extension or <tt>null</tt> if we don't recognize the format.
+     */
+    public static MediaFormat payloadTypeToMediaFormat(
+            NewPayloadTypePacketExtension payloadType,
+            DynamicPayloadTypeRegistry ptRegistry)
+    {
+        return
+                payloadTypeToMediaFormat(
+                        payloadType,
+                        LibJitsi.getMediaService(),
+                        ptRegistry);
+    }
 
 }

@@ -1,11 +1,9 @@
 package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import org.jivesoftware.smack.packet.Element;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.provider.IntrospectionProvider;
 import org.jivesoftware.smack.provider.ProviderManager;
-import org.xmlpull.mxp1.MXParser;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -52,7 +50,7 @@ public class JingleProvider extends IntrospectionProvider.IQIntrospectionProvide
             throws XmlPullParserException, IOException
     {
         NewJingleIQ jingleIQ = new NewJingleIQ();
-        JingleAction action = JingleAction.parseString(parser.getAttributeValue("", "action"));
+        NewJingleAction action = NewJingleAction.parseString(parser.getAttributeValue("", "action"));
         String initiator = parser.getAttributeValue("", "initiator");
         String responder = parser.getAttributeValue("", "responder");
         String sid = parser.getAttributeValue("", "sid");
@@ -88,34 +86,27 @@ public class JingleProvider extends IntrospectionProvider.IQIntrospectionProvide
                         }
                         catch (Exception e)
                         {
-                            System.out.println("Got exception: " + e.toString());
+                            System.out.println("JingleProvider got exception when parsing: " + e.toString());
                         }
                         if (child instanceof NewContentPacketExtension)
                         {
-                            System.out.println("Got a content");
                             jingleIQ.addContent((NewContentPacketExtension)child);
                         }
-                        System.out.println("done processing top level");
-
-
-
+                        else
+                        {
+                            System.out.println("JingleProvider not handling child element " + elementName +
+                                " in namespace " + namespace);
+                        }
+                    }
+                    else
+                    {
+                        System.out.println("JingleProvider no provider found for element " +
+                                elementName + " in namespace " + namespace);
                     }
 //                    if (elementName.equals("reason"))
 //                    {
 //                        ReasonPacketExtension type1 = reasonProvider.parseExtension(parser);
 //                        jingleIQ.setReason(type1);
-//                    }
-//                    else if (elementName.equals("content"))
-//                    {
-//
-//                        ContentPacketExtension type = (ContentPacketExtension) contentProvider.parse(parser);
-//                         jingleIQ.addContent(type);
-//
-//                    }
-//                    if (elementName.equals("content"))
-//                    {
-//                        NewContentPacketExtension type = (NewContentPacketExtension) contentProvider.parse(parser);
-//                        jingleIQ.addContent(type);
 //                    } else if (elementName.equals("reason"))
 //                    {
 //                        ReasonPacketExtension type1 = reasonProvider.parseExtension(parser);

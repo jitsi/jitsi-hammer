@@ -1,5 +1,6 @@
 package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
+
 import org.jivesoftware.smack.packet.IQ;
 
 import java.util.ArrayList;
@@ -40,7 +41,7 @@ public class NewJingleIQ extends IQ
      */
     public static final String SID_ATTR_NAME = "sid";
 
-    private JingleAction action;
+    private NewJingleAction action;
     private String initiator;
     private String responder;
     private String sid;
@@ -63,7 +64,7 @@ public class NewJingleIQ extends IQ
 
     @Override
     public IQ.IQChildElementXmlStringBuilder getIQChildElementBuilder(IQ.IQChildElementXmlStringBuilder xml) {
-        xml.attribute(ACTION_ATTR_NAME, getAction());
+        xml.attribute(ACTION_ATTR_NAME, getAction().toString());
         if (initiator != null)
         {
             xml.attribute(INITIATOR_ATTR_NAME, getInitiator());
@@ -85,15 +86,16 @@ public class NewJingleIQ extends IQ
         {
             xml.element(reason);
         }
+        //xml.closeElement(ELEMENT_NAME);
 
         return xml;
     }
 
-    public void setAction(JingleAction action) {
+    public void setAction(NewJingleAction action) {
         this.action = action;
     }
 
-    public JingleAction getAction() {
+    public NewJingleAction getAction() {
         return this.action;
     }
 
@@ -162,7 +164,7 @@ public class NewJingleIQ extends IQ
     public List<NewContentPacketExtension> getContentList() {
         synchronized(contentList)
         {
-            return new ArrayList<NewContentPacketExtension>(contentList);
+            return new ArrayList<>(contentList);
         }
     }
 }

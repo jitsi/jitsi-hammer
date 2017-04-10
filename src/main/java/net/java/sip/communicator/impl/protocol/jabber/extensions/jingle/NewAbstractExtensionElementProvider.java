@@ -19,11 +19,8 @@ package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
 import java.util.logging.*;
 
-import net.java.sip.communicator.impl.protocol.jabber.NamespaceOptionalProviderManager;
-import net.java.sip.communicator.impl.protocol.jabber.ProviderManagerExt;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.provider.*;
-import org.jivesoftware.smack.util.StringUtils;
 import org.xmlpull.v1.*;
 
 /**
@@ -103,24 +100,18 @@ public class NewAbstractExtensionElementProvider<C extends NewAbstractExtensionE
             elementName = parser.getName();
             namespace = parser.getNamespace();
 
-            //if (logger.isLoggable(Level.FINE))
+            if (logger.isLoggable(Level.FINE))
             {
-                logger.info("Will parse " + elementName
+                logger.fine("BB: Will parse " + elementName
                         + " ns=" + namespace
-                        + " class=" + packetExtension.getClass().getSimpleName());
+                        + " class=" + packetExtension.getClass().getSimpleName()
+                        + " at depth " + parser.getDepth());
             }
 
             if (eventType == XmlPullParser.START_TAG)
             {
                 ExtensionElementProvider provider;
-//                if (StringUtils.isNullOrEmpty(namespace))
-//                {
-//                    provider = NamespaceOptionalProviderManager.getExtensionProvider(elementName);
-//                }
-//                else
-//                {
-                    provider = ProviderManager.getExtensionProvider(elementName, namespace);
-                //}
+                provider = ProviderManager.getExtensionProvider(elementName, namespace);
 
                 ProviderManager.getExtensionProviders();
 
@@ -148,9 +139,12 @@ public class NewAbstractExtensionElementProvider<C extends NewAbstractExtensionE
                 packetExtension.setText(text);
             }
 
-            //if (logger.isLoggable(Level.FINE))
+            if (logger.isLoggable(Level.FINE))
             {
-                logger.info("Done parsing " + elementName);
+                logger.fine("BB: done parsing " + elementName
+                        + " ns=" + namespace
+                        + " class=" + packetExtension.getClass().getSimpleName()
+                        + " at depth " + parser.getDepth());
             }
         }
 

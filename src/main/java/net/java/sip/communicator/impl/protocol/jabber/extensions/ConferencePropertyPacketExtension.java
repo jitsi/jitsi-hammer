@@ -15,15 +15,17 @@
  */
 package net.java.sip.communicator.impl.protocol.jabber.extensions;
 
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.NewAbstractExtensionElement;
+
 /**
  * An <tt>AbstractPacketExtension</tt> inheritor that represents 
  * a <tt>property</tt> element of the conference
  *
  * @author Maksym Kulish
  */
-@Deprecated
-public class ConferencePropertyPacketExtension extends AbstractPacketExtension {
-
+public class ConferencePropertyPacketExtension
+        extends NewAbstractExtensionElement
+{
     /**
      * The name of the "parameter" element.
      */
@@ -44,7 +46,7 @@ public class ConferencePropertyPacketExtension extends AbstractPacketExtension {
      * The default constructor which does not set the element values
      */
     public ConferencePropertyPacketExtension() {
-        super(null, ELEMENT_NAME);
+        super(ELEMENT_NAME, null);
     }
     
     /**
@@ -56,7 +58,7 @@ public class ConferencePropertyPacketExtension extends AbstractPacketExtension {
      */
     public ConferencePropertyPacketExtension(
             String propertyName, String propertyValue) {
-        super(null, ELEMENT_NAME);
+        super(ELEMENT_NAME, null);
         setPropertyName(propertyName);
         setPropertyValue(propertyValue);
     }

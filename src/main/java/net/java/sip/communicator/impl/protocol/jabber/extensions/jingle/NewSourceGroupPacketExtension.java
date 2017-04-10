@@ -77,7 +77,7 @@ public class NewSourceGroupPacketExtension
      */
     public NewSourceGroupPacketExtension()
     {
-        super(NAMESPACE, ELEMENT_NAME);
+        super(ELEMENT_NAME, NAMESPACE);
     }
 
     /**
