@@ -794,7 +794,7 @@ public class FakeUser implements StanzaListener
                 sessionAccept.getContentList(),
                 sessionInitiate.getContentList());
 
-            System.out.println("Sending session accept: " + sessionAccept);
+            System.out.println("Sending session accept: " + sessionAccept.toXML());
             // Send the session-accept IQ
             connection.sendStanza(sessionAccept);
             logger.info(
