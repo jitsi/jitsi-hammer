@@ -21,10 +21,13 @@ import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.NewAbstr
 import net.java.sip.communicator.impl.protocol.jabber.jinglesdp.HammerJingleUtils;
 import net.java.sip.communicator.service.protocol.media.DynamicPayloadTypeRegistry;
 import net.java.sip.communicator.service.protocol.media.DynamicRTPExtensionsRegistry;
+import org.apache.commons.lang.ObjectUtils;
 import org.jitsi.hammer.extension.MediaPacketExtension;
 import org.jitsi.service.neomedia.format.MediaFormat;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.bosh.*;
+import org.jivesoftware.smack.iqrequest.AbstractIqRequestHandler;
+import org.jivesoftware.smack.iqrequest.IQRequestHandler;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.provider.ProviderManager;
 import org.jivesoftware.smackx.disco.*;
@@ -319,9 +322,24 @@ public class FakeUser implements StanzaListener
 
         connection = new XMPPBOSHConnection(config);
 
-        connection.addSyncStanzaListener(
-                this,
-                (Stanza packet) -> packet instanceof NewJingleIQ);
+        connection.registerIQRequestHandler(new AbstractIqRequestHandler(NewJingleIQ.ELEMENT_NAME, NewJingleIQ.NAMESPACE, IQ.Type.set, IQRequestHandler.Mode.sync)
+        {
+            @Override
+            public IQ handleIQRequest(IQ iq)
+            {
+                NewJingleIQ jiq = (NewJingleIQ)iq;
+                System.out.println("iq request handler got jingle iq: " + jiq.toXML());
+                IQ result = IQ.createResultIQ(iq);
+                switch (jiq.getAction())
+                {
+                    case SESSION_INITIATE:
+                        logger.info("Received session-initiate");
+                        sessionInitiate = jiq;
+                        acceptJingleSession();
+                }
+                return result;
+            }
+        });
         /*
          * Creation in advance of the MediaStream that will be used later
          * so the HammerStats can register their MediaStreamStats now.
@@ -662,6 +680,8 @@ public class FakeUser implements StanzaListener
                         intersectRTPExtensions(remoteRtpExtensions, supportedRtpExtension);
 
                 selectedRtpExtensions.put(cpe.getName(), rtpExtensionIntersection);
+
+                selectedFormats.put(cpe.getName(), HammerUtils.selectFormat(cpe.getName(), mediaFormats));
 
                 localContent = HammerJingleUtils.createDescription(
                         NewContentPacketExtension.CreatorEnum.responder,
