@@ -21,7 +21,12 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>libjitsi</artifactId>
-            <version>1.0-20160229.215705-102</version>
+            <version>1.0-20170411.145651-271</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>ice4j</artifactId>
+            <version>2.0-20170410.185542-12</version>
         </dependency>
         <dependency>
             <groupId>org.igniterealtime.smack</groupId>
