@@ -1,7 +1,7 @@
 /*
  * Jitsi, the OpenSource Java VoIP and Instant Messaging client.
  *
- * Copyright @ 2015 Atlassian Pty Ltd
+ * Copyright @ 2017 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
  * the sender. There is no default value for the 'action' attribute.
  *
  * @author Emil Ivov
+ * @author Brian Baldino
  */
 public enum NewJingleAction
 {
@@ -197,7 +198,7 @@ public enum NewJingleAction
      * @param actionName the name of the <tt>NewJingleAction</tt> we'd like
      * to create.
      */
-    private NewJingleAction(String actionName)
+    NewJingleAction(String actionName)
     {
 
         this.actionName = actionName;

@@ -1,7 +1,7 @@
 /*
  * Jitsi, the OpenSource Java VoIP and Instant Messaging client.
  *
- * Copyright @ 2015 Atlassian Pty Ltd
+ * Copyright @ 2017 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@
 package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
 /**
- * Implements <tt>AbstractPacketExtension</tt> for the <tt>fingerprint</tt>
+ * Implements <tt>NewAbstractExtensionElement</tt> for the <tt>fingerprint</tt>
  * element defined by XEP-0320: Use of DTLS-SRTP in Jingle Sessions.
  *
  * @author Lyubomir Marinov
  * @author Pawel Domas
+ * @author Brian Baldino
  */
 public class NewDtlsFingerprintPacketExtension
         extends NewAbstractExtensionElement
@@ -146,7 +147,7 @@ public class NewDtlsFingerprintPacketExtension
      */
     public void setRequired(boolean required)
     {
-        setAttribute(REQUIRED_ATTR_NAME, Boolean.valueOf(required));
+        setAttribute(REQUIRED_ATTR_NAME, required);
     }
 
     /**

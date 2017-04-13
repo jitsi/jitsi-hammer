@@ -1,5 +1,5 @@
 /*
- * Copyright @ 2015 Atlassian Pty Ltd
+ * Copyright @ 2017 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.NewAbstr
 import net.java.sip.communicator.impl.protocol.jabber.jinglesdp.HammerJingleUtils;
 import net.java.sip.communicator.service.protocol.media.DynamicPayloadTypeRegistry;
 import net.java.sip.communicator.service.protocol.media.DynamicRTPExtensionsRegistry;
-import org.apache.commons.lang.ObjectUtils;
 import org.jitsi.hammer.extension.MediaPacketExtension;
 import org.jitsi.service.neomedia.format.MediaFormat;
 import org.jivesoftware.smack.*;
@@ -53,13 +52,13 @@ import java.util.*;
 
 /**
  *
- * @author Thomas Kuntz
- *
  * <tt>FakeUser</tt> represent a Jingle,ICE and RTP/RTCP session with
  * jitsi-videobridge : it simulate a jitmeet user by setting up an
  * ICE stream and then sending fake audio/video data using RTP
  * to the videobridge./
  *
+ * @author Thomas Kuntz
+ * @author Brian Baldino
  */
 public class FakeUser implements StanzaListener
 {
@@ -411,6 +410,7 @@ public class FakeUser implements StanzaListener
             IOException,
             XMPPException
     {
+        //TODO(brian)
 //        logger.info(this.nickname + " : Login with username "
 //                + username + " to the XMPP server.");
 //        connection.connect();
@@ -593,15 +593,7 @@ public class FakeUser implements StanzaListener
             {
                 try
                 {
-                    connection.sendPacket(
-                            Smack4AwareJinglePacketFactory
-                                    .createSessionTerminate(
-                                        sessionAccept.getFrom().toString(),
-                                        sessionAccept.getTo().toString(),
-                                        sessionAccept.getSID(),
-                                        Reason.GONE,
-                                        "Bye Bye")
-                    );
+                    //TODO(brian): send session-terminate message
                     if(muc != null) muc.leave();
                     connection.disconnect();
                 }

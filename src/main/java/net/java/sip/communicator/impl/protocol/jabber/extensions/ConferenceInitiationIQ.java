@@ -26,6 +26,7 @@ import java.util.*;
  * managing the conference
  *
  * @author Maksym Kulish
+ * @author Brian Baldino
  */
 public class ConferenceInitiationIQ extends IQ 
 {

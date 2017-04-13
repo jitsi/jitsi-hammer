@@ -1,7 +1,7 @@
 /*
  * Jitsi, the OpenSource Java VoIP and Instant Messaging client.
  *
- * Copyright @ 2015 Atlassian Pty Ltd
+ * Copyright @ 2017 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import org.xmlpull.v1.*;
  * {@link Class} that it has been instantiated for.
  *
  * @param <C> Class that the packets we will be parsing belong to
- * @author Emil Ivov
+ * @author Brian Baldino
  */
 public class NewAbstractExtensionElementProvider<C extends NewAbstractExtensionElement>
         extends ExtensionElementProvider
@@ -39,13 +39,6 @@ public class NewAbstractExtensionElementProvider<C extends NewAbstractExtensionE
      */
     private static final Logger logger = Logger
             .getLogger(NewAbstractExtensionElementProvider.class.getName());
-
-    /**
-     * The <tt>AbstractSmackInteroperabilityLayer</tt> instance implementing
-     * necessary methods
-     */
-    //private AbstractSmackInteroperabilityLayer smackInteroperabilityLayer =
-    //        AbstractSmackInteroperabilityLayer.getInstance();
 
     /**
      * The {@link Class} that the packets we will be parsing here belong to.
@@ -102,7 +95,7 @@ public class NewAbstractExtensionElementProvider<C extends NewAbstractExtensionE
 
             if (logger.isLoggable(Level.FINE))
             {
-                logger.fine("BB: Will parse " + elementName
+                logger.fine("Will parse " + elementName
                         + " ns=" + namespace
                         + " class=" + packetExtension.getClass().getSimpleName()
                         + " at depth " + parser.getDepth());
@@ -141,7 +134,7 @@ public class NewAbstractExtensionElementProvider<C extends NewAbstractExtensionE
 
             if (logger.isLoggable(Level.FINE))
             {
-                logger.fine("BB: done parsing " + elementName
+                logger.fine("Done parsing " + elementName
                         + " ns=" + namespace
                         + " class=" + packetExtension.getClass().getSimpleName()
                         + " at depth " + parser.getDepth());

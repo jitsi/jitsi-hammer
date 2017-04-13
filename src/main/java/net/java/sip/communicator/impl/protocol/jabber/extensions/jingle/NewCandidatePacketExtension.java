@@ -1,7 +1,7 @@
 /*
  * Jitsi, the OpenSource Java VoIP and Instant Messaging client.
  *
- * Copyright @ 2015 Atlassian Pty Ltd
+ * Copyright @ 2017 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.ice4j.ice.CandidateTcpType;
 
 /**
  * @author Emil Ivov
+ * @author Brian Baldino
  * FIXME(brian): this class relies on a custom candidate type enum (NewCandidateType) to put
  * the candidate types in the preferred order.  However, it also uses the TcpCandidateType
  * class in ice4j, which is confusing.  It'd be best if we could reconcile that in someway

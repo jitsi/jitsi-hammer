@@ -1,5 +1,5 @@
 /*
- * Copyright @ 2015 Atlassian Pty Ltd
+ * Copyright @ 2017 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,12 @@ import java.io.*;
 
 
 /**
- * 
- * @author Thomas Kuntz.
- * 
+ *
  * <tt>SsrcProvider</tt> is used to parse "ssrc" element in "description"
  * element of a Jingle IQ
+ *
+ * @author Thomas Kuntz.
+ * @author Brian Baldino
  */
 public class SsrcProvider extends ExtensionElementProvider
 {

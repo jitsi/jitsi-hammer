@@ -2,7 +2,7 @@
 /*
  * Jitsi, the OpenSource Java VoIP and Instant Messaging client.
  *
- * Copyright @ 2015 Atlassian Pty Ltd
+ * Copyright @ 2017 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,21 +19,17 @@
 package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
 
-        import java.util.*;
-
-        import net.java.sip.communicator.impl.protocol.jabber.extensions.*;
-        import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-        import net.java.sip.communicator.util.*;
-
-        import org.jivesoftware.smack.packet.*;
+import java.util.*;
+import net.java.sip.communicator.util.*;
 
 /**
- * Implements <tt>AbstractPacketExtension</tt> for the <tt>source</tt> element
+ * Implements <tt>NewAbstractExtensionElement</tt> for the <tt>source</tt> element
  * defined by <a href="http://hancke.name/jabber/jingle-sources">
  * Source-Specific Media Attributes in Jingle</a>.
  *
  * @author Lyubomir Marinov
  * @author Pawel Domas
+ * @author Brian Baldino
  */
 public class NewSourcePacketExtension
         extends NewAbstractExtensionElement

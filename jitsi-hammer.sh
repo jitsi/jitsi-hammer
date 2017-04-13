@@ -40,7 +40,7 @@ else
 fi
 
 # we can make this a script parameter at some point.
-REBUILD=false
+REBUILD=true
 SC_HOME_DIR_LOCATION=$SCRIPT_DIR
 SC_HOME_DIR_NAME=.jitsi-hammer
 LOG_HOME=$SCRIPT_DIR/$SC_HOME_DIR_NAME/log

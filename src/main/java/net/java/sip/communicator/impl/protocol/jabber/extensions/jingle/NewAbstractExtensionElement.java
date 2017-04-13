@@ -14,7 +14,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Created by bbaldino on 4/4/17.
+ * An <tt>ExtensionElement</tt> implementation which provides common functionality <tt>ExtensionElement</tt>s
+ *
+ * @author Brian baldino
  */
 public abstract class NewAbstractExtensionElement
     implements ExtensionElement
@@ -59,12 +61,6 @@ public abstract class NewAbstractExtensionElement
 
     protected NewAbstractExtensionElement(String elementName, String namespace)
     {
-//        if (StringUtils.isNullOrEmpty(elementName)) {
-//            throw new IllegalArgumentException("Element name must not be empty or null");
-//        }
-//        if (StringUtils.isNullOrEmpty(namespace)) {
-//            throw new IllegalArgumentException("Namespace must not be empty or null");
-//        }
         this.namespace = namespace;
         this.elementName = elementName;
     }
@@ -151,29 +147,6 @@ public abstract class NewAbstractExtensionElement
     }
 
     /**
-     * Sets the value of the attribute named <tt>name</tt> to <tt>value</tt>.
-     *
-     * @param name the name of the attribute that we are setting.
-     * @param value an {@link Object} whose <tt>toString()</tt> method returns
-     * the XML value of the attribute we are setting or <tt>null</tt> if we'd
-     * like to remove the attribute with the specified <tt>name</tt>.
-     */
-    public void setAttribute(String name, Object value)
-    {
-        synchronized (attributes)
-        {
-            if (value != null)
-            {
-                this.attributes.put(name, value);
-            }
-            else
-            {
-                this.attributes.remove(name);
-            }
-        }
-    }
-
-    /**
      * Specifies the text content of this extension.
      *
      * @param text the text content of this extension.
@@ -208,6 +181,92 @@ public abstract class NewAbstractExtensionElement
     public void addChildExtension(Element childExtension)
     {
         childExtensions.add(childExtension);
+    }
+
+    /**
+     * Returns all sub-elements for this <tt>NewAbstractExtensionElement</tt> or
+     * <tt>null</tt> if there aren't any.
+     * <p>
+     * Overriding extensions may need to override this method if they would like
+     * to have anything more elaborate than just a list of extensions.
+     *
+     * @return the {@link List} of elements that this packet extension contains.
+     */
+    public List<Element> getChildExtensions()
+    {
+        return childExtensions;
+    }
+
+    /**
+     * Returns this packet's direct child extensions that match the
+     * specified <tt>type</tt>.
+     *
+     * @param <T> the specific <tt>PacketExtension</tt> type of child extensions
+     * to be returned
+     *
+     * @param type the <tt>Class</tt> of the extension we are looking for.
+     *
+     * @return a (possibly empty) list containing all of this packet's direct
+     * child extensions that match the specified <tt>type</tt>
+     */
+    public <T extends NewAbstractExtensionElement> List<T> getChildExtensionsOfType(
+            Class<T> type)
+    {
+        synchronized (childExtensions)
+        {
+            return getChildExtensions()
+                    .stream()
+                    .filter(element -> type.isInstance(element))
+                    .map(element -> (T) element)
+                    .collect(Collectors.toList());
+        }
+    }
+
+    /**
+     * Returns this packet's first direct child extension that matches the
+     * specified <tt>type</tt>.
+     *
+     * @param <T> the specific type of <tt>PacketExtension</tt> to be returned
+     *
+     * @param type the <tt>Class</tt> of the extension we are looking for.
+     *
+     * @return this packet's first direct child extension that matches specified
+     * <tt>type</tt> or <tt>null</tt> if no such child extension was found.
+     */
+    public <T extends NewAbstractExtensionElement> T getFirstChildOfType(Class<T> type)
+    {
+        synchronized (childExtensions)
+        {
+            return getChildExtensions()
+                    .stream()
+                    .filter(element -> type.isInstance(element))
+                    .map(element -> (T) element)
+                    .findFirst()
+                    .get();
+        }
+    }
+
+    /**
+     * Sets the value of the attribute named <tt>name</tt> to <tt>value</tt>.
+     *
+     * @param name the name of the attribute that we are setting.
+     * @param value an {@link Object} whose <tt>toString()</tt> method returns
+     * the XML value of the attribute we are setting or <tt>null</tt> if we'd
+     * like to remove the attribute with the specified <tt>name</tt>.
+     */
+    public void setAttribute(String name, Object value)
+    {
+        synchronized (attributes)
+        {
+            if (value != null)
+            {
+                this.attributes.put(name, value);
+            }
+            else
+            {
+                this.attributes.remove(name);
+            }
+        }
     }
 
     /**
@@ -320,65 +379,17 @@ public abstract class NewAbstractExtensionElement
     }
 
     /**
-     * Returns all sub-elements for this <tt>AbstractPacketExtension</tt> or
-     * <tt>null</tt> if there aren't any.
-     * <p>
-     * Overriding extensions may need to override this method if they would like
-     * to have anything more elaborate than just a list of extensions.
+     * Gets the names of the attributes which currently have associated values
+     * in this extension.
      *
-     * @return the {@link List} of elements that this packet extension contains.
+     * @return the names of the attributes which currently have associated
+     * values in this extension
      */
-    public List<Element> getChildExtensions()
+    public List<String> getAttributeNames()
     {
-        return childExtensions;
-    }
-
-    /**
-     * Returns this packet's direct child extensions that match the
-     * specified <tt>type</tt>.
-     *
-     * @param <T> the specific <tt>PacketExtension</tt> type of child extensions
-     * to be returned
-     *
-     * @param type the <tt>Class</tt> of the extension we are looking for.
-     *
-     * @return a (possibly empty) list containing all of this packet's direct
-     * child extensions that match the specified <tt>type</tt>
-     */
-    public <T extends NewAbstractExtensionElement> List<T> getChildExtensionsOfType(
-            Class<T> type)
-    {
-        synchronized (childExtensions)
+        synchronized (attributes)
         {
-            return getChildExtensions()
-                    .stream()
-                    .filter(element -> type.isInstance(element))
-                    .map(element -> (T) element)
-                    .collect(Collectors.toList());
-        }
-    }
-
-    /**
-     * Returns this packet's first direct child extension that matches the
-     * specified <tt>type</tt>.
-     *
-     * @param <T> the specific type of <tt>PacketExtension</tt> to be returned
-     *
-     * @param type the <tt>Class</tt> of the extension we are looking for.
-     *
-     * @return this packet's first direct child extension that matches specified
-     * <tt>type</tt> or <tt>null</tt> if no such child extension was found.
-     */
-    public <T extends NewAbstractExtensionElement> T getFirstChildOfType(Class<T> type)
-    {
-        synchronized (childExtensions)
-        {
-            return getChildExtensions()
-                    .stream()
-                    .filter(element -> type.isInstance(element))
-                    .map(element -> (T) element)
-                    .findFirst()
-                    .get();
+            return new ArrayList<String>(attributes.keySet());
         }
     }
 
@@ -397,27 +408,12 @@ public abstract class NewAbstractExtensionElement
     }
 
     /**
-     * Gets the names of the attributes which currently have associated values
-     * in this extension.
-     *
-     * @return the names of the attributes which currently have associated
-     * values in this extension
-     */
-    public List<String> getAttributeNames()
-    {
-        synchronized (attributes)
-        {
-            return new ArrayList<String>(attributes.keySet());
-        }
-    }
-
-    /**
      * Clones the attributes, namespace and text of a specific
-     * <tt>AbstractPacketExtension</tt> into a new
-     * <tt>AbstractPacketExtension</tt> instance of the same run-time type.
+     * <tt>NewAbstractExtensionElement</tt> into a new
+     * <tt>NewAbstractExtensionElement</tt> instance of the same run-time type.
      *
-     * @param src the <tt>AbstractPacketExtension</tt> to be cloned
-     * @return a new <tt>AbstractPacketExtension</tt> instance of the run-time
+     * @param src the <tt>NewAbstractExtensionElement</tt> to be cloned
+     * @return a new <tt>NewAbstractExtensionElement</tt> instance of the run-time
      * type of the specified <tt>src</tt> which has the same attributes,
      * namespace and text
      * @throws Exception if an error occurs during the cloning of the specified
@@ -442,7 +438,9 @@ public abstract class NewAbstractExtensionElement
 
         // attributes
         for (String name : src.getAttributeNames())
+        {
             dst.setAttribute(name, src.getAttribute(name));
+        }
         // namespace
         dst.setNamespace(src.getNamespace());
         // text

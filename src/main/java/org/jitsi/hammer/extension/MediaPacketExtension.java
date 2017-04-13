@@ -22,11 +22,12 @@ import org.jivesoftware.smack.packet.*;
 import java.util.*;
 
 /**
- * @author Thomas Kuntz
- * 
  * MediaPacketExtension is used by MediaProvider.
  * This class is used to store attributes of XML sub-documents
  * starting with "media" tag.
+ *
+ * @author Thomas Kuntz
+ * @author Brian Baldino
  */
 public class MediaPacketExtension
         extends NewAbstractExtensionElement

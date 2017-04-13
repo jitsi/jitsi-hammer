@@ -1,5 +1,5 @@
 /*
- * Copyright @ 2015 Atlassian Pty Ltd
+ * Copyright @ 2017 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,14 @@ import java.security.cert.Extension;
 
 
 /**
- * 
- * @author Thomas Kuntz.
- * 
+ *
  * MediaProvider is used to correctly parse "media" XML document
  * (with MediaProvider.NAMESPACE as namespace).
  * 
  * It especially correctly parses <source /> lines
+ *
+ * @author Thomas Kuntz.
+ * @author Brian Baldino
  */
 public class MediaProvider extends ExtensionElementProvider
 {

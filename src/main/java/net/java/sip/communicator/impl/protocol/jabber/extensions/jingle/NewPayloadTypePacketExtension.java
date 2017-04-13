@@ -1,7 +1,7 @@
 /*
  * Jitsi, the OpenSource Java VoIP and Instant Messaging client.
  *
- * Copyright @ 2015 Atlassian Pty Ltd
+ * Copyright @ 2017 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.util.*;
  * Represents the <tt>payload-type</tt> elements described in XEP-0167.
  *
  * @author Emil Ivov
+ * @author Brian Baldino
  */
 public class NewPayloadTypePacketExtension
         extends NewAbstractExtensionElement

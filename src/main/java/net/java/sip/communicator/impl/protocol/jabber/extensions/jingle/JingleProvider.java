@@ -1,3 +1,19 @@
+/*
+ * Copyright @ 2017 Atlassian Pty Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
 import org.jivesoftware.smack.packet.Element;
@@ -10,7 +26,9 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 
 /**
- * Created by bbaldino on 4/3/17.
+ * A provider for <tt>NewJingleIQ</tt> instances
+ *
+ * @author Brian Baldino
  */
 public class JingleProvider extends IntrospectionProvider.IQIntrospectionProvider<NewJingleIQ>
 {
@@ -18,31 +36,6 @@ public class JingleProvider extends IntrospectionProvider.IQIntrospectionProvide
     public JingleProvider()
     {
         super(NewJingleIQ.class);
-//        AbstractSmackInteroperabilityLayer smackInteroperabilityLayer = AbstractSmackInteroperabilityLayer.getInstance();
-        //smackInteroperabilityLayer.addExtensionProvider("description", "urn:xmpp:jingle:apps:rtp:1", new NewAbstractExtensionElementProvider(NewRtpDescriptionPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("payload-type", "urn:xmpp:jingle:apps:rtp:1", new NewAbstractExtensionElementProvider(NewPayloadTypePacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("parameter", "urn:xmpp:jingle:apps:rtp:1", new NewAbstractExtensionElementProvider(ParameterPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("rtp-hdrext", "urn:xmpp:jingle:apps:rtp:rtp-hdrext:0", new NewAbstractExtensionElementProvider(NewRTPHdrExtPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("sctpmap", "urn:xmpp:jingle:transports:dtls-sctp:1", new NewSctpMapExtensionProvider());
-//        smackInteroperabilityLayer.addExtensionProvider("encryption", "urn:xmpp:jingle:apps:rtp:1", new NewAbstractExtensionElementProvider(NewEncryptionPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("zrtp-hash", "urn:xmpp:jingle:apps:rtp:zrtp:1", new NewAbstractExtensionElementProvider(ZrtpHashPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("crypto", "urn:xmpp:jingle:apps:rtp:1", new NewAbstractExtensionElementProvider(NewCryptoPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("bundle", "http://estos.de/ns/bundle", new NewAbstractExtensionElementProvider(BundlePacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("group", "urn:xmpp:jingle:apps:grouping:0", new NewAbstractExtensionElementProvider(GroupPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("transport", "urn:xmpp:jingle:transports:ice-udp:1", new NewAbstractExtensionElementProvider(NewIceUdpTransportPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("transport", "urn:xmpp:jingle:transports:raw-udp:1", new NewAbstractExtensionElementProvider(NewRawUdpTransportPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("candidate", "urn:xmpp:jingle:transports:ice-udp:1", new NewAbstractExtensionElementProvider(NewCandidatePacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("candidate", "urn:xmpp:jingle:transports:raw-udp:1", new NewAbstractExtensionElementProvider(NewCandidatePacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("remote-candidate", "urn:xmpp:jingle:transports:ice-udp:1", new NewAbstractExtensionElementProvider(RemoteCandidatePacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("inputevt", "http://jitsi.org/protocol/inputevt", new NewAbstractExtensionElementProvider(InputEvtPacketExtension.class));
-//        //smackInteroperabilityLayer.addExtensionProvider("conference-info", "", new NewAbstractExtensionElementProvider(CoinPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("fingerprint", "urn:xmpp:jingle:apps:dtls:0", new NewAbstractExtensionElementProvider(NewDtlsFingerprintPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("transfer", "urn:xmpp:jingle:transfer:0", new NewAbstractExtensionElementProvider(TransferPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("transferred", "urn:xmpp:jingle:transfer:0", new NewAbstractExtensionElementProvider(TransferredPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("callid", "http://jitsi.org/protocol/condesc", new NewAbstractExtensionElementProvider(CallIdPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("rtcp-fb", "urn:xmpp:jingle:apps:rtp:rtcp-fb:0", new NewAbstractExtensionElementProvider(NewRtcpFbPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("rtcp-mux", "urn:xmpp:jingle:transports:ice-udp:1", new NewAbstractExtensionElementProvider(NewRtcpmuxPacketExtension.class));
-//        smackInteroperabilityLayer.addExtensionProvider("ssrc-info", "http://jitsi.org/jitmeet", new NewAbstractExtensionElementProvider(NewSSRCInfoPacketExtension.class));
     }
 
     @Override
@@ -60,13 +53,7 @@ public class JingleProvider extends IntrospectionProvider.IQIntrospectionProvide
         jingleIQ.setResponder(responder);
         jingleIQ.setSID(sid);
         boolean done = false;
-        //NewAbstractExtensionElementProvider<NewContentPacketExtension> contentProvider =
-        //        new NewAbstractExtensionElementProvider<NewContentPacketExtension>(NewContentPacketExtension.class);
-        //ReasonProvider reasonProvider = new ReasonProvider();
-//        NewAbstractExtensionElementProvider transferProvider = new NewAbstractExtensionElementProvider(TransferPacketExtension.class);
-//        NewAbstractExtensionElementProvider coinProvider = new NewAbstractExtensionElementProvider(CoinPacketExtension.class);
-//        NewAbstractExtensionElementProvider callidProvider = new NewAbstractExtensionElementProvider(CallIdPacketExtension.class);
-//
+
         try
         {
             while (!done)
@@ -74,69 +61,30 @@ public class JingleProvider extends IntrospectionProvider.IQIntrospectionProvide
                 int eventType = parser.next();
                 String elementName = parser.getName();
                 String namespace = parser.getNamespace();
-                if (eventType == 2)
+                if (eventType == XmlPullParser.START_TAG)
                 {
                     ExtensionElementProvider provider = ProviderManager.getExtensionProvider(elementName, namespace);
                     if (provider != null)
                     {
-                        Element child = null;
-                        try
-                        {
-                            child = provider.parse(parser);
-                        }
-                        catch (Exception e)
-                        {
-                            System.out.println("JingleProvider got exception when parsing: " + e.toString());
-                        }
+                        Element child = provider.parse(parser);
                         if (child instanceof NewContentPacketExtension)
                         {
                             jingleIQ.addContent((NewContentPacketExtension)child);
                         }
                         else
                         {
-                            System.out.println("JingleProvider not handling child element " + elementName +
+                            throw new IOException("JingleProvider doesn't handle child element " + elementName +
                                 " in namespace " + namespace);
                         }
                     }
                     else
                     {
-                        System.out.println("JingleProvider no provider found for element " +
+                        throw new IOException("JingleProvider: no provider found for element " +
                                 elementName + " in namespace " + namespace);
                     }
-//                    if (elementName.equals("reason"))
-//                    {
-//                        ReasonPacketExtension type1 = reasonProvider.parseExtension(parser);
-//                        jingleIQ.setReason(type1);
-//                    } else if (elementName.equals("reason"))
-//                    {
-//                        ReasonPacketExtension type1 = reasonProvider.parseExtension(parser);
-//                        jingleIQ.setReason(type1);
-//                    } else if (elementName.equals("transfer") && namespace.equals("urn:xmpp:jingle:transfer:0"))
-//                    {
-//                        //jingleIQ.addExtension(transferProvider.parse(parser));
-//                    } else if (elementName.equals("conference-info"))
-//                    {
-//                        //jingleIQ.addExtension(coinProvider.parse(parser));
-//                    } else if (elementName.equals("callid"))
-//                    {
-//                        //jingleIQ.addExtension(callidProvider.parse(parser));
-//                    }
-//
-//                    if (namespace.equals("urn:xmpp:jingle:apps:rtp:info:1"))
-//                    {
-//                        SessionInfoType type2 = SessionInfoType.valueOf(elementName);
-//                        if (type2 != SessionInfoType.mute && type2 != SessionInfoType.unmute)
-//                        {
-//                            jingleIQ.setSessionInfo(new SessionInfoPacketExtension(type2));
-//                        } else
-//                        {
-//                            String name = parser.getAttributeValue("", "name");
-//                            jingleIQ.setSessionInfo(new MuteSessionInfoPacketExtension(type2 == SessionInfoType.mute, name));
-//                        }
-//                    }
                 }
 
-                if (eventType == 3 && parser.getName().equals("jingle"))
+                if (eventType == XmlPullParser.END_TAG && parser.getName().equals("jingle"))
                 {
                     done = true;
                 }

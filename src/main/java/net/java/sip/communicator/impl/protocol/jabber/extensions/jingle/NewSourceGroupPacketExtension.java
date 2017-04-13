@@ -1,7 +1,7 @@
 /*
  * Jitsi, the OpenSource Java VoIP and Instant Messaging client.
  *
- * Copyright @ 2015 Atlassian Pty Ltd
+ * Copyright @ 2017 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import java.util.*;
  * Created by gp on 07/08/14.
  * @author George Politis
  * @author Pawel Domas
+ * @author Brian Baldino
  */
 public class NewSourceGroupPacketExtension
         extends NewAbstractExtensionElement
@@ -122,29 +123,4 @@ public class NewSourceGroupPacketExtension
         }
 
     }
-
-    /**
-     * Returns deep copy of this <tt>NewSourceGroupPacketExtension</tt> instance.
-     */
-//    public NewSourceGroupPacketExtension copy()
-//    {
-//        NewSourceGroupPacketExtension copy
-//                = AbstractPacketExtension.clone(this);
-//
-//        copy.setSemantics(getSemantics());
-//
-//        List<NewSourcePacketExtension> sources = getSources();
-//
-//        List<SourcePacketExtension> sourcesCopy
-//                = new ArrayList<SourcePacketExtension>(sources.size());
-//
-//        for (NewSourcePacketExtension source : sources)
-//        {
-//            sourcesCopy.add(source.copy());
-//        }
-//
-//        copy.addSources(sourcesCopy);
-//
-//        return copy;
-//    }
 }

@@ -1,13 +1,33 @@
+/*
+ * Jitsi, the OpenSource Java VoIP and Instant Messaging client.
+ *
+ * Copyright @ 2017 Atlassian Pty Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package net.java.sip.communicator.impl.protocol.jabber.extensions.jingle;
 
 /**
  * Represents the <tt>parameter</tt> elements described in XEP-0167.
  *
+ * Note(brian): Since a parameter doesn't have an explicit namespace, I think it would be better for this
+ * to derive from NamedElement (and not ExtensionElement), but smack's provider registry doesn't make it easy to
+ * add or find element providers without a registered namespace.
+ *
  * @author Emil Ivov
+ * @author Brian Baldino
  */
-
-//NOTE(brian): since this doesn't use a namespace(?) it would technically be more accurate for this to derive
-// from NamedElement (and not ExtensionElement), but will see if that ends up being a big deal
 public class NewParameterPacketExtension
     extends NewAbstractExtensionElement
 {
