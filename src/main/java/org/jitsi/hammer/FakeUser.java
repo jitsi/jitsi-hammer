@@ -71,6 +71,12 @@ public class FakeUser implements StanzaListener
         = Logger.getLogger(FakeUser.class);
 
     /**
+     * After this amount of time, we'll give up on waiting for ICE to
+     * connect
+     */
+    private static long ICE_TIMEOUT_MS = 30000;
+
+    /**
      * The <tt>Hammer</tt> instance to which this <tt>FakeUser</tt> corresponds
      * This object layout exists in order to make conference initiation 
      * synchronization bound to Hammer instance
@@ -245,7 +251,7 @@ public class FakeUser implements StanzaListener
                     .setFile(serverInfo.getBOSHpath())
                     .setPort(serverInfo.getPort())
                     .setXmppDomain(serverInfo.getXMPPDomain())
-                    .setDebuggerEnabled(true)
+                    .setDebuggerEnabled(smackDebug)
                     .performSaslAnonymousAuthentication()
                     .build();
         }
@@ -873,8 +879,13 @@ public class FakeUser implements StanzaListener
                         || IceProcessingState.FAILED.equals(iceState))
                     break;
 
-                if (System.currentTimeMillis() - startWait > 10000)
-                    break; // Don't run for more than 10 seconds
+                if (System.currentTimeMillis() - startWait > ICE_TIMEOUT_MS)
+		{
+		    logger.error("ICE for user " + nickname + " is still in " +
+			iceState + " state after " + ICE_TIMEOUT_MS + " ms, " +
+                        "giving up");
+                    break;
+		}
 
                 try
                 {
