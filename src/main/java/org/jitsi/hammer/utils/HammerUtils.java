@@ -568,8 +568,8 @@ public class HammerUtils
 
             if( (srtpControl instanceof DtlsControl) && (transport != null))
             {
-                DtlsFingerprintPacketExtension fingerprint =
-                    new DtlsFingerprintPacketExtension();
+                NewDtlsFingerprintPacketExtension fingerprint =
+                    new NewDtlsFingerprintPacketExtension();
                 dtlsControl = (DtlsControl) srtpControl;
 
 
@@ -662,14 +662,14 @@ public class HammerUtils
 
         sourcePacketExtension.setSSRC(ssrc);
         sourcePacketExtension.addChildExtension(
-            new ParameterPacketExtension("cname",
+            new NewParameterPacketExtension("cname",
                 mediaService.getRtpCname()));
         sourcePacketExtension.addChildExtension(
-            new ParameterPacketExtension("msid", msLabel + " " + label));
+            new NewParameterPacketExtension("msid", msLabel + " " + label));
         sourcePacketExtension.addChildExtension(
-            new ParameterPacketExtension("mslabel", msLabel));
+            new NewParameterPacketExtension("mslabel", msLabel));
         sourcePacketExtension.addChildExtension(
-            new ParameterPacketExtension("label", label));
+            new NewParameterPacketExtension("label", label));
         description.addChildExtension(sourcePacketExtension);
 
         ssrcPacketExtension.setSsrc(String.valueOf(ssrc));
