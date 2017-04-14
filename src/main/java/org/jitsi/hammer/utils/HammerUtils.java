@@ -1,5 +1,5 @@
 /*
- * Copyright @ 2015 Atlassian Pty Ltd
+ * Copyright @ 2017 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,8 @@
 
 package org.jitsi.hammer.utils;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.CandidateType;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.NewContentPacketExtension.*;
 import net.java.sip.communicator.service.protocol.media.*;
 
 import org.ice4j.socket.*;
@@ -41,6 +39,7 @@ import java.util.*;
  * the handling of a Jingle session and the created ICE stream and media stream.
  *
  * @author Thomas Kuntz
+ * @author Brian Baldino
  */
 public class HammerUtils
 {
@@ -114,20 +113,20 @@ public class HammerUtils
 
     /**
      * Add the remote transport candidates of each
-     * <tt>ContentPacketExtension</tt> in <tt>contentList</tt> to their
+     * <tt>NewContentPacketExtension</tt> in <tt>contentList</tt> to their
      * associated <tt>IceMediaStream</tt> inside <tt>agent</tt>.
      *
      * @param agent the <tt>Agent</tt> containing the IceMediaStream to which
      * will be added the remote transport candidates.
-     * @param contentList the list of <tt>ContentPacketExtension</tt> containing
+     * @param contentList the list of <tt>NewContentPacketExtension</tt> containing
      * the remote transport candidates to add to the <tt>Agent</tt>.
      */
     public static void addRemoteCandidateToAgent(
         Agent agent,
-        Collection<ContentPacketExtension> contentList)
+        Collection<NewContentPacketExtension> contentList)
     {
-        IceUdpTransportPacketExtension transports = null;
-        List<CandidatePacketExtension> candidates = null;
+        NewIceUdpTransportPacketExtension transports = null;
+        List<NewCandidatePacketExtension> candidates = null;
         String contentName = null;
         IceMediaStream stream = null;
         Component component = null;
@@ -136,23 +135,23 @@ public class HammerUtils
         TransportAddress mainAddr = null, relatedAddr = null;
         RemoteCandidate remoteCandidate;
 
-        for(ContentPacketExtension content : contentList)
+        for(NewContentPacketExtension content : contentList)
         {
             contentName = content.getName();
             stream = agent.getStream(contentName);
             if(stream == null) continue;
 
-            transports = content.getFirstChildOfType(IceUdpTransportPacketExtension.class);
+            transports = content.getFirstChildOfType(NewIceUdpTransportPacketExtension.class);
             if(transports == null)
                 continue;
 
             stream.setRemotePassword(transports.getPassword());
             stream.setRemoteUfrag(transports.getUfrag());
 
-            candidates = transports.getChildExtensionsOfType(CandidatePacketExtension.class);
+            candidates = transports.getChildExtensionsOfType(NewCandidatePacketExtension.class);
             Collections.sort(candidates);
 
-            for(CandidatePacketExtension candidate : candidates)
+            for(NewCandidatePacketExtension candidate : candidates)
             {
                 component = stream.getComponent(candidate.getComponent());
 
@@ -198,26 +197,26 @@ public class HammerUtils
     /**
      * Add the local transport candidates contained in <tt>agent</tt> to
      * their associated (by the stream/content name)
-     * <tt>ContentPacketExtension</tt>.
+     * <tt>NewContentPacketExtension</tt>.
      *
      * @param agent the <tt>Agent</tt> from which we will get the local
      * transport candidates.
-     * @param contentList the list of <tt>ContentPacketExtension</tt> to which
+     * @param contentList the list of <tt>NewContentPacketExtension</tt> to which
      * will be added the local transport candidates.
      */
     public static void addLocalCandidateToContentList(
         Agent agent,
-        Collection<ContentPacketExtension> contentList)
+        Collection<NewContentPacketExtension> contentList)
     {
         IceMediaStream iceMediaStream = null;
-        IceUdpTransportPacketExtension transport = null;
-        DtlsFingerprintPacketExtension fingerprint = null;
-        CandidatePacketExtension candidate = null;
+        NewIceUdpTransportPacketExtension transport = null;
+        NewDtlsFingerprintPacketExtension fingerprint = null;
+        NewCandidatePacketExtension candidate = null;
         long candidateID = 0;
 
-        for(ContentPacketExtension content : contentList)
+        for(NewContentPacketExtension content : contentList)
         {
-            transport = new IceUdpTransportPacketExtension();
+            transport = new NewIceUdpTransportPacketExtension();
 
             iceMediaStream = agent.getStream(content.getName());
 
@@ -226,7 +225,7 @@ public class HammerUtils
 
             if(iceMediaStream != null)
             {
-                fingerprint = new DtlsFingerprintPacketExtension();
+                fingerprint = new NewDtlsFingerprintPacketExtension();
 
                 fingerprint.setFingerprint("");
                 fingerprint.setHash("");
@@ -235,7 +234,7 @@ public class HammerUtils
                 {
                     for(LocalCandidate localCandidate : component.getLocalCandidates())
                     {
-                        candidate = new CandidatePacketExtension();
+                        candidate = new NewCandidatePacketExtension();
 
                         candidate.setNamespace(IceUdpTransportPacketExtension.NAMESPACE);
                         candidate.setFoundation(localCandidate.getFoundation());
@@ -244,7 +243,7 @@ public class HammerUtils
                         candidate.setPriority(localCandidate.getPriority());
                         candidate.setIP(localCandidate.getTransportAddress().getHostAddress());
                         candidate.setPort(localCandidate.getTransportAddress().getPort());
-                        candidate.setType(CandidateType.valueOf(localCandidate.getType().toString()));
+                        candidate.setType(NewCandidateType.valueOf(localCandidate.getType().toString()));
                         candidate.setGeneration(agent.getGeneration());
                         candidate.setNetwork(0);
                         candidate.setID(String.valueOf(candidateID++));
@@ -478,27 +477,27 @@ public class HammerUtils
      * @param mediaStreamMap a Map containing the <tt>MediaStream</tt> to
      * which will be added the remote fingerprints, from which we will get
      * the local fingerprints.
-     * @param localContentList The list of <tt>ContentPacketExtension</tt> to
+     * @param localContentList The list of <tt>NewContentPacketExtension</tt> to
      * which will be added the local fingerprints
-     * @param remoteContentList The list of <tt>ContentPacketExtension</tt> from
+     * @param remoteContentList The list of <tt>NewContentPacketExtension</tt> from
      * which we will get the remote fingerprints
      */
     public static void setDtlsEncryptionOnTransport(
-        Map<String,MediaStream> mediaStreamMap,
-        List<ContentPacketExtension> localContentList,
-        List<ContentPacketExtension> remoteContentList)
+        Map<String, MediaStream> mediaStreamMap,
+        List<NewContentPacketExtension> localContentList,
+        List<NewContentPacketExtension> remoteContentList)
     {
         MediaStream stream = null;
-        IceUdpTransportPacketExtension transport = null;
-        List<DtlsFingerprintPacketExtension> fingerprints = null;
+        NewIceUdpTransportPacketExtension transport = null;
+        List<NewDtlsFingerprintPacketExtension> fingerprints = null;
         SrtpControl srtpControl = null;
         DtlsControl dtlsControl = null;
         DtlsControl.Setup dtlsSetup = null;
 
 
-        for(ContentPacketExtension remoteContent : remoteContentList)
+        for(NewContentPacketExtension remoteContent : remoteContentList)
         {
-            transport = remoteContent.getFirstChildOfType(IceUdpTransportPacketExtension.class);
+            transport = remoteContent.getFirstChildOfType(NewIceUdpTransportPacketExtension.class);
             dtlsSetup = null;
 
             stream = mediaStreamMap.get(remoteContent.getName());
@@ -512,7 +511,7 @@ public class HammerUtils
                 dtlsControl = (DtlsControl)srtpControl;
 
                 fingerprints = transport.getChildExtensionsOfType(
-                    DtlsFingerprintPacketExtension.class);
+                    NewDtlsFingerprintPacketExtension.class);
 
                 if (!fingerprints.isEmpty())
                 {
@@ -521,7 +520,7 @@ public class HammerUtils
 
                     //XXX videobridge send a session-initiate with only one
                     //fingerprint, so I'm not sure using a loop here is useful
-                    for(DtlsFingerprintPacketExtension fingerprint : fingerprints)
+                    for(NewDtlsFingerprintPacketExtension fingerprint : fingerprints)
                     {
                         remoteFingerprints.put(
                             fingerprint.getHash(),
@@ -558,10 +557,10 @@ public class HammerUtils
 
         //This code add the fingerprint of the local MediaStream to the content
         //that will be sent with the session-accept
-        for(ContentPacketExtension localContent : localContentList)
+        for(NewContentPacketExtension localContent : localContentList)
         {
             transport = localContent.getFirstChildOfType(
-                IceUdpTransportPacketExtension.class);
+                NewIceUdpTransportPacketExtension.class);
 
             stream = mediaStreamMap.get(localContent.getName());
             if(stream == null) continue;
@@ -569,8 +568,8 @@ public class HammerUtils
 
             if( (srtpControl instanceof DtlsControl) && (transport != null))
             {
-                DtlsFingerprintPacketExtension fingerprint =
-                    new DtlsFingerprintPacketExtension();
+                NewDtlsFingerprintPacketExtension fingerprint =
+                    new NewDtlsFingerprintPacketExtension();
                 dtlsControl = (DtlsControl) srtpControl;
 
 
@@ -609,78 +608,69 @@ public class HammerUtils
 
     /**
      * Set the ssrc attribute of each <tt>MediaStream</tt> to their corresponding
-     * <tt>RtpDescriptionPacketExtension</tt>, and also add a 'source' element
+     * <tt>NewRtpDescriptionPacketExtension</tt>, and also add a 'source' element
      * to it, describing the msid,mslabel,label and cname of the stream.
      *
-     * @param contentMap the Map of <tt>ContentPacketExtension</tt> to which
+     * @param contentMap the Map of <tt>NewContentPacketExtension</tt> to which
      * will be set the ssrc and addec the "source" element.
      * @param mediaStreamMap the Map of <tt>MediaStream</tt> from which will be
      * gotten the ssrc and other informations.
      */
     public static void addSSRCToContent(
-        Map<String,ContentPacketExtension> contentMap,
-        Map<String,MediaStream> mediaStreamMap)
+        Map<String, NewContentPacketExtension> contentMap,
+        Map<String, MediaStream> mediaStreamMap)
     {
-        ContentPacketExtension content = null;
-        RtpDescriptionPacketExtension description = null;
-        MediaStream mediaStream = null;
-
-
         for(String mediaName : contentMap.keySet())
         {
             long ssrc;
 
-            content = contentMap.get(mediaName);
-            mediaStream = mediaStreamMap.get(mediaName);
+            NewContentPacketExtension content = contentMap.get(mediaName);
+            MediaStream mediaStream = mediaStreamMap.get(mediaName);
             if((content == null) || (mediaStream == null)) continue;
 
             ssrc = mediaStream.getLocalSourceID();
 
-            description = content.getFirstChildOfType(
-                RtpDescriptionPacketExtension.class);
+            NewRtpDescriptionPacketExtension description = content.getFirstChildOfType(
+                NewRtpDescriptionPacketExtension.class);
 
             description.setSsrc(String.valueOf(ssrc));
             addSourceExtension(description, ssrc);
         }
     }
 
-
-
     /**
      * Adds a <tt>SourcePacketExtension</tt> as a child element of
      * <tt>description</tt>. See XEP-0339.
      *
-     * @param description the <tt>RtpDescriptionPacketExtension</tt> to which
+     * @param description the <tt>NewRtpDescriptionPacketExtension</tt> to which
      * a child element will be added.
      * @param ssrc the SSRC for the <tt>SourcePacketExtension</tt> to use.
      */
     public static void addSourceExtension(
-        RtpDescriptionPacketExtension description,
+        NewRtpDescriptionPacketExtension description,
         long ssrc)
     {
         MediaService mediaService = LibJitsi.getMediaService();
         String msLabel = UUID.randomUUID().toString();
         String label = UUID.randomUUID().toString();
 
-        SourcePacketExtension sourcePacketExtension =
-            new SourcePacketExtension();
+        NewSourcePacketExtension sourcePacketExtension =
+            new NewSourcePacketExtension();
         SsrcPacketExtension ssrcPacketExtension =
             new SsrcPacketExtension();
 
 
         sourcePacketExtension.setSSRC(ssrc);
         sourcePacketExtension.addChildExtension(
-            new ParameterPacketExtension("cname",
+            new NewParameterPacketExtension("cname",
                 mediaService.getRtpCname()));
         sourcePacketExtension.addChildExtension(
-            new ParameterPacketExtension("msid", msLabel + " " + label));
+            new NewParameterPacketExtension("msid", msLabel + " " + label));
         sourcePacketExtension.addChildExtension(
-            new ParameterPacketExtension("mslabel", msLabel));
+            new NewParameterPacketExtension("mslabel", msLabel));
         sourcePacketExtension.addChildExtension(
-            new ParameterPacketExtension("label", label));
+            new NewParameterPacketExtension("label", label));
         description.addChildExtension(sourcePacketExtension);
-
-
 
         ssrcPacketExtension.setSsrc(String.valueOf(ssrc));
         ssrcPacketExtension.setCname(mediaService.getRtpCname());
@@ -691,20 +681,20 @@ public class HammerUtils
     }
 
     /**
-     * Create a relatively empty <tt>ContentPacketExtension</tt> for 'data'
+     * Create a relatively empty <tt>NewContentPacketExtension</tt> for 'data'
      * (<tt>MediaType.DATA</tt>) rtp content type, because
      * <tt>HammerJingleUtils.createDescription</tt> doesn't handle this type for now.
      *
      * @param creator indicates whether the person who originally created this
      * content was the initiator or the responder of the jingle session.
      * @param senders indicates the direction of the media in this stream.
-     * @return a <tt>ContentPacketExtension</tt> for 'data' content.
+     * @return a <tt>NewContentPacketExtension</tt> for 'data' content.
      */
-    public static ContentPacketExtension createDescriptionForDataContent(
+    public static NewContentPacketExtension createDescriptionForDataContent(
         CreatorEnum                  creator,
         SendersEnum                  senders)
     {
-        ContentPacketExtension content = new ContentPacketExtension();
+        NewContentPacketExtension content = new NewContentPacketExtension();
         RtpDescriptionPacketExtension description
         = new RtpDescriptionPacketExtension();
 

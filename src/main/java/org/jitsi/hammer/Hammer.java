@@ -1,5 +1,5 @@
 /*
- * Copyright @ 2015 Atlassian Pty Ltd
+ * Copyright @ 2017 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.jivesoftware.smack.provider.*;
 
 import org.jitsi.impl.osgi.framework.launch.*;
 import org.jitsi.impl.neomedia.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 
 import org.jitsi.hammer.extension.*;
 import org.jitsi.hammer.utils.*;
@@ -37,8 +36,6 @@ import java.util.*;
 
 /**
  *
- * @author Thomas Kuntz
- *
  * The <tt>Hammer</tt> class is the core class of the jitsi-hammer project.
  * This class will try to create N virtual users to a XMPP server then to
  * a MUC chatroom created by JitMeet (https://jitsi.org/Projects/JitMeet).
@@ -48,6 +45,9 @@ import java.util.*;
  * invitation, each virtual user will positively reply to the invitation and
  * start sending audio and video data to the jitsi-videobridge handling the
  * conference.
+ *
+ * @author Thomas Kuntz
+ * @author Brian Baldino
  */
 public class Hammer
 {
@@ -124,37 +124,6 @@ public class Hammer
         {
             "org/jitsi/service/libjitsi/LibJitsiActivator",
         }
-        //These bundles are used in Jitsi-Videobridge from which I copied
-        //some code, but these bundle doesn't seems necessary for the hammer
-        /*,
-            {
-                "net/java/sip/communicator/util/UtilActivator",
-                "net/java/sip/communicator/impl/fileaccess/FileAccessActivator"
-            },
-            {
-                "net/java/sip/communicator/impl/configuration/ConfigurationActivator"
-            },
-            {
-                "net/java/sip/communicator/impl/resources/ResourceManagementActivator"
-            },
-            {
-                "net/java/sip/communicator/util/dns/DnsUtilActivator"
-            },
-            {
-                "net/java/sip/communicator/impl/netaddr/NetaddrActivator"
-            },
-            {
-                "net/java/sip/communicator/impl/packetlogging/PacketLoggingActivator"
-            },
-            {
-                "net/java/sip/communicator/service/gui/internal/GuiServiceActivator"
-            },
-            {
-                "net/java/sip/communicator/service/protocol/media/ProtocolMediaActivator"
-            },
-            {
-                "org/jitsi/hammer/HammerActivator"
-            }*/
     };
 
     /**
@@ -324,12 +293,12 @@ public class Hammer
             SsrcProvider.ELEMENT_NAME,
             SsrcProvider.NAMESPACE,
             new SsrcProvider());
-        logger.info("Element name : " + JingleIQ.ELEMENT_NAME
-            + ", Namespace : " + JingleIQ.NAMESPACE);
-        ProviderManager.addIQProvider(
-            JingleIQ.ELEMENT_NAME,
-            JingleIQ.NAMESPACE,
-            new JingleIQProvider());
+//        logger.info("Element name : " + JingleIQ.ELEMENT_NAME
+//            + ", Namespace : " + JingleIQ.NAMESPACE);
+//        ProviderManager.addIQProvider(
+//            JingleIQ.ELEMENT_NAME,
+//            JingleIQ.NAMESPACE,
+//            new JingleIQProvider());
     }
 
     /**

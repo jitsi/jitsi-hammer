@@ -1,5 +1,5 @@
 /*
- * Copyright @ 2015 Atlassian Pty Ltd
+ * Copyright @ 2017 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jitsi.hammer.extension;
 
 import org.jivesoftware.smack.packet.*;
+import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.provider.PacketExtensionProvider;
 import org.xmlpull.v1.*;
 
@@ -24,13 +25,14 @@ import java.io.*;
 
 
 /**
- * 
- * @author Thomas Kuntz.
- * 
+ *
  * <tt>SsrcProvider</tt> is used to parse "ssrc" element in "description"
  * element of a Jingle IQ
+ *
+ * @author Thomas Kuntz.
+ * @author Brian Baldino
  */
-public class SsrcProvider implements PacketExtensionProvider
+public class SsrcProvider extends ExtensionElementProvider
 {
     /**
      * The name of the "ssrc" element. 
@@ -54,7 +56,7 @@ public class SsrcProvider implements PacketExtensionProvider
      * @throws XmlPullParserException 
      * @throws IOException
      */
-    public PacketExtension parseExtension(XmlPullParser parser)
+    public ExtensionElement parse(XmlPullParser parser, int initialDepth)
         throws IOException, XmlPullParserException
     {
         

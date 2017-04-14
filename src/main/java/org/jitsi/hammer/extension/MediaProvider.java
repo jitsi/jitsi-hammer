@@ -1,5 +1,5 @@
 /*
- * Copyright @ 2015 Atlassian Pty Ltd
+ * Copyright @ 2017 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,25 @@
 package org.jitsi.hammer.extension;
 
 import org.jivesoftware.smack.packet.*;
+import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.provider.PacketExtensionProvider;
 import org.xmlpull.v1.*;
 
 import java.io.*;
+import java.security.cert.Extension;
 
 
 /**
- * 
- * @author Thomas Kuntz.
- * 
+ *
  * MediaProvider is used to correctly parse "media" XML document
  * (with MediaProvider.NAMESPACE as namespace).
  * 
  * It especially correctly parses <source /> lines
+ *
+ * @author Thomas Kuntz.
+ * @author Brian Baldino
  */
-public class MediaProvider implements PacketExtensionProvider
+public class MediaProvider extends ExtensionElementProvider
 {
     /**
      * The name of the "media" element. 
@@ -56,7 +59,7 @@ public class MediaProvider implements PacketExtensionProvider
      * @throws XmlPullParserException 
      * @throws IOException
      */
-    public PacketExtension parseExtension(XmlPullParser parser)
+    public ExtensionElement parse(XmlPullParser parser, int initialDepth)
         throws IOException, XmlPullParserException
     {
         

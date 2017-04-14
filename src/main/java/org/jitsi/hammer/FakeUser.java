@@ -1,5 +1,5 @@
 /*
- * Copyright @ 2015 Atlassian Pty Ltd
+ * Copyright @ 2017 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,43 +15,52 @@
  */
 package org.jitsi.hammer;
 
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.JingleProvider;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.NewAbstractExtensionElementProvider;
+import net.java.sip.communicator.impl.protocol.jabber.jinglesdp.HammerJingleUtils;
+import net.java.sip.communicator.service.protocol.media.DynamicPayloadTypeRegistry;
+import net.java.sip.communicator.service.protocol.media.DynamicRTPExtensionsRegistry;
+import org.jitsi.hammer.extension.MediaPacketExtension;
+import org.jitsi.service.neomedia.format.MediaFormat;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.bosh.*;
+import org.jivesoftware.smack.iqrequest.AbstractIqRequestHandler;
+import org.jivesoftware.smack.iqrequest.IQRequestHandler;
 import org.jivesoftware.smack.packet.*;
-import org.jivesoftware.smack.filter.*;
+import org.jivesoftware.smack.provider.ProviderManager;
 import org.jivesoftware.smackx.disco.*;
 import org.jivesoftware.smackx.muc.*;
 import org.jivesoftware.smackx.nick.packet.*;
 import org.ice4j.ice.*;
 import org.jitsi.service.neomedia.*;
-import org.jitsi.service.neomedia.format.*;
 import org.jitsi.util.Logger;
 import org.jitsi.hammer.stats.*;
 import org.jitsi.hammer.utils.*;
-import org.jitsi.hammer.extension.*;
 
-import net.java.sip.communicator.impl.protocol.jabber.jinglesdp.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;
-import net.java.sip.communicator.service.protocol.media.*;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
+import org.jxmpp.jid.parts.Resourcepart;
+import org.jxmpp.stringprep.XmppStringprepException;
 
-import java.beans.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.util.*;
 
 
 /**
  *
- * @author Thomas Kuntz
- *
  * <tt>FakeUser</tt> represent a Jingle,ICE and RTP/RTCP session with
  * jitsi-videobridge : it simulate a jitmeet user by setting up an
  * ICE stream and then sending fake audio/video data using RTP
- * to the videobridge.
+ * to the videobridge./
  *
+ * @author Thomas Kuntz
+ * @author Brian Baldino
  */
-public class FakeUser implements PacketListener
+public class FakeUser implements StanzaListener
 {
     /**
      * The <tt>Logger</tt> used by the <tt>FakeUser</tt> class and its
@@ -59,6 +68,12 @@ public class FakeUser implements PacketListener
      */
     private static final Logger logger
         = Logger.getLogger(FakeUser.class);
+
+    /**
+     * After this amount of time, we'll give up on waiting for ICE to
+     * connect
+     */
+    private static long ICE_TIMEOUT_MS = 30000;
 
     /**
      * The <tt>Hammer</tt> instance to which this <tt>FakeUser</tt> corresponds
@@ -99,7 +114,9 @@ public class FakeUser implements PacketListener
     /**
      * The object use to connect to and then communicate with the XMPP server.
      */
-    private XMPPConnection connection;
+    private AbstractXMPPConnection connection;
+
+    private MultiUserChatManager mucManager;
 
     /**
      * The object use to connect to and then send message to the MUC chatroom.
@@ -109,21 +126,21 @@ public class FakeUser implements PacketListener
     /**
      * The IQ message received by the XMPP server to initiate the Jingle session.
      *
-     * It contains a list of <tt>ContentPacketExtension</tt> representing
+     * It contains a list of <tt>NewContentPacketExtension</tt> representing
      * the media and their formats the videobridge is offering to send/receive
      * and their corresponding transport information (IP, port, etc...).
      */
-    private JingleIQ sessionInitiate;
+    private NewJingleIQ sessionInitiate;
 
     /**
      * The IQ message send by this <tt>FakeUser</tt> to the XMPP server
      * to accept the Jingle session.
      *
-     * It contains a list of <tt>ContentPacketExtension</tt> representing
+     * It contains a list of <tt>NewContentPacketExtension</tt> representing
      * the media and format, with their corresponding transport information,
      * that this <tt>FakeUser</tt> accept to receive and send.
      */
-    private JingleIQ sessionAccept;
+    private NewJingleIQ sessionAccept;
 
     /**
      * A Map of the different <tt>MediaStream</tt> this <tt>FakeUser</tt>
@@ -225,23 +242,109 @@ public class FakeUser implements PacketListener
         this.conferenceInfo = hammer.getConferenceInfo();
         fakeUserStats = statisticsEnabled ? new FakeUserStats(nickname) : null;
 
-        config = new BOSHConfiguration(
-                serverInfo.getUseHTTPS(),
-                serverInfo.getBOSHhostname(),
-                serverInfo.getPort(),
-                serverInfo.getBOSHpath(),
-                serverInfo.getXMPPDomain());
-        config.setDebuggerEnabled(smackDebug);
+        try
+        {
+            config = BOSHConfiguration.builder()
+                    .setUseHttps(serverInfo.getUseHTTPS())
+                    .setHost(serverInfo.getBOSHhostname())
+                    .setFile(serverInfo.getBOSHpath())
+                    .setPort(serverInfo.getPort())
+                    .setXmppDomain(serverInfo.getXMPPDomain())
+                    .setDebuggerEnabled(smackDebug)
+                    .performSaslAnonymousAuthentication()
+                    .build();
+        }
+        catch (XmppStringprepException e)
+        {
+            logger.fatal("Error creating bosh config: " + e.toString());
+            System.exit(1);
+        }
+
+        ProviderManager.addIQProvider(NewJingleIQ.ELEMENT_NAME, NewJingleIQ.NAMESPACE, new JingleProvider());
+        // Note(brian): i don't think the old hammer even parsed the conference iq, and i don't think it's needed,
+        //  but if i leave it unparsed smack seems to choke on it for some reason.  it has a bunch of escaped
+        //  values in the xml and seems to have duplicate </conference> tags, not sure where that's going wrong
+        ProviderManager.addIQProvider(
+                ConferenceInitiationIQ.ELEMENT_NAME,
+                ConferenceInitiationIQ.NAMESPACE,
+                new ConferenceInitiationIQProvider());
+        ProviderManager.addExtensionProvider(
+                NewContentPacketExtension.ELEMENT_NAME,
+                NewContentPacketExtension.NAMESPACE,
+                new NewAbstractExtensionElementProvider<>(NewContentPacketExtension.class));
+        ProviderManager.addExtensionProvider(
+                RtpDescriptionPacketExtension.ELEMENT_NAME,
+                RtpDescriptionPacketExtension.NAMESPACE,
+                new NewAbstractExtensionElementProvider<>(NewRtpDescriptionPacketExtension.class));
+        ProviderManager.addExtensionProvider(
+                NewPayloadTypePacketExtension.ELEMENT_NAME,
+                NewPayloadTypePacketExtension.NAMESPACE,
+                new NewAbstractExtensionElementProvider<>(NewPayloadTypePacketExtension.class));
+        ProviderManager.addExtensionProvider(
+                NewParameterPacketExtension.ELEMENT_NAME,
+                "urn:xmpp:jingle:apps:rtp:1",
+                new NewAbstractExtensionElementProvider<>(NewParameterPacketExtension.class));
+        ProviderManager.addExtensionProvider(
+                NewParameterPacketExtension.ELEMENT_NAME,
+                "urn:xmpp:jingle:apps:rtp:ssma:0",
+                new NewAbstractExtensionElementProvider<>(NewParameterPacketExtension.class));
+        ProviderManager.addExtensionProvider(
+                NewRtcpFbPacketExtension.ELEMENT_NAME,
+                NewRtcpFbPacketExtension.NAMESPACE,
+                new NewAbstractExtensionElementProvider<>(NewRtcpFbPacketExtension.class));
+        ProviderManager.addExtensionProvider(
+                NewRTPHdrExtPacketExtension.ELEMENT_NAME,
+                NewRTPHdrExtPacketExtension.NAMESPACE,
+                new NewAbstractExtensionElementProvider<>(NewRTPHdrExtPacketExtension.class));
+        ProviderManager.addExtensionProvider(
+                NewSourcePacketExtension.ELEMENT_NAME,
+                NewSourcePacketExtension.NAMESPACE,
+                new NewAbstractExtensionElementProvider<>(NewSourcePacketExtension.class));
+        ProviderManager.addExtensionProvider(
+                NewSSRCInfoPacketExtension.ELEMENT_NAME,
+                NewSSRCInfoPacketExtension.NAMESPACE,
+                new NewAbstractExtensionElementProvider<>(NewSSRCInfoPacketExtension.class));
+        ProviderManager.addExtensionProvider(
+                NewIceUdpTransportPacketExtension.ELEMENT_NAME,
+                NewIceUdpTransportPacketExtension.NAMESPACE,
+                new NewAbstractExtensionElementProvider<>(NewIceUdpTransportPacketExtension.class));
+        ProviderManager.addExtensionProvider(
+                NewDtlsFingerprintPacketExtension.ELEMENT_NAME,
+                NewDtlsFingerprintPacketExtension.NAMESPACE,
+                new NewAbstractExtensionElementProvider<>(NewDtlsFingerprintPacketExtension.class));
+        ProviderManager.addExtensionProvider(
+                NewCandidatePacketExtension.ELEMENT_NAME,
+                "urn:xmpp:jingle:transports:ice-udp:1",
+                new NewAbstractExtensionElementProvider<>(NewCandidatePacketExtension.class));
+        ProviderManager.addExtensionProvider(
+                NewCandidatePacketExtension.ELEMENT_NAME,
+                "urn:xmpp:jingle:transports:raw-udp:1",
+                new NewAbstractExtensionElementProvider<>(NewCandidatePacketExtension.class));
+        ProviderManager.addExtensionProvider(
+                NewSourceGroupPacketExtension.ELEMENT_NAME,
+                NewSourceGroupPacketExtension.NAMESPACE,
+                new NewAbstractExtensionElementProvider<>(NewSourceGroupPacketExtension.class));
 
         connection = new XMPPBOSHConnection(config);
-        connection.addPacketListener(this,new PacketFilter()
+
+        connection.registerIQRequestHandler(new AbstractIqRequestHandler(NewJingleIQ.ELEMENT_NAME, NewJingleIQ.NAMESPACE, IQ.Type.set, IQRequestHandler.Mode.sync)
         {
-            public boolean accept(Packet packet)
+            @Override
+            public IQ handleIQRequest(IQ iq)
             {
-                return (packet instanceof JingleIQ);
+                NewJingleIQ jiq = (NewJingleIQ)iq;
+                System.out.println("iq request handler got jingle iq: " + jiq.toXML());
+                IQ result = IQ.createResultIQ(iq);
+                switch (jiq.getAction())
+                {
+                    case SESSION_INITIATE:
+                        logger.info("Received session-initiate");
+                        sessionInitiate = jiq;
+                        acceptJingleSession();
+                }
+                return result;
             }
         });
-
         /*
          * Creation in advance of the MediaStream that will be used later
          * so the HammerStats can register their MediaStreamStats now.
@@ -267,7 +370,7 @@ public class FakeUser implements PacketListener
         discoManager.addFeature("urn:xmpp:jingle:apps:rtp:audio");
         discoManager.addFeature("urn:xmpp:jingle:apps:rtp:video");
 
-        /** added to address bosh timeout issues causing early terminatin of the hammer **/
+        // added to address bosh timeout issues causing early termination of the hammer
         org.jivesoftware.smackx.ping.PingManager.getInstanceFor(connection).setPingInterval(15);
     }
 
@@ -283,8 +386,16 @@ public class FakeUser implements PacketListener
             XMPPException
     {
         logger.info(this.nickname + " : Login anonymously to the XMPP server.");
-        connection.connect();
-        connection.loginAnonymously();
+        try
+        {
+            connection.connect();
+            connection.login();
+        }
+        catch (InterruptedException e)
+        {
+            logger.fatal("Interrupted while making xmpp connection: " + e.toString());
+            System.exit(1);
+        }
         connectMUC();
     }
 
@@ -299,17 +410,18 @@ public class FakeUser implements PacketListener
             IOException,
             XMPPException
     {
-        logger.info(this.nickname + " : Login with username "
-                + username + " to the XMPP server.");
-        connection.connect();
-        connection.login(username, password, "Jitsi-Hammer");
-
-      //set the highest priority possible
-        Presence presence = new Presence(Presence.Type.available);
-        presence.setPriority(128);
-        presence.setStatus("Fake User");
-        connection.sendPacket(presence);
-        connectMUC();
+        //TODO(brian)
+//        logger.info(this.nickname + " : Login with username "
+//                + username + " to the XMPP server.");
+//        connection.connect();
+//        connection.login(username, password, "Jitsi-Hammer");
+//
+//      //set the highest priority possible
+//        Presence presence = new Presence(Presence.Type.available);
+//        presence.setPriority(128);
+//        presence.setStatus("Fake User");
+//        connection.sendPacket(presence);
+//        connectMUC();
     }
 
     /**
@@ -326,7 +438,7 @@ public class FakeUser implements PacketListener
         ConferenceInitiationIQ conferenceInitiationIQ 
                 = new ConferenceInitiationIQ();
         conferenceInitiationIQ.setTo(this.getFocusJID());
-        conferenceInitiationIQ.setType(IQ.Type.SET);
+        conferenceInitiationIQ.setType(IQ.Type.set);
         conferenceInitiationIQ.setServerInfo(serverInfo);
         conferenceInitiationIQ.addConferenceProperty(
                 new ConferencePropertyPacketExtension(
@@ -356,12 +468,12 @@ public class FakeUser implements PacketListener
                         this.conferenceInfo.getSimulcastMode()));
         try 
         {
-            this.connection.sendPacket(conferenceInitiationIQ);
+            this.connection.sendStanza(conferenceInitiationIQ);
             this.hammer.setFocusInvited(true);
             logger.info("Conference initiation IQ is sent to the focus user");
         }
         catch (SmackException.NotConnectedException e) {
-            /**
+            /*
              * Give up here, make an attempt to reconnect,
              * and let the next <tt>FakeUser</tt> thread awake with
              * focus user invitation
@@ -369,7 +481,11 @@ public class FakeUser implements PacketListener
             logger.warn("Cannot send the conference initiation IQ: not" +
                     " connected, will retry with another FakeUser");
             e.printStackTrace();
-            this.connection.connect();
+            //this.connection.connect();
+        }
+        catch (InterruptedException e)
+        {
+            logger.warn("Interrupted while sending conference initiation iq: " + e.toString());
         }
         
         
@@ -383,32 +499,32 @@ public class FakeUser implements PacketListener
      */
     private void connectMUC() throws SmackException, XMPPException, IOException
     {
+        mucManager = MultiUserChatManager.getInstanceFor(connection);
         String roomURL = serverInfo.getRoomURL();
         logger.info(this.nickname + " : Trying to connect to MUC " + roomURL);
-        muc = new MultiUserChat(connection, roomURL);
+        muc = mucManager.getMultiUserChat(JidCreate.entityBareFrom(roomURL));
         while(true)
         {
             try
             {
-                muc.join(nickname);
+                muc.join(Resourcepart.from(nickname));
 
-                muc.sendMessage("Hello World!");
+                muc.sendMessage("Goodbye cruel World!");
 
                 /*
                  * Send a Presence packet containing a Nick extension so that the
                  * nickname is correctly displayed in jitmeet
                  */
-                Packet presencePacket = new Presence(Presence.Type.available);
+                Stanza presencePacket = new Presence(Presence.Type.available);
                 presencePacket.setTo(roomURL + "/" + nickname);
                 presencePacket.addExtension(new Nick(nickname));
-                connection.sendPacket(presencePacket);
+                connection.sendStanza(presencePacket);
 
-                /**
+                /*
                  * Make an attempt to send an IQ to Focus user 
                  * in order to enable Jingle for the conference
                  */
-            
-                synchronized (this.hammer.getFocusInvitationSyncRoot()) 
+                synchronized (this.hammer.getFocusInvitationSyncRoot())
                 {
                     
                     if (!this.hammer.getFocusInvited()) {
@@ -440,13 +556,17 @@ public class FakeUser implements PacketListener
             }
             catch (SmackException.NotConnectedException e)
             {
-                /**
+                /*
                  * Reconnect on lost connection
                  */
                 logger.warn("The connection needs to be re-established");
-                connection.connect();
-                continue;
+                //connection.connect();
+                //continue;
 
+            }
+            catch (InterruptedException e)
+            {
+                logger.warn("Interrupted while trying to join muc " + e.toString());
             }
 
             break;
@@ -473,15 +593,7 @@ public class FakeUser implements PacketListener
             {
                 try
                 {
-                    connection.sendPacket(
-                            Smack4AwareJinglePacketFactory
-                                    .createSessionTerminate(
-                                        sessionAccept.getFrom(),
-                                        sessionAccept.getTo(),
-                                        sessionAccept.getSID(),
-                                        Reason.GONE,
-                                        "Bye Bye")
-                    );
+                    //TODO(brian): send session-terminate message
                     if(muc != null) muc.leave();
                     connection.disconnect();
                 }
@@ -490,6 +602,10 @@ public class FakeUser implements PacketListener
                             "stop the conference");
                     e.printStackTrace();
                     System.exit(1);
+                }
+                catch (InterruptedException e)
+                {
+                    logger.warn("Interrupted while sending session terminate packet " + e.toString());
                 }
 
             }
@@ -506,122 +622,88 @@ public class FakeUser implements PacketListener
      */
     private void acceptJingleSession()
     {
-        IceMediaStreamGenerator iceMediaStreamGenerator = null;
-        List<MediaFormat> listFormat = null;
-        List<RTPExtension> remoteRtpExtension = null;
-        List<RTPExtension> supportedRtpExtension = null;
-        List<RTPExtension> listRtpExtension = null;
-        ContentPacketExtension content = null;
-        RtpDescriptionPacketExtension description = null;
-        Map<String,ContentPacketExtension> contentMap =
-            new HashMap<String,ContentPacketExtension>();
-
-
-        /**
-         * A Map mapping a media type (audio, video, data), with a <tt>MediaFormat</tt>
+        Map<String, NewContentPacketExtension> contentMap = new HashMap<>();
+        /*
+         * A Map mapping of media type (audio, video, data), to a <tt>MediaFormat</tt>
          * representing the selected format for the stream handling this media type.
-         *
-         * The MediaFormat in this Map has been chosen in <tt>possibleFormatMap</tt>
          */
-        Map<String,MediaFormat> selectedFormat =
-                new HashMap<String,MediaFormat>();
+        Map<String,MediaFormat> selectedFormats =
+                new HashMap<String, MediaFormat>();
 
-        /**
+        /*
          * A Map mapping a media type (audio, video, data), with a list of
          * RTPExtension representing the selected RTP extensions for the format
          * (and its corresponding <tt>MediaDevice</tt>)
          */
-        Map<String,List<RTPExtension>> selectedRtpExtension =
+        Map<String,List<RTPExtension>> selectedRtpExtensions =
                 new HashMap<String,List<RTPExtension>>();
 
-        /**
+        /*
          * The registry containing the dynamic payload types learned in the
          * session-initiate (to use back in the session-accept)
          */
         DynamicPayloadTypeRegistry ptRegistry =
                 new DynamicPayloadTypeRegistry();
 
-        /**
+        /*
          * The registry containing the dynamic RTP extensions learned in the
          * session-initiate
          */
         DynamicRTPExtensionsRegistry rtpExtRegistry =
                 new DynamicRTPExtensionsRegistry();
 
-        /**
-         * A Map mapping a media type (audio, video, data), with a list of format
-         * that can be handle by libjitsi
-         */
-        Map<String,List<MediaFormat>> possibleFormatMap =
-                new HashMap<String,List<MediaFormat>>();
-
-        for(ContentPacketExtension cpe : sessionInitiate.getContentList())
+        for (NewContentPacketExtension cpe : sessionInitiate.getContentList())
         {
-            //data isn't correctly handle by libjitsi for now, so we handle it
-            //differently than the other MediaType
-            if(cpe.getName().equalsIgnoreCase("data"))
+            NewContentPacketExtension localContent;
+            //TODO(brian): do we still need this special treatment for data?
+            if (cpe.getName().equalsIgnoreCase("data"))
             {
-                content = HammerUtils.createDescriptionForDataContent(
-                    CreatorEnum.responder,
-                    SendersEnum.both);
+                 localContent = HammerUtils.createDescriptionForDataContent(
+                         NewContentPacketExtension.CreatorEnum.responder,
+                         NewContentPacketExtension.SendersEnum.both);
             }
             else
             {
-                description = cpe.getFirstChildOfType(
-                    RtpDescriptionPacketExtension.class);
-
-                if(description == null)
+                NewRtpDescriptionPacketExtension description =
+                        cpe.getFirstChildOfType(NewRtpDescriptionPacketExtension.class);
+                if (description == null)
+                {
                     continue;
+                }
+                List<MediaFormat> mediaFormats = HammerJingleUtils.extractFormats(description, ptRegistry);
+                List<RTPExtension> remoteRtpExtensions =
+                        HammerJingleUtils.extractRTPExtensions(description, rtpExtRegistry);
+                List<RTPExtension> supportedRtpExtension = getExtensionsForType(MediaType.parseString(cpe.getName()));
+                List<RTPExtension> rtpExtensionIntersection =
+                        intersectRTPExtensions(remoteRtpExtensions, supportedRtpExtension);
 
-                listFormat = HammerJingleUtils.extractFormats(
-                        description,
-                        ptRegistry);
-                remoteRtpExtension = HammerJingleUtils.extractRTPExtensions(
-                        description,
-                        rtpExtRegistry);
-                supportedRtpExtension = getExtensionsForType(
-                    MediaType.parseString(cpe.getName()));
-                listRtpExtension = intersectRTPExtensions(
-                    remoteRtpExtension,
-                    supportedRtpExtension);
+                selectedRtpExtensions.put(cpe.getName(), rtpExtensionIntersection);
 
+                selectedFormats.put(cpe.getName(), HammerUtils.selectFormat(cpe.getName(), mediaFormats));
 
-                possibleFormatMap.put(
-                    cpe.getName(),
-                    listFormat);
-
-                selectedFormat.put(
-                    cpe.getName(),
-                    HammerUtils.selectFormat(cpe.getName(),listFormat));
-
-                selectedRtpExtension.put(
-                    cpe.getName(),
-                    listRtpExtension);
-
-
-                content = HammerJingleUtils.createDescription(
-                        CreatorEnum.responder,
+                localContent = HammerJingleUtils.createDescription(
+                        NewContentPacketExtension.CreatorEnum.responder,
                         cpe.getName(),
-                        SendersEnum.both,
-                        listFormat,
-                        listRtpExtension,
+                        NewContentPacketExtension.SendersEnum.both,
+                        mediaFormats,
+                        rtpExtensionIntersection,
                         ptRegistry,
                         rtpExtRegistry);
             }
 
-            contentMap.put(cpe.getName(),content);
+            contentMap.put(cpe.getName(), localContent);
         }
         /*
          * We remove the content for the data (because data is not handle
          * for now by libjitsi)
          * FIXME
+         * TODO(brian): do we still need to do this?
          */
         contentMap.remove("data");
-        
-        
 
-        iceMediaStreamGenerator = IceMediaStreamGenerator.getInstance();
-        
+
+        IceMediaStreamGenerator iceMediaStreamGenerator = IceMediaStreamGenerator.getInstance();
+
         try
         {
             iceMediaStreamGenerator.generateIceMediaStream(
@@ -635,9 +717,11 @@ public class FakeUser implements PacketListener
             logger.fatal(this.nickname + " : Error during the generation"
                 + " of the IceMediaStream",e);
         }
-        
-        //Add the remote candidate to my agent, and add my local candidate of
-        //my stream to the content list of the future session-accept
+
+        /*
+         * Add the remote candidate to the agent, and add the local candidate of
+         *  the stream to the content list of the future session-accept
+         */
         HammerUtils.addRemoteCandidateToAgent(
             agent,
             sessionInitiate.getContentList());
@@ -645,26 +729,23 @@ public class FakeUser implements PacketListener
             agent,
             contentMap.values());
 
-
-
-
         /*
-         * configure the MediaStream created in the constructor with the
-         * selected MediaFormat, and with the selected MediaDevice (through the
-         * MediaDeviceChooser.
+         * Configure the MediaStreams with the selected MediaFormats and with
+         *  the selected MediaDevice (via the MediaDeviceChooser)
          */
         HammerUtils.configureMediaStream(
             mediaStreamMap,
-            selectedFormat,
-            selectedRtpExtension,
+            selectedFormats,
+            selectedRtpExtensions,
             mediaDeviceChooser,
             ptRegistry,
             rtpExtRegistry);
 
-        //Now that the MediaStream are created, I can add their SSRC to the
-        //content list of the future session-accept
+        /*
+         * Now that the MediaStreams are configured, add their SSRCs to the
+         *   content list of the future session-accept
+         */
         HammerUtils.addSSRCToContent(contentMap, mediaStreamMap);
-
 
         /*
          * Send the SSRC of the different media in a "media" tag
@@ -676,13 +757,22 @@ public class FakeUser implements PacketListener
          * It seems like Jitsi Meet can work arround this error,
          * but better safe than sorry.
          */
-        Packet presencePacketWithSSRC = new Presence(Presence.Type.available);
-        String recipient =
-            serverInfo.getRoomName()
-            +"@"
-            +serverInfo.getMUCDomain()
-            + "/"
-            + nickname;
+        Stanza presencePacketWithSSRC = new Presence(Presence.Type.available);
+        Jid recipient = null;
+        try
+        {
+            recipient = JidCreate.entityFullFrom(serverInfo.getRoomName()
+                    +"@"
+                    +serverInfo.getMUCDomain()
+                    + "/"
+                    + nickname);
+
+        }
+        catch (XmppStringprepException e)
+        {
+            logger.error("Error creating to field for presence packet: " + e.toString());
+        }
+
         presencePacketWithSSRC.setTo(recipient);
         presencePacketWithSSRC.addExtension(new Nick(this.nickname));
         MediaPacketExtension mediaPacket = new MediaPacketExtension();
@@ -698,25 +788,33 @@ public class FakeUser implements PacketListener
 
         try
         {
-            connection.sendPacket(presencePacketWithSSRC);
+            System.out.println("Sending presence packet with ssrc: " + presencePacketWithSSRC.toXML());
+            connection.sendStanza(presencePacketWithSSRC);
+            // Create the session-accept
+            sessionAccept = new NewJingleIQ();
+            sessionAccept.setTo(sessionInitiate.getFrom());
+            sessionAccept.setFrom(sessionInitiate.getTo());
+            sessionAccept.setResponder(sessionInitiate.getTo().toString());
+            sessionAccept.setType(IQ.Type.set);
+            sessionAccept.setSID(sessionInitiate.getSID());
+            sessionAccept.setAction(NewJingleAction.SESSION_ACCEPT);
 
-            //Creation of a session-accept message
-            sessionAccept = Smack4AwareJinglePacketFactory.createSessionAccept(
-                sessionInitiate.getTo(),
-                sessionInitiate.getFrom(),
-                sessionInitiate.getSID(),
-                contentMap.values());
-            sessionAccept.setInitiator(sessionInitiate.getFrom());
+            for (NewContentPacketExtension cpe : contentMap.values())
+            {
+                sessionAccept.addContent(cpe);
+            }
+            sessionAccept.setInitiator(sessionInitiate.getFrom().toString());
 
-            //Set the remote fingerprint on my streams and add the fingerprints
-            //of my streams to the content list of the session-accept
+            // Set the remote fingerprint on my streams and add the fingerprints
+            //  of my streams to the content list of the session-accept
             HammerUtils.setDtlsEncryptionOnTransport(
                 mediaStreamMap,
                 sessionAccept.getContentList(),
                 sessionInitiate.getContentList());
 
-            //Send the session-accept IQ
-            connection.sendPacket(sessionAccept);
+            System.out.println("Sending session accept: " + sessionAccept.toXML());
+            // Send the session-accept IQ
+            connection.sendStanza(sessionAccept);
             logger.info(
                     this.nickname + " : Jingle accept-session message sent");
         }
@@ -725,7 +823,11 @@ public class FakeUser implements PacketListener
             logger.fatal("Cannot accept Jingle session: not connected");
             System.exit(1);
         }
-
+        catch (InterruptedException e)
+        {
+            logger.fatal("Interrupted while sending session accept: " + e.toString());
+            System.exit(1);
+        }
 
         // A listener to wake us up when the Agent enters a final state.
         final Object syncRoot = new Object();
@@ -769,8 +871,13 @@ public class FakeUser implements PacketListener
                         || IceProcessingState.FAILED.equals(iceState))
                     break;
 
-                if (System.currentTimeMillis() - startWait > 10000)
-                    break; // Don't run for more than 10 seconds
+                if (System.currentTimeMillis() - startWait > ICE_TIMEOUT_MS)
+		{
+		    logger.error("ICE for user " + nickname + " is still in " +
+			iceState + " state after " + ICE_TIMEOUT_MS + " ms, " +
+                        "giving up");
+                    break;
+		}
 
                 try
                 {
@@ -827,9 +934,10 @@ public class FakeUser implements PacketListener
      * Callback function used when a JingleIQ is received by the XMPP connector.
      * @param packet the packet received by the <tt>FakeUser</tt>
      */
-    public void processPacket(Packet packet)
+    public void processStanza(Stanza packet)
     {
-        JingleIQ jiq = (JingleIQ)packet;
+        NewJingleIQ jiq = (NewJingleIQ)packet;
+        System.out.println("Got jingle iq: " + jiq.toXML());
         ackJingleIQ(jiq);
         switch(jiq.getAction())
         {
@@ -865,16 +973,20 @@ public class FakeUser implements PacketListener
      * packet <tt>packetToAck</tt>.
      * @param packetToAck the <tt>JingleIQ</tt> that need to be acknowledge.
      */
-    private void ackJingleIQ(JingleIQ packetToAck)
+    private void ackJingleIQ(NewJingleIQ packetToAck)
     {
         IQ ackPacket = IQ.createResultIQ(packetToAck);
         try
         {
-            connection.sendPacket(ackPacket);
+            connection.sendStanza(ackPacket);
         }
         catch (SmackException.NotConnectedException e) {
             logger.fatal("Cannot ACK Jingle session: not connected");
             System.exit(1);
+        }
+        catch (InterruptedException e)
+        {
+            logger.fatal("Interrupted while sending ack packet: " + e.toString());
         }
     }
 
@@ -987,7 +1099,7 @@ public class FakeUser implements PacketListener
      * @return the <tt>FakeUserStats</tt> object used to get statistics about
      * this <tt>FakeUser</tt>.
      */
-    public FakeUserStats getFakeUserStats()
+    FakeUserStats getFakeUserStats()
     {
         return this.fakeUserStats;
     }

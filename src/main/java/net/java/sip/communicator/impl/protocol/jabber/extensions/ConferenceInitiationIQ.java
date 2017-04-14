@@ -26,6 +26,7 @@ import java.util.*;
  * managing the conference
  *
  * @author Maksym Kulish
+ * @author Brian Baldino
  */
 public class ConferenceInitiationIQ extends IQ 
 {
@@ -49,7 +50,6 @@ public class ConferenceInitiationIQ extends IQ
      * The name of the attribute that contains machine UID
      */
     public static final String MACHINE_UID_ATTR_NAME = "machine-uid";
-    
 
     /**
      * The <tt>HostInfo</tt> object associated with a particular 
@@ -71,6 +71,10 @@ public class ConferenceInitiationIQ extends IQ
     private List<ConferencePropertyPacketExtension> conferenceProperties 
             = new ArrayList<ConferencePropertyPacketExtension>();
 
+    public ConferenceInitiationIQ()
+    {
+        super(ELEMENT_NAME, NAMESPACE);
+    }
 
     /**
      * Add the <tt>ConferencePropertyPacketExtension</tt> to the list 
@@ -84,41 +88,24 @@ public class ConferenceInitiationIQ extends IQ
     {
         this.conferenceProperties.add(conferenceProperty);
     }
-    
-    /**
-     * Get the string builder for the child element XML
-     * 
-     * @return the child element section of the IQ XML
-     */
-    public StringBuilder getChildElementXML() 
+
+    @Override
+    public IQ.IQChildElementXmlStringBuilder getIQChildElementBuilder(IQ.IQChildElementXmlStringBuilder xml)
     {
-
-        StringBuilder stringBuilder = new StringBuilder("<" + ELEMENT_NAME);
-
-        stringBuilder.append(" xmlns='" + NAMESPACE + "'");
-        stringBuilder.append(" " + ROOM_ATTR_NAME + 
-                "='" + serverInfo.getRoomURL() + "'");
-        stringBuilder.append(" " + MACHINE_UID_ATTR_NAME + 
-                "='" + machineUID + "'");
-        
-        if (this.conferenceProperties.size() == 0)
+        if (serverInfo != null)
         {
-            stringBuilder.append(" />");
+            xml.attribute(ROOM_ATTR_NAME, serverInfo.getRoomURL());
         }
-        else
+        xml.attribute(MACHINE_UID_ATTR_NAME, machineUID.toString());
+
+        xml.rightAngleBracket();
         {
-            stringBuilder.append(" >");
-            for (ConferencePropertyPacketExtension cppe: 
-                    conferenceProperties) {
-                
-                stringBuilder.append(cppe.toXML());
-                
+            for (ConferencePropertyPacketExtension cppe : conferenceProperties)
+            {
+                xml.element(cppe);
             }
-            stringBuilder.append("</" + ELEMENT_NAME + ">");
         }
-        
-        return stringBuilder;
-        
+        return xml;
     }
     
     /**
