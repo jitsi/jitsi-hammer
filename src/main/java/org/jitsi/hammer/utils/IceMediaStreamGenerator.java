@@ -35,6 +35,7 @@ import java.io.*;
  */
 public class IceMediaStreamGenerator
 {
+    public static String STREAM_NAME = "muxed_stream";
     /**
      * The static instance of the IceMediaStreamGenerator.
      */
@@ -45,18 +46,18 @@ public class IceMediaStreamGenerator
      * The minimum value that will be used as port when generating new
      * <tt>IceMediaStream</tt>.
      */
-    private int MIN_COMPONENT_PORT = 6000;
+    private static int MIN_COMPONENT_PORT = 6000;
     /**
      * The maximum value that will be used as port when generating new
      * <tt>IceMediaStream</tt>.
      */
-    private int MAX_COMPONENT_PORT = 9000;
+    private static int MAX_COMPONENT_PORT = 9000;
 
     /**
      * The current value that will be used as port when generating new
      * <tt>IceMediaStream</tt>.
      */
-    private int CURRENT_COMPONENT_PORT = MIN_COMPONENT_PORT;
+    private int currentComponentPort = MIN_COMPONENT_PORT;
 
 
     /**
@@ -76,7 +77,7 @@ public class IceMediaStreamGenerator
     public IceMediaStreamGenerator(int min_port, int max_port)
     {
         MIN_COMPONENT_PORT = min_port;
-        CURRENT_COMPONENT_PORT = min_port;
+        currentComponentPort = min_port;
         MAX_COMPONENT_PORT = max_port;
     }
 
@@ -121,56 +122,38 @@ public class IceMediaStreamGenerator
 
         IceMediaStream stream = null;
 
-        if( stunAddresses != null )
+        if (stunAddresses != null)
         {
-            for( TransportAddress stunAddress : stunAddresses )
+            for (TransportAddress stunAddress : stunAddresses)
             {
                 agent.addCandidateHarvester(
-                        new StunCandidateHarvester(stunAddress) );
+                        new StunCandidateHarvester(stunAddress));
             }
         }
 
-
-        if( turnAddresses != null )
+        if (turnAddresses != null)
         {
-            for( TransportAddress turnAddress : turnAddresses )
+            for (TransportAddress turnAddress : turnAddresses)
             {
                 agent.addCandidateHarvester(
-                        new TurnCandidateHarvester(turnAddress) );
+                        new TurnCandidateHarvester(turnAddress));
             }
         }
-
-
-        synchronized(this)
+        // Instead of creating one component and stream per mline, create one
+        //  for everything
+        synchronized (this)
         {
-            for(String name : mediaNameSet)
+            stream = agent.createMediaStream(IceMediaStreamGenerator.STREAM_NAME);
+            if( (currentComponentPort + 1) >= MAX_COMPONENT_PORT )
             {
-                //FIXME if the stream is a data one, we don't create an IceMediaStream
-                //(normally the data content should have been remove from the Set
-                //But better safe than sorry
-                if(name.equalsIgnoreCase("data")) continue;
-
-                stream = agent.createMediaStream(name);
-
-                if( (CURRENT_COMPONENT_PORT + 1) >= MAX_COMPONENT_PORT )
-                    CURRENT_COMPONENT_PORT = MIN_COMPONENT_PORT;
-
-                agent.createComponent(
-                        stream,
-                        Transport.UDP,
-                        CURRENT_COMPONENT_PORT,
-                        CURRENT_COMPONENT_PORT,
-                        CURRENT_COMPONENT_PORT + 50);
-
-                agent.createComponent(
-                        stream,
-                        Transport.UDP,
-                        CURRENT_COMPONENT_PORT+1,
-                        CURRENT_COMPONENT_PORT+1,
-                        CURRENT_COMPONENT_PORT + 50);
-
-                CURRENT_COMPONENT_PORT+=50;
+                currentComponentPort = MIN_COMPONENT_PORT;
             }
+            agent.createComponent(
+                    stream,
+                    Transport.UDP,
+                    currentComponentPort,
+                    currentComponentPort,
+                    currentComponentPort + 50);
         }
     }
 
