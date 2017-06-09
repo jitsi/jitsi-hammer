@@ -11,10 +11,11 @@ while getopts ":u:" o; do
   esac
 done
 
+
 OLDIFS="$IFS"
 IFS='/' read -r -a array <<< "$BOSH_URI"
 IFS="$OLDIFS"
-if [ ${array[0]} = "https:" ]
+if [ "${array[0]}" = "https:" ]
 then
   BOSH_HOST=${array[2]}
   KEYSTORE_FILE=$BOSH_HOST.ks
