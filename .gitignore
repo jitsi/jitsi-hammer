@@ -5,4 +5,5 @@
 /jitsi-hammer.jar
 .idea/
 *.iml
+*.ks
 target/
