@@ -50,9 +50,13 @@ if $REBUILD ; then
   mvn clean compile
 fi
 
-exec mvn exec:java -Dexec.args="$*" \
-  -Djavax.net.ssl.keyStore=$KEYSTORE_FILE -Djavax.net.ssl.keyStorePassword=$KEYSTORE_PWD \
-  -Djavax.net.ssl.trustStore=$KEYSTORE_FILE -Djavax.net.ssl.trustStorePassword=$KEYSTORE_PWD \
-  -Djava.util.logging.config.file=$SCRIPT_DIR/lib/logging.properties \
-  -Dnet.java.sip.communicator.SC_HOME_DIR_LOCATION=$SC_HOME_DIR_LOCATION \
-  -Dnet.java.sip.communicator.SC_HOME_DIR_NAME=$SC_HOME_DIR_NAME 2>&1 | tee $LOG_HOME/output.log
+HAMMER_ARGS="-cp %classpath"
+HAMMER_ARGS+=" -Djavax.net.ssl.keyStore=$KEYSTORE_FILE -Djavax.net.ssl.keyStorePassword=$KEYSTORE_PWD"
+HAMMER_ARGS+=" -Djavax.net.ssl.trustStore=$KEYSTORE_FILE -Djavax.net.ssl.trustStorePassword=$KEYSTORE_PWD"
+HAMMER_ARGS+=" -Djava.util.logging.config.file=$SCRIPT_DIR/lib/logging.properties"
+HAMMER_ARGS+=" -Dnet.java.sip.communicator.SC_HOME_DIR_LOCATION=$SC_HOME_DIR_LOCATION"
+HAMMER_ARGS+=" -Dnet.java.sip.communicator.SC_HOME_DIR_NAME=$SC_HOME_DIR_NAME"
+HAMMER_ARGS+=" org.jitsi.hammer.Main"
+HAMMER_ARGS+=" $*"
+
+exec mvn exec:exec -Dexec.executable=java -Dexec.args="$HAMMER_ARGS" 2>&1 | tee $LOG_HOME/output.log
