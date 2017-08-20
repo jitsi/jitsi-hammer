@@ -15,6 +15,7 @@
  */
 package org.jitsi.hammer;
 
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jitsimeet.MediaPresenceExtension;
 import org.jitsi.hammer.stats.*;
 import org.jitsi.hammer.utils.Credential;
 import org.jitsi.hammer.utils.HostInfo;
@@ -204,7 +205,7 @@ public class Hammer
      */
     public static void init()
     {
-        /**
+        /*
          * This code is a slightly modified copy of the one found in
          * startOSGi of the class ComponentImpl of jitsi-videobridge.
          *
@@ -281,12 +282,9 @@ public class Hammer
         }
 
         logger.info("Add extension provider for :");
-        logger.info("Element name : " + MediaProvider.ELEMENT_NAME
-            + ", Namespace : " + MediaProvider.NAMESPACE);
-        ProviderManager.addExtensionProvider(
-            MediaProvider.ELEMENT_NAME,
-            MediaProvider.NAMESPACE,
-            new MediaProvider());
+        logger.info("Element name : " + MediaPresenceExtension.ELEMENT_NAME
+            + ", Namespace : " + MediaPresenceExtension.NAMESPACE);
+        MediaPresenceExtension.registerExtensions();
         logger.info("Element name : " + SsrcProvider.ELEMENT_NAME
             + ", Namespace : " + SsrcProvider.NAMESPACE);
         ProviderManager.addExtensionProvider(

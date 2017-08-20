@@ -16,13 +16,9 @@
 
 package org.jitsi.hammer;
 
-import java.awt.*;
 import java.io.*;
 import java.net.*;
 import java.util.List;
-
-import net.java.sip.communicator.impl.protocol.jabber.*;
-import net.java.sip.communicator.service.protocol.jabber.*;
 
 import org.jitsi.hammer.utils.*;
 import org.kohsuke.args4j.*;
@@ -234,10 +230,6 @@ public class Main
             System.exit(1);
         }
 
-        // Set Smack interoperation to support Smackv4
-        AbstractSmackInteroperabilityLayer
-                .setImplementationClass(SmackV4InteroperabilityLayer.class);
-        
         //We call initialize the Hammer (registering OSGi bundle for example)
         Hammer.init();
         try

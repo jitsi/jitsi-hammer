@@ -15,17 +15,16 @@
  */
 package net.java.sip.communicator.impl.protocol.jabber.extensions;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.NewAbstractExtensionElement;
-
 /**
  * An <tt>NewAbstractExtensionElement</tt> inheritor that represents
  * a <tt>property</tt> element of the conference
  *
  * @author Maksym Kulish
  * @author Brian Baldino
+ * FIXME: this class is duplicated from Jicofo
  */
 public class ConferencePropertyPacketExtension
-        extends NewAbstractExtensionElement
+        extends AbstractPacketExtension
 {
     /**
      * The name of the "parameter" element.

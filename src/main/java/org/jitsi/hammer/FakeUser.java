@@ -15,13 +15,11 @@
  */
 package org.jitsi.hammer;
 
+import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.JingleProvider;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.NewAbstractExtensionElementProvider;
-import net.java.sip.communicator.impl.protocol.jabber.jinglesdp.HammerJingleUtils;
-import net.java.sip.communicator.service.protocol.media.DynamicPayloadTypeRegistry;
-import net.java.sip.communicator.service.protocol.media.DynamicRTPExtensionsRegistry;
-import org.jitsi.hammer.extension.MediaPacketExtension;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jitsimeet.*;
+import net.java.sip.communicator.impl.protocol.jabber.jinglesdp.*;
+import net.java.sip.communicator.service.protocol.media.*;
 import org.jitsi.service.neomedia.format.MediaFormat;
 import org.jitsi.impl.neomedia.transform.dtls.DtlsControlImpl;
 import org.jivesoftware.smack.*;
@@ -131,7 +129,7 @@ public class FakeUser implements StanzaListener
      * the media and their formats the videobridge is offering to send/receive
      * and their corresponding transport information (IP, port, etc...).
      */
-    private NewJingleIQ sessionInitiate;
+    private JingleIQ sessionInitiate;
 
     /**
      * The IQ message send by this <tt>FakeUser</tt> to the XMPP server
@@ -141,7 +139,7 @@ public class FakeUser implements StanzaListener
      * the media and format, with their corresponding transport information,
      * that this <tt>FakeUser</tt> accept to receive and send.
      */
-    private NewJingleIQ sessionAccept;
+    private JingleIQ sessionAccept;
 
     /**
      * A Map of the different <tt>MediaStream</tt> this <tt>FakeUser</tt>
@@ -168,13 +166,21 @@ public class FakeUser implements StanzaListener
      *
      * @return JID for the focus component
      */
-    public String getFocusJID()
+    public Jid getFocusJID()
     {
-        String focusJID;
+        Jid focusJID;
         if (this.serverInfo.getFocusJID() != null) {
             focusJID = this.serverInfo.getFocusJID();
         } else {
-            focusJID = "focus." + this.serverInfo.getXMPPDomain();
+            try
+            {
+                focusJID = JidCreate.domainBareFrom(
+                    "focus." + this.serverInfo.getXMPPDomain());
+            }
+            catch (XmppStringprepException e)
+            {
+                throw new RuntimeException(e);
+            }
         }
         return focusJID;
     }
@@ -263,7 +269,7 @@ public class FakeUser implements StanzaListener
             System.exit(1);
         }
 
-        ProviderManager.addIQProvider(NewJingleIQ.ELEMENT_NAME, NewJingleIQ.NAMESPACE, new JingleProvider());
+        ProviderManager.addIQProvider(JingleIQ.ELEMENT_NAME, JingleIQ.NAMESPACE, new JingleIQProvider());
         // Note(brian): i don't think the old hammer even parsed the conference iq, and i don't think it's needed,
         //  but if i leave it unparsed smack seems to choke on it for some reason.  it has a bunch of escaped
         //  values in the xml and seems to have duplicate </conference> tags, not sure where that's going wrong
@@ -272,70 +278,70 @@ public class FakeUser implements StanzaListener
                 ConferenceInitiationIQ.NAMESPACE,
                 new ConferenceInitiationIQProvider());
         ProviderManager.addExtensionProvider(
-                NewContentPacketExtension.ELEMENT_NAME,
-                NewContentPacketExtension.NAMESPACE,
-                new NewAbstractExtensionElementProvider<>(NewContentPacketExtension.class));
+                ContentPacketExtension.ELEMENT_NAME,
+                ContentPacketExtension.NAMESPACE,
+                new DefaultPacketExtensionProvider<>(ContentPacketExtension.class));
         ProviderManager.addExtensionProvider(
                 RtpDescriptionPacketExtension.ELEMENT_NAME,
                 RtpDescriptionPacketExtension.NAMESPACE,
-                new NewAbstractExtensionElementProvider<>(NewRtpDescriptionPacketExtension.class));
+                new DefaultPacketExtensionProvider<>(RtpDescriptionPacketExtension.class));
         ProviderManager.addExtensionProvider(
-                NewPayloadTypePacketExtension.ELEMENT_NAME,
-                NewPayloadTypePacketExtension.NAMESPACE,
-                new NewAbstractExtensionElementProvider<>(NewPayloadTypePacketExtension.class));
+                PayloadTypePacketExtension.ELEMENT_NAME,
+                PayloadTypePacketExtension.NAMESPACE,
+                new DefaultPacketExtensionProvider<>(PayloadTypePacketExtension.class));
         ProviderManager.addExtensionProvider(
-                NewParameterPacketExtension.ELEMENT_NAME,
+                ParameterPacketExtension.ELEMENT_NAME,
                 "urn:xmpp:jingle:apps:rtp:1",
-                new NewAbstractExtensionElementProvider<>(NewParameterPacketExtension.class));
+                new DefaultPacketExtensionProvider<>(ParameterPacketExtension.class));
         ProviderManager.addExtensionProvider(
-                NewParameterPacketExtension.ELEMENT_NAME,
+                ParameterPacketExtension.ELEMENT_NAME,
                 "urn:xmpp:jingle:apps:rtp:ssma:0",
-                new NewAbstractExtensionElementProvider<>(NewParameterPacketExtension.class));
+                new DefaultPacketExtensionProvider<>(ParameterPacketExtension.class));
         ProviderManager.addExtensionProvider(
-                NewRtcpFbPacketExtension.ELEMENT_NAME,
-                NewRtcpFbPacketExtension.NAMESPACE,
-                new NewAbstractExtensionElementProvider<>(NewRtcpFbPacketExtension.class));
+                RtcpFbPacketExtension.ELEMENT_NAME,
+                RtcpFbPacketExtension.NAMESPACE,
+                new DefaultPacketExtensionProvider<>(RtcpFbPacketExtension.class));
         ProviderManager.addExtensionProvider(
-                NewRTPHdrExtPacketExtension.ELEMENT_NAME,
-                NewRTPHdrExtPacketExtension.NAMESPACE,
-                new NewAbstractExtensionElementProvider<>(NewRTPHdrExtPacketExtension.class));
+                RTPHdrExtPacketExtension.ELEMENT_NAME,
+                RTPHdrExtPacketExtension.NAMESPACE,
+                new DefaultPacketExtensionProvider<>(RTPHdrExtPacketExtension.class));
         ProviderManager.addExtensionProvider(
-                NewSourcePacketExtension.ELEMENT_NAME,
-                NewSourcePacketExtension.NAMESPACE,
-                new NewAbstractExtensionElementProvider<>(NewSourcePacketExtension.class));
+                SourcePacketExtension.ELEMENT_NAME,
+                SourcePacketExtension.NAMESPACE,
+                new DefaultPacketExtensionProvider<>(SourcePacketExtension.class));
         ProviderManager.addExtensionProvider(
-                NewSSRCInfoPacketExtension.ELEMENT_NAME,
-                NewSSRCInfoPacketExtension.NAMESPACE,
-                new NewAbstractExtensionElementProvider<>(NewSSRCInfoPacketExtension.class));
+                SSRCInfoPacketExtension.ELEMENT_NAME,
+                SSRCInfoPacketExtension.NAMESPACE,
+                new DefaultPacketExtensionProvider<>(SSRCInfoPacketExtension.class));
         ProviderManager.addExtensionProvider(
-                NewIceUdpTransportPacketExtension.ELEMENT_NAME,
-                NewIceUdpTransportPacketExtension.NAMESPACE,
-                new NewAbstractExtensionElementProvider<>(NewIceUdpTransportPacketExtension.class));
+                IceUdpTransportPacketExtension.ELEMENT_NAME,
+                IceUdpTransportPacketExtension.NAMESPACE,
+                new DefaultPacketExtensionProvider<>(IceUdpTransportPacketExtension.class));
         ProviderManager.addExtensionProvider(
-                NewDtlsFingerprintPacketExtension.ELEMENT_NAME,
-                NewDtlsFingerprintPacketExtension.NAMESPACE,
-                new NewAbstractExtensionElementProvider<>(NewDtlsFingerprintPacketExtension.class));
+                DtlsFingerprintPacketExtension.ELEMENT_NAME,
+                DtlsFingerprintPacketExtension.NAMESPACE,
+                new DefaultPacketExtensionProvider<>(DtlsFingerprintPacketExtension.class));
         ProviderManager.addExtensionProvider(
-                NewCandidatePacketExtension.ELEMENT_NAME,
+                CandidatePacketExtension.ELEMENT_NAME,
                 "urn:xmpp:jingle:transports:ice-udp:1",
-                new NewAbstractExtensionElementProvider<>(NewCandidatePacketExtension.class));
+                new DefaultPacketExtensionProvider<>(CandidatePacketExtension.class));
         ProviderManager.addExtensionProvider(
-                NewCandidatePacketExtension.ELEMENT_NAME,
+                CandidatePacketExtension.ELEMENT_NAME,
                 "urn:xmpp:jingle:transports:raw-udp:1",
-                new NewAbstractExtensionElementProvider<>(NewCandidatePacketExtension.class));
+                new DefaultPacketExtensionProvider<>(CandidatePacketExtension.class));
         ProviderManager.addExtensionProvider(
-                NewSourceGroupPacketExtension.ELEMENT_NAME,
-                NewSourceGroupPacketExtension.NAMESPACE,
-                new NewAbstractExtensionElementProvider<>(NewSourceGroupPacketExtension.class));
+                SourceGroupPacketExtension.ELEMENT_NAME,
+                SourceGroupPacketExtension.NAMESPACE,
+                new DefaultPacketExtensionProvider<>(SourceGroupPacketExtension.class));
 
         connection = new XMPPBOSHConnection(config);
 
-        connection.registerIQRequestHandler(new AbstractIqRequestHandler(NewJingleIQ.ELEMENT_NAME, NewJingleIQ.NAMESPACE, IQ.Type.set, IQRequestHandler.Mode.sync)
+        connection.registerIQRequestHandler(new AbstractIqRequestHandler(JingleIQ.ELEMENT_NAME, JingleIQ.NAMESPACE, IQ.Type.set, IQRequestHandler.Mode.sync)
         {
             @Override
             public IQ handleIQRequest(IQ iq)
             {
-                NewJingleIQ jiq = (NewJingleIQ)iq;
+                JingleIQ jiq = (JingleIQ)iq;
                 System.out.println("iq request handler got jingle iq: " + jiq.toXML());
                 IQ result = IQ.createResultIQ(iq);
                 switch (jiq.getAction())
@@ -521,7 +527,7 @@ public class FakeUser implements StanzaListener
                  * nickname is correctly displayed in jitmeet
                  */
                 Stanza presencePacket = new Presence(Presence.Type.available);
-                presencePacket.setTo(roomURL + "/" + nickname);
+                presencePacket.setTo(JidCreate.from(roomURL + "/" + nickname));
                 presencePacket.addExtension(new Nick(nickname));
                 connection.sendStanza(presencePacket);
 
@@ -545,7 +551,7 @@ public class FakeUser implements StanzaListener
                  * then we append '_' to the nickname, and retry
                  */
                 if((e.getXMPPError() != null) &&
-                        (XMPPError.Condition.conflict.toString().equals(
+                        (XMPPError.Condition.conflict.equals(
                             e.getXMPPError().getCondition())))
                 {
                     logger.warn(this.nickname + " nickname already used, "
@@ -627,7 +633,7 @@ public class FakeUser implements StanzaListener
      */
     private void acceptJingleSession()
     {
-        Map<String, NewContentPacketExtension> contentMap = new HashMap<>();
+        Map<String, ContentPacketExtension> contentMap = new HashMap<>();
         /*
          * A Map mapping of media type (audio, video, data), to a <tt>MediaFormat</tt>
          * representing the selected format for the stream handling this media type.
@@ -657,20 +663,20 @@ public class FakeUser implements StanzaListener
         DynamicRTPExtensionsRegistry rtpExtRegistry =
                 new DynamicRTPExtensionsRegistry();
 
-        for (NewContentPacketExtension cpe : sessionInitiate.getContentList())
+        for (ContentPacketExtension cpe : sessionInitiate.getContentList())
         {
-            NewContentPacketExtension localContent;
+            ContentPacketExtension localContent;
             //TODO(brian): do we still need this special treatment for data?
             if (cpe.getName().equalsIgnoreCase("data"))
             {
                  localContent = HammerUtils.createDescriptionForDataContent(
-                         NewContentPacketExtension.CreatorEnum.responder,
-                         NewContentPacketExtension.SendersEnum.both);
+                         ContentPacketExtension.CreatorEnum.responder,
+                         ContentPacketExtension.SendersEnum.both);
             }
             else
             {
-                NewRtpDescriptionPacketExtension description =
-                        cpe.getFirstChildOfType(NewRtpDescriptionPacketExtension.class);
+                RtpDescriptionPacketExtension description =
+                        cpe.getFirstChildOfType(RtpDescriptionPacketExtension.class);
                 if (description == null)
                 {
                     continue;
@@ -687,9 +693,9 @@ public class FakeUser implements StanzaListener
                 selectedFormats.put(cpe.getName(), HammerUtils.selectFormat(cpe.getName(), mediaFormats));
 
                 localContent = HammerJingleUtils.createDescription(
-                        NewContentPacketExtension.CreatorEnum.responder,
+                        ContentPacketExtension.CreatorEnum.responder,
                         cpe.getName(),
-                        NewContentPacketExtension.SendersEnum.both,
+                        ContentPacketExtension.SendersEnum.both,
                         mediaFormats,
                         rtpExtensionIntersection,
                         ptRegistry,
@@ -780,7 +786,7 @@ public class FakeUser implements StanzaListener
 
         presencePacketWithSSRC.setTo(recipient);
         presencePacketWithSSRC.addExtension(new Nick(this.nickname));
-        MediaPacketExtension mediaPacket = new MediaPacketExtension();
+        MediaPresenceExtension mediaPacket = new MediaPresenceExtension();
         for(String key : contentMap.keySet())
         {
             String str = String.valueOf(mediaStreamMap.get(key).getLocalSourceID());
@@ -796,19 +802,18 @@ public class FakeUser implements StanzaListener
             System.out.println("Sending presence packet with ssrc: " + presencePacketWithSSRC.toXML());
             connection.sendStanza(presencePacketWithSSRC);
             // Create the session-accept
-            sessionAccept = new NewJingleIQ();
+            sessionAccept = new JingleIQ(JingleAction.SESSION_ACCEPT,
+                sessionInitiate.getSID());
             sessionAccept.setTo(sessionInitiate.getFrom());
             sessionAccept.setFrom(sessionInitiate.getTo());
-            sessionAccept.setResponder(sessionInitiate.getTo().toString());
+            sessionAccept.setResponder(sessionInitiate.getTo());
             sessionAccept.setType(IQ.Type.set);
-            sessionAccept.setSID(sessionInitiate.getSID());
-            sessionAccept.setAction(NewJingleAction.SESSION_ACCEPT);
 
-            for (NewContentPacketExtension cpe : contentMap.values())
+            for (ContentPacketExtension cpe : contentMap.values())
             {
                 sessionAccept.addContent(cpe);
             }
-            sessionAccept.setInitiator(sessionInitiate.getFrom().toString());
+            sessionAccept.setInitiator(sessionInitiate.getFrom());
 
             // Set the remote fingerprint on my streams and add the fingerprints
             //  of my streams to the content list of the session-accept
@@ -944,7 +949,7 @@ public class FakeUser implements StanzaListener
      */
     public void processStanza(Stanza packet)
     {
-        NewJingleIQ jiq = (NewJingleIQ)packet;
+        JingleIQ jiq = (JingleIQ)packet;
         System.out.println("Got jingle iq: " + jiq.toXML());
         ackJingleIQ(jiq);
         switch(jiq.getAction())
@@ -981,7 +986,7 @@ public class FakeUser implements StanzaListener
      * packet <tt>packetToAck</tt>.
      * @param packetToAck the <tt>JingleIQ</tt> that need to be acknowledge.
      */
-    private void ackJingleIQ(NewJingleIQ packetToAck)
+    private void ackJingleIQ(JingleIQ packetToAck)
     {
         IQ ackPacket = IQ.createResultIQ(packetToAck);
         try

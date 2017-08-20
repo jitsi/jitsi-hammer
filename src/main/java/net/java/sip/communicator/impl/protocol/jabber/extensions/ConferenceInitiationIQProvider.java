@@ -30,6 +30,7 @@ import java.io.IOException;
  * if there wasn't a provider for it.
  *
  * @author Brian Baldino
+ * FIXME: this class is duplicated from Jicofo
  */
 public class ConferenceInitiationIQProvider
         extends IntrospectionProvider.IQIntrospectionProvider<ConferenceInitiationIQ>

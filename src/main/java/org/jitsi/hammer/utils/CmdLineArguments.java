@@ -20,6 +20,8 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import org.jxmpp.jid.impl.JidCreate;
+import org.jxmpp.stringprep.XmppStringprepException;
 import org.kohsuke.args4j.*;
 
 /**
@@ -284,7 +286,14 @@ public class CmdLineArguments
         
         if (focusJID != null)
         {
-            hostInfo.setFocusJID(focusJID);
+            try
+            {
+                hostInfo.setFocusJID(JidCreate.from(focusJID));
+            }
+            catch (XmppStringprepException e)
+            {
+                throw new URISyntaxException(focusJID, "Invalid JID");
+            }
         }
         
         return hostInfo;
