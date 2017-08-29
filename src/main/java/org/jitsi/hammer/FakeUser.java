@@ -20,14 +20,13 @@ import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jitsimeet.*;
 import net.java.sip.communicator.impl.protocol.jabber.jinglesdp.*;
 import net.java.sip.communicator.service.protocol.media.*;
-import org.jitsi.service.neomedia.format.MediaFormat;
-import org.jitsi.impl.neomedia.transform.dtls.DtlsControlImpl;
+import org.jitsi.service.neomedia.format.*;
+import org.jitsi.impl.neomedia.transform.dtls.*;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.bosh.*;
-import org.jivesoftware.smack.iqrequest.AbstractIqRequestHandler;
-import org.jivesoftware.smack.iqrequest.IQRequestHandler;
+import org.jivesoftware.smack.iqrequest.*;
 import org.jivesoftware.smack.packet.*;
-import org.jivesoftware.smack.provider.ProviderManager;
+import org.jivesoftware.smack.provider.*;
 import org.jivesoftware.smackx.disco.*;
 import org.jivesoftware.smackx.muc.*;
 import org.jivesoftware.smackx.nick.packet.*;
@@ -38,13 +37,12 @@ import org.jitsi.hammer.stats.*;
 import org.jitsi.hammer.utils.*;
 
 import net.java.sip.communicator.impl.protocol.jabber.extensions.*;
-import org.jxmpp.jid.Jid;
-import org.jxmpp.jid.impl.JidCreate;
-import org.jxmpp.jid.parts.Resourcepart;
-import org.jxmpp.stringprep.XmppStringprepException;
+import org.jxmpp.jid.*;
+import org.jxmpp.jid.impl.*;
+import org.jxmpp.jid.parts.*;
+import org.jxmpp.stringprep.*;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.beans.*;
 import java.io.*;
 import java.util.*;
 

@@ -16,7 +16,7 @@
 
 package org.jitsi.hammer.utils;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.SourcePacketExtension;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.CandidateType;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.ContentPacketExtension.*;

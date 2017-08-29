@@ -20,8 +20,8 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-import org.jxmpp.jid.impl.JidCreate;
-import org.jxmpp.stringprep.XmppStringprepException;
+import org.jxmpp.jid.impl.*;
+import org.jxmpp.stringprep.*;
 import org.kohsuke.args4j.*;
 
 /**

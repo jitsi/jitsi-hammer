@@ -15,7 +15,7 @@
  */
 package org.jitsi.hammer;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jitsimeet.MediaPresenceExtension;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jitsimeet.*;
 import org.jitsi.hammer.stats.*;
 import org.jitsi.hammer.utils.Credential;
 import org.jitsi.hammer.utils.HostInfo;

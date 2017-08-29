@@ -16,7 +16,7 @@
 
 package org.jitsi.hammer.utils;
 
-import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.*;
 
 /**
  * The class contains an number of information about the host server.

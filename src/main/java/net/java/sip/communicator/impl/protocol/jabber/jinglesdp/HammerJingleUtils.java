@@ -16,13 +16,12 @@
 package net.java.sip.communicator.impl.protocol.jabber.jinglesdp;
 
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-import net.java.sip.communicator.service.protocol.media.DynamicPayloadTypeRegistry;
-import net.java.sip.communicator.util.Logger;
-import org.jitsi.service.libjitsi.LibJitsi;
-import org.jitsi.service.neomedia.format.MediaFormat;
+import net.java.sip.communicator.service.protocol.media.*;
+import net.java.sip.communicator.util.*;
+import org.jitsi.service.libjitsi.*;
+import org.jitsi.service.neomedia.format.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * The class contains a number of utility methods that are meant to facilitate
