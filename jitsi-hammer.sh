@@ -4,12 +4,32 @@
 
 KEYSTORE_PWD=123456
 
-while getopts ":u:" o; do
-  case "${o}" in
-    u) BOSH_URI=${OPTARG}
-      ;;
-  esac
-done
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # Mac OSX
+	# A string with command options
+	options=$@
+	# An array with all the arguments
+	arguments=($options)
+	# Loop index
+	index=0
+	for argument in $options
+	  do
+	    # Incrementing index
+	    index=`expr $index + 1`
+	    # The conditions
+	    case $argument in
+	      -BOSHuri) BOSH_URI=${arguments[index]} ;;
+	    esac
+	  done
+else
+	# Others
+	while getopts ":u:" o; do
+	  case "${o}" in
+	    u) BOSH_URI=${OPTARG}
+	      ;;
+	  esac
+	done
+fi
 
 
 OLDIFS="$IFS"
