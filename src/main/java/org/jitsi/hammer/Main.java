@@ -171,6 +171,8 @@ public class Main
     public static void main(String[] args)
         throws InterruptedException
     {
+        org.apache.log4j.BasicConfigurator.configure();
+
         String version = System.getProperty("java.version");
         String vmVendor = System.getProperty("java.vendor");
         String osName = System.getProperty("os.name");
