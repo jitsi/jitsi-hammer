@@ -1,5 +1,5 @@
 # Note
-Please note that this project has not been update for a long time, as stated on the jitsi community [blog](https://community.jitsi.org/t/jitsi-hammer-cannot-generate-load-on-jvb/21289):
+Please note that this project has not been updated for a long time, hence is is not compatible with the latest version of videobridge and the required effort to make it compatible seems substantial. See jitsi community blog [here](https://community.jitsi.org/t/jitsi-hammer-cannot-generate-load-on-jvb/21289):
 
 "
   Hammer have not been touched for years and doesn’t support bundle which is requirement for the new bridge. So if you want to use it, it needs a lot of work and debugging to update it and make it work… I think it miss a lot of features available in the normal client, which does not make it close to reality … In other words we are not using it …
