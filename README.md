@@ -1,3 +1,8 @@
+# Note (February 2020)
+Please note that this project has not been updated for a long time, hence it is
+not compatible with recent versions of Jitsi Meet and Jitsi Videobridge. The required effort
+to make it compatible seems substantial. See [this discussion on the community forums](https://community.jitsi.org/t/jitsi-hammer-cannot-generate-load-on-jvb/21289)
+
 # Jitsi-Hammer
 
 A traffic generator for Jitsi Videobridge.
