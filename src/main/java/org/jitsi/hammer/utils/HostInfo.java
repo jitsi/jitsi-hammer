@@ -16,6 +16,8 @@
 
 package org.jitsi.hammer.utils;
 
+import org.jxmpp.jid.*;
+
 /**
  * The class contains an number of information about the host server.
  *
@@ -62,7 +64,7 @@ public class HostInfo
     /**
      * The XMPP address (JID) for the Focus component
      */
-    private String focusJID;
+    private Jid focusJID;
 
 
     /**
@@ -172,7 +174,7 @@ public class HostInfo
     /**
      * Get JID of the focus component.
      */
-    public String getFocusJID()
+    public Jid getFocusJID()
     {
         return this.focusJID;
     }
@@ -194,7 +196,7 @@ public class HostInfo
      *
      * @param focusJID the focus JID value to be used to perform conference initiation 
      */
-    public void setFocusJID(String focusJID)
+    public void setFocusJID(Jid focusJID)
     {
         this.focusJID = focusJID;
     }

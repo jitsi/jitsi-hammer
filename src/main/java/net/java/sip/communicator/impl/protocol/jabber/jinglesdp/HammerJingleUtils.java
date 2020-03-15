@@ -15,15 +15,13 @@
  */
 package net.java.sip.communicator.impl.protocol.jabber.jinglesdp;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.NewPayloadTypePacketExtension;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.NewRtpDescriptionPacketExtension;
-import net.java.sip.communicator.service.protocol.media.DynamicPayloadTypeRegistry;
-import net.java.sip.communicator.util.Logger;
-import org.jitsi.service.libjitsi.LibJitsi;
-import org.jitsi.service.neomedia.format.MediaFormat;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
+import net.java.sip.communicator.service.protocol.media.*;
+import net.java.sip.communicator.util.*;
+import org.jitsi.service.libjitsi.*;
+import org.jitsi.service.neomedia.format.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * The class contains a number of utility methods that are meant to facilitate
@@ -34,7 +32,7 @@ import java.util.List;
  * @author Lyubomir Marinov
  * @author Brian Baldino
  */
-public class HammerJingleUtils extends NewJingleUtils
+public class HammerJingleUtils extends JingleUtils
 {
 
     /**
@@ -66,14 +64,14 @@ public class HammerJingleUtils extends NewJingleUtils
      * implementation.
      */
     public static List<MediaFormat> extractFormats(
-                                     NewRtpDescriptionPacketExtension description,
+                                     RtpDescriptionPacketExtension description,
                                      DynamicPayloadTypeRegistry ptRegistry)
     {
         List<MediaFormat> mediaFmts = new ArrayList<MediaFormat>();
-        List<NewPayloadTypePacketExtension> payloadTypes
+        List<PayloadTypePacketExtension> payloadTypes
                                             = description.getPayloadTypes();
 
-        for(NewPayloadTypePacketExtension ptExt : payloadTypes)
+        for(PayloadTypePacketExtension ptExt : payloadTypes)
         {
             MediaFormat format = payloadTypeToMediaFormat(ptExt, ptRegistry);
 
@@ -95,7 +93,7 @@ public class HammerJingleUtils extends NewJingleUtils
      * extension or <tt>null</tt> if we don't recognize the format.
      * This method uses <tt>LibJitsi</tt> instead of <tt>JabberActivator</tt>
      *
-     * @param payloadType the {@link NewPayloadTypePacketExtension} which is to be
+     * @param payloadType the {@link PayloadTypePacketExtension} which is to be
      * parsed into a {@link MediaFormat}.
      * @param ptRegistry the {@link DynamicPayloadTypeRegistry} that we would
      * use for the registration of possible dynamic payload types or
@@ -106,7 +104,7 @@ public class HammerJingleUtils extends NewJingleUtils
      * extension or <tt>null</tt> if we don't recognize the format.
      */
     public static MediaFormat payloadTypeToMediaFormat(
-            NewPayloadTypePacketExtension payloadType,
+            PayloadTypePacketExtension payloadType,
             DynamicPayloadTypeRegistry ptRegistry)
     {
         return

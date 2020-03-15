@@ -25,7 +25,7 @@ import org.jivesoftware.smack.packet.*;
  * This class is used to store attributes of XML sub-documents
  * starting with "ssrc" tag.
  */
-public class SsrcPacketExtension implements PacketExtension
+public class SsrcPacketExtension implements ExtensionElement
 {
     /**
      * The namespace of this <tt>SsrcPacketExtension</tt>

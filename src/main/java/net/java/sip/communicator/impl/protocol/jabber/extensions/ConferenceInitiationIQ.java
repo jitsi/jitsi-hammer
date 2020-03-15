@@ -27,6 +27,7 @@ import java.util.*;
  *
  * @author Maksym Kulish
  * @author Brian Baldino
+ * FIXME: this class is duplicated from Jicofo
  */
 public class ConferenceInitiationIQ extends IQ 
 {
